@@ -1,8 +1,8 @@
 from math import sqrt
 
 # ------ RBM Inputs ------
-ROBOT_LENGTH = 400 # [mm]
-WHEEL_RADIUS = 35 # [mm]
+ROBOT_LENGTH = 350 # [mm]
+WHEEL_DIAMETER = 100 # [mm]
 IMAGE_FILE = "rbm.png" # Output image file name
 # ------------------------
 
@@ -35,7 +35,7 @@ BN is the RBM height
 BN = sqrt(BC^2 - NC^2)
 """
 
-WHEEL_DIAMETER = WHEEL_RADIUS * 2 # [mm]
+WHEEL_RADIUS = WHEEL_DIAMETER / 2 # [mm]
 WHEEL_BASE = ROBOT_LENGTH - WHEEL_RADIUS * 2 # [mm]
 NC = WHEEL_BASE / 2 # [mm]
 BC = sqrt(2) * NC # [mm]
@@ -49,7 +49,7 @@ print(
     f'Rover Rocker Bogie Assembly (RBM) parameters:\n'
     f'----Robot Inputs----\n'
     f'- Robot Length: {ROBOT_LENGTH} [mm]\n'
-    f'- Wheel Radius: {WHEEL_RADIUS} [mm]\n'
+    f'- Wheel Diameter: {WHEEL_DIAMETER} [mm]\n'
     f'--------------------\n'
     f'- Wheel Base (A to C): {WHEEL_BASE:.3f} [mm]\n'
     f'- Center to Front Wheel (B to C): {BC:.3f} [mm]\n'
