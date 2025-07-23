@@ -74,12 +74,17 @@ SCREEN_HEIGHT = 600
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pg.display.set_caption('Rover Rocker Bogie Assembly (RBM)')
 
+def pygame_color_from_hex_code(hex_code):
+    """Convert hex color code to Pygame color tuple."""
+    hex_code = hex_code.lstrip('#')
+    return tuple(int(hex_code[i:i+2], 16) for i in (0, 2, 4))
+
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
-GREEN = (128, 255, 0)
+GREEN = pygame_color_from_hex_code("#1f6632")
 GRAY = (128, 128, 128)
 YELLOW = (255, 255, 0)
 ORANGE = (255, 165, 0)
@@ -222,7 +227,7 @@ def main():
 
         draw_rbm()
         pg.display.flip()
-        clock.tick(60)
+        clock.tick(24)
     pg.image.save(screen, IMAGE_FILE)
     print(f"RBM diagram saved as '{IMAGE_FILE}'.")
     pg.quit()
