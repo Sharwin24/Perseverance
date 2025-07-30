@@ -71,11 +71,47 @@ class KalmanFilter:
         self.R_imu = np.array([[0.05]])  # Yaw rate noise [rad^2/s^2]
         self.last_timestamp = initial_timestamp  # [seconds]
 
-    def normalize_angle(self, angle):
+    def normalize_angle(self, angle: float) -> float:
         """Normalizes an angle to be within -pi to pi."""
         return (angle + np.pi) % (2 * np.pi) - np.pi
 
-    def predict(self, imu_data: IMUData):
+    def F(self, dt):
+        # State Transition Matrix (F) for a constant acceleration model
+        # Each row is a partial derivative of the new state with respect to the old state
+        # [dX/dx, dX/dy, dX/dtheta, dX/dvx, dX/dvy, dX/domega]
+        # [dY/dx, dY/dy, dY/dtheta, dY/dvx, dY/dvy, dY/domega]
+        # [dTheta/dx, dTheta/dy, dTheta/dtheta, dTheta/dvx, dTheta/dvy, dTheta/domega]
+        # [dVx/dx, dVx/dy, dVx/dtheta, dVx/dvx, dVx/dvy, dVx/domega]
+        # [dVy/dx, dVy/dy, dVy/dtheta, dVy/dvx, dVy/dvy, dVy/domega]
+        # [dOmega/dx, dOmega/dy, dOmega/dtheta, dOmega/dvx, dOmega/dvy, dOmega/domega]
+        return np.array([
+            [1, 0, 0, dt, 0,  0],
+            [0, 1, 0, 0,  dt, 0],
+            [0, 0, 1, 0,  0,  dt],
+            [0, 0, 0, 1,  0,  0],
+            [0, 0, 0, 0,  1,  0],
+            [0, 0, 0, 0,  0,  1]
+        ])
+
+    def B(self, dt):
+        # Control Input Model (B) for a constant acceleration model
+        # Each row is a partial derivative of the new state with respect to the control input
+        # [dX/dax, dX/day]
+        # [dY/dax, dY/day]
+        # [dTheta/dax, dTheta/day]
+        # [dVx/dax, dVx/day]
+        # [dVy/dax, dVy/day]
+        # [dOmega/dax, dOmega/day]
+        return np.array([
+            [0.5 * dt**2, 0],
+            [0, 0.5 * dt**2],
+            [0, 0],
+            [dt, 0],
+            [0, dt],
+            [0, 0]
+        ])
+
+    def predict_with_dynamics_model(self, imu_data: IMUData):
         """
         Predicts the next state using a constant acceleration model.
         IMU accelerations are treated as control inputs.
@@ -92,24 +128,10 @@ class KalmanFilter:
             np.sin(theta) + imu_data.acc_y * np.cos(theta)
 
         # State Transition Matrix (F) for a constant acceleration model
-        F = np.array([
-            [1, 0, 0, dt, 0,  0],
-            [0, 1, 0, 0,  dt, 0],
-            [0, 0, 1, 0,  0,  dt],
-            [0, 0, 0, 1,  0,  0],
-            [0, 0, 0, 0,  1,  0],
-            [0, 0, 0, 0,  0,  1]
-        ])
+        F = self.F(dt)
 
         # Control Input Model (B)
-        B = np.array([
-            [0.5 * dt**2, 0],
-            [0, 0.5 * dt**2],
-            [0, 0],
-            [dt, 0],
-            [0, dt],
-            [0, 0]
-        ])
+        B = self.B(dt)
 
         # Control Vector (u)
         u = np.array([global_acc_x, global_acc_y])
@@ -121,29 +143,44 @@ class KalmanFilter:
 
         # Predict covariance: P_pred = F * P * F.T + Q
         self.P = F @ self.P @ F.T + self.Q
-
+        # Update the last timestamp
         self.last_timestamp = imu_data.timestamp
 
+    def predict_with_kinematics_model(self, left_vel, right_vel, dt):
+        pass
+
     def update_odom(self, odom_data: OdomData):
-        # Create measurement vector from odometry data
         z = np.array(
             [odom_data.odom_x, odom_data.odom_y, odom_data.odom_theta])
-        H = np.array(
-            [[1, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0]])
+        # Odometry Measurement Model
+        H = np.array([
+            [1, 0, 0, 0, 0, 0],  # [x]
+            [0, 1, 0, 0, 0, 0],  # [y]
+            [0, 0, 1, 0, 0, 0]  # [theta]
+        ])
+        # Calculate the innovation and normalize theta
         y = z - H @ self.state.to_array()
         y[2] = self.normalize_angle(y[2])
+        # Calculate the Kalman Gain [K] using the innovation covariance [S]
         S = H @ self.P @ H.T + self.R_odom
         K = self.P @ H.T @ np.linalg.inv(S)
+        # Update the state estimate and covariance
         self.state = RobotState.from_npy(self.state.to_array() + K @ y)
         self.state.theta = self.normalize_angle(self.state.theta)
         self.P = (np.eye(self.P.shape[0]) - K @ H) @ self.P
 
     def update_imu(self, imu_data: IMUData):
         z = np.array([imu_data.gyro_z])
-        H = np.array([[0, 0, 0, 0, 0, 1]])
+        # IMU Measurement Model
+        H = np.array([
+            [0, 0, 0, 0, 0, 1]  # [omega]
+        ])
+        # Calculate the innovation
         y = z - H @ self.state.to_array()
+        # Calculate the Kalman Gain [K] using the innovation covariance [S]
         S = H @ self.P @ H.T + self.R_imu
         K = self.P @ H.T @ np.linalg.inv(S)
+        # Update the state estimate and covariance
         self.state = RobotState.from_npy(self.state.to_array() + K @ y)
         self.state.theta = self.normalize_angle(self.state.theta)
         self.P = (np.eye(self.P.shape[0]) - K @ H) @ self.P
@@ -205,7 +242,7 @@ if __name__ == "__main__":
         # Create IMU data object for prediction (using true acceleration as control input)
         predict_imu = IMUData(
             acc_x=true_acc_x, acc_y=true_acc_y, gyro_z=0, timestamp=timestamp)
-        kf.predict(predict_imu)
+        kf.predict_with_dynamics_model(predict_imu)
 
         # 3. Correction Step (with noisy sensor data)
         # Create noisy Odometry measurement
