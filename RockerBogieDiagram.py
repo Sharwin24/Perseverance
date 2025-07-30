@@ -1,9 +1,11 @@
+import sys
+import pygame as pg
 from math import sqrt
 
 # ------ RBM Inputs ------
-ROBOT_LENGTH = 350 # [mm]
-WHEEL_DIAMETER = 100 # [mm]
-IMAGE_FILE = "rbm.png" # Output image file name
+ROBOT_LENGTH = 350  # [mm]
+WHEEL_DIAMETER = 100  # [mm]
+IMAGE_FILE = "rocker_bogie_diagram.png"
 # ------------------------
 
 
@@ -18,7 +20,7 @@ A------N------C
 
 """
 A, N, C are wheel locations
-B is center axle of RBM
+B is center axle of Rocker Bogie Mechanism (RBM)
 M is the rotation center of the back rocker assembly
 WHEEL_BASE is A to C
 Triangle BNC is a 45-45-90 triangle
@@ -35,18 +37,18 @@ BN is the RBM height
 BN = sqrt(BC^2 - NC^2)
 """
 
-WHEEL_RADIUS = WHEEL_DIAMETER / 2 # [mm]
-WHEEL_BASE = ROBOT_LENGTH - WHEEL_RADIUS * 2 # [mm]
-NC = WHEEL_BASE / 2 # [mm]
-BC = sqrt(2) * NC # [mm]
-BM = sqrt(0.5) * NC # [mm]
-AM = BM # [mm]
-MN = BM # [mm]
-BN = sqrt(BC**2 - NC**2) # [mm]
-CENTER_TO_GROUND = WHEEL_RADIUS + BN # [mm]
+WHEEL_RADIUS = WHEEL_DIAMETER / 2  # [mm]
+WHEEL_BASE = ROBOT_LENGTH - WHEEL_RADIUS * 2  # [mm]
+NC = WHEEL_BASE / 2  # [mm]
+BC = sqrt(2) * NC  # [mm]
+BM = sqrt(0.5) * NC  # [mm]
+AM = BM  # [mm]
+MN = BM  # [mm]
+BN = sqrt(BC**2 - NC**2)  # [mm]
+CENTER_TO_GROUND = WHEEL_RADIUS + BN  # [mm]
 
 print(
-    f'Rover Rocker Bogie Assembly (RBM) parameters:\n'
+    f'Rover Rocker Bogie Mechanism (RBM) parameters:\n'
     f'----Robot Inputs----\n'
     f'- Robot Length: {ROBOT_LENGTH} [mm]\n'
     f'- Wheel Diameter: {WHEEL_DIAMETER} [mm]\n'
@@ -62,8 +64,16 @@ print(
     f'Rover Diagram:\n{ROBOT_DIAGRAM}'
 )
 
-import pygame as pg
-import sys
+# Print the equations from the inputs: Robot Length, Wheel Diameter
+print(
+    f'Equations with Inputs [Robot Length, Wheel Diameter] = [{ROBOT_LENGTH}, {WHEEL_DIAMETER}] mm:\n'
+    f'- Wheel Base (A to C) = RobotLength - 2 * WheelRadius\n'
+    f'- Center to Front Wheel (B to C) = sqrt(2) * NC\n'
+    f'- Center to Back Pivot (B to M) = sqrt(0.5) * NC\n'
+    f'- Height of RBM (B to N) = sqrt(BC^2 - NC^2)\n'
+    f'- Center to Ground = WheelRadius + BN'nnnfnfslqlqlqqqqqqqq nn
+)
+
 
 # Initialize Pygame
 pg.init()
@@ -72,12 +82,14 @@ pg.init()
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
 screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pg.display.set_caption('Rover Rocker Bogie Assembly (RBM)')
+pg.display.set_caption('Rover Rocker Bogie Diagram')
+
 
 def pygame_color_from_hex_code(hex_code):
     """Convert hex color code to Pygame color tuple."""
     hex_code = hex_code.lstrip('#')
     return tuple(int(hex_code[i:i+2], 16) for i in (0, 2, 4))
+
 
 # Colors
 BLACK = (0, 0, 0)
@@ -92,6 +104,7 @@ ORANGE = (255, 165, 0)
 # Font for labels
 font = pg.font.Font(None, 28)
 small_font = pg.font.Font(None, 22)
+
 
 def draw_rbm():
     """Draw the Rocker Bogie Mechanism with labels"""
@@ -118,19 +131,26 @@ def draw_rbm():
     B_x = center_x  # Center axle
     B_y = center_y - (BN * scale)
 
-    M_x = center_x - (BM * scale * 0.7)  # Back pivot (adjusted for visual clarity)
+    # Back pivot (adjusted for visual clarity)
+    M_x = center_x - (BM * scale * 0.7)
     M_y = center_y - (BM * scale * 0.7)
 
     # Draw wheels
     wheel_radius_scaled = WHEEL_RADIUS * scale * 0.5  # Scale down for visual clarity
-    pg.draw.circle(screen, BLACK, (int(A_x), int(A_y)), int(wheel_radius_scaled), 3)
-    pg.draw.circle(screen, BLACK, (int(N_x), int(N_y)), int(wheel_radius_scaled), 3)
-    pg.draw.circle(screen, BLACK, (int(C_x), int(C_y)), int(wheel_radius_scaled), 3)
+    pg.draw.circle(screen, BLACK, (int(A_x), int(A_y)),
+                   int(wheel_radius_scaled), 3)
+    pg.draw.circle(screen, BLACK, (int(N_x), int(N_y)),
+                   int(wheel_radius_scaled), 3)
+    pg.draw.circle(screen, BLACK, (int(C_x), int(C_y)),
+                   int(wheel_radius_scaled), 3)
 
     # Fill wheels
-    pg.draw.circle(screen, GRAY, (int(A_x), int(A_y)), int(wheel_radius_scaled))
-    pg.draw.circle(screen, GRAY, (int(N_x), int(N_y)), int(wheel_radius_scaled))
-    pg.draw.circle(screen, GRAY, (int(C_x), int(C_y)), int(wheel_radius_scaled))
+    pg.draw.circle(screen, GRAY, (int(A_x), int(A_y)),
+                   int(wheel_radius_scaled))
+    pg.draw.circle(screen, GRAY, (int(N_x), int(N_y)),
+                   int(wheel_radius_scaled))
+    pg.draw.circle(screen, GRAY, (int(C_x), int(C_y)),
+                   int(wheel_radius_scaled))
 
     # Draw RBM structure lines
     # Main triangle BNC
@@ -145,7 +165,7 @@ def draw_rbm():
 
     # Draw pivot points
     pg.draw.circle(screen, RED, (int(B_x), int(B_y)), 6)    # Center pivot B
-    pg.draw.circle(screen, ORANGE, (int(M_x), int(M_y)), 6) # Back pivot M
+    pg.draw.circle(screen, ORANGE, (int(M_x), int(M_y)), 6)  # Back pivot M
 
     # Draw labels for points
     labels = [
@@ -176,11 +196,12 @@ def draw_rbm():
     screen.blit(height_text, (B_x + 70, (B_y + N_y) // 2))
 
     # Add title and key measurements
-    title = font.render('Rover Rocker Bogie Assembly (RBM)', True, BLACK)
+    title = font.render('Rover Rocker Bogie Diagram', True, BLACK)
     screen.blit(title, (center_x - 150, 30))
 
     # Add help text
-    help_text = small_font.render('Press any key to close window and save image', True, BLACK)
+    help_text = small_font.render(
+        'Press any key to close window and save image', True, BLACK)
     screen.blit(help_text, (center_x - 120, 55))
 
     # Display key measurements
@@ -213,7 +234,7 @@ def draw_rbm():
         legend_text = small_font.render(text, True, BLACK)
         screen.blit(legend_text, (45, legend_y + i * 20))
 
-# Main game loop
+
 def main():
     clock = pg.time.Clock()
     running = True
@@ -221,17 +242,18 @@ def main():
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
-              running = False
+                running = False
             elif event.type == pg.KEYDOWN:
-              running = False
+                running = False
 
         draw_rbm()
         pg.display.flip()
         clock.tick(24)
     pg.image.save(screen, IMAGE_FILE)
-    print(f"RBM diagram saved as '{IMAGE_FILE}'.")
+    print(f"Diagram saved to '{IMAGE_FILE}'.")
     pg.quit()
     sys.exit()
+
 
 # Run the visualization
 if __name__ == "__main__":
