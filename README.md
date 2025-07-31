@@ -1,7 +1,7 @@
 # Perseverance
 Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
 
-# Kalman Filtering for rover state estimation
+# Kalman Filtering for Rover State Estimation
 Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics.
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">

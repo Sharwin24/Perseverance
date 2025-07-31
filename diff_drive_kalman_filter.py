@@ -53,26 +53,26 @@ class KalmanFilter:
         # State vector: [x, y, theta, vx, vy, omega]
         self.state = initial_state  # Initial state of the robot
         self.P = np.eye(6)  # Initial covariance matrix
-        self.P[0, 0] = 0.1  # Position uncertainty in x [mm^2]
-        self.P[1, 1] = 0.1  # Position uncertainty in y [mm^2]
+        self.P[0, 0] = 0.05  # Position uncertainty in x [mm^2]
+        self.P[1, 1] = 0.05  # Position uncertainty in y [mm^2]
         self.P[2, 2] = 0.01  # Orientation uncertainty [rad^2]
         self.P[3, 3] = 0.1  # Velocity uncertainty in x [mm^2/s^2]
         self.P[4, 4] = 0.1  # Velocity uncertainty in y [mm^2/s^2]
-        self.P[5, 5] = 0.1  # Angular velocity uncertainty [rad^2/s^2]
+        self.P[5, 5] = 0.0825  # Angular velocity uncertainty [rad^2/s^2]
         self.Q = np.eye(6)  # Process noise covariance
-        self.Q[0, 0] = 0.01    # X position noise
-        self.Q[1, 1] = 0.01    # Y position noise
-        self.Q[2, 2] = 0.005   # Orientation noise
-        self.Q[3, 3] = 0.1     # Velocity noise in x
-        self.Q[4, 4] = 0.1     # Velocity noise in y
-        self.Q[5, 5] = 0.05    # Angular velocity noise
+        self.Q[0, 0] = 0.005    # X position noise [mm^2]
+        self.Q[1, 1] = 0.005    # Y position noise [mm^2]
+        self.Q[2, 2] = 0.001   # Orientation noise [rad^2]
+        self.Q[3, 3] = 0.075     # Velocity noise in x [mm^2/s^2]
+        self.Q[4, 4] = 0.075     # Velocity noise in y [mm^2/s^2]
+        self.Q[5, 5] = 0.005    # Angular velocity noise [rad^2/s^2]
         # [x, y, theta] Odometry measurement noise covariance
         self.R_odom = np.eye(3)
-        self.R_odom[0, 0] = 5.0  # Position uncertainty in x [mm^2]
-        self.R_odom[1, 1] = 5.0  # Position uncertainty in y [mm^2]
-        self.R_odom[2, 2] = 0.1  # Orientation uncertainty [rad^2]
+        self.R_odom[0, 0] = 1.0  # Position uncertainty in x [mm^2]
+        self.R_odom[1, 1] = 1.0  # Position uncertainty in y [mm^2]
+        self.R_odom[2, 2] = 0.05  # Orientation uncertainty [rad^2]
         # [omega] IMU measurement noise covariance
-        self.R_imu = np.array([[0.05]])  # Yaw rate noise [rad^2/s^2]
+        self.R_imu = np.array([[0.0075]])  # Yaw rate noise [rad^2/s^2]
         self.last_timestamp = initial_timestamp  # [seconds]
 
     def normalize_angle(self, angle: float) -> float:
