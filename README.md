@@ -16,14 +16,14 @@ KALMAN FILTER PERFORMANCE COMPARISON
 ============================================================
 State           Dynamic RMSE    Kinematic RMSE  Better Model
 ------------------------------------------------------------
-x [mm]          1.162           0.390           Kinematic
-y [mm]          1.134           0.288           Kinematic
-theta [rad]     0.097           0.096           Kinematic
-vx [mm/s]       1.306           0.481           Kinematic
-vy [mm/s]       0.495           0.415           Kinematic
-omega [rad/s]   0.197           0.123           Kinematic
+x [mm]          0.821           1.206           Dynamic
+y [mm]          0.777           1.182           Dynamic
+theta [rad]     0.102           0.069           Kinematic
+vx [mm/s]       0.978           5.597           Dynamic
+vy [mm/s]       1.083           3.969           Dynamic
+omega [rad/s]   0.152           0.125           Kinematic
 ------------------------------------------------------------
-Overall         0.732           0.299           Kinematic
+Overall         0.652           2.025           Dynamic
 ```
 
 ## Robot State & Dynamics
