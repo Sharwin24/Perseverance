@@ -25,6 +25,14 @@ struct RobotState {
   Eigen::Vector<double, 6> vec() const {
     return Eigen::Vector<double, 6>(x, y, theta, vx, vy, omega);
   }
+
+  /**
+   * @brief Normalize theta to the range [-pi, pi].
+   *
+   */
+  void normalizeTheta() {
+    theta = std::fmod(theta + M_PI, 2 * M_PI) - M_PI;
+  }
 };
 
 struct Covariance {
@@ -106,6 +114,27 @@ struct Covariance {
   void setImuMeasurementNoiseCovariance(double omegaNoise) {
     imuMeasurementNoiseCovariance(0, 0) = omegaNoise; // Angular Velocity
   }
+};
+
+struct SystemModel {
+  Eigen::Matrix<double, 6, 6> stateTransitionMatrix = Eigen::Matrix<double, 6, 6>::Identity();
+  Eigen::Matrix<double, 6, 2> controlInputModel = Eigen::Matrix<double, 6, 2>::Zero();
+
+  SystemModel() = default;
+
+  SystemModel(const Eigen::Matrix<double, 6, 6>& stateTransition,
+    const Eigen::Matrix<double, 6, 2>& controlInput)
+    : stateTransitionMatrix(stateTransition), controlInputModel(controlInput) {
+  }
+
+  Eigen::Matrix<double, 6, 6> getStateTransitionMatrix(const double dt) {
+    // Update the state transition matrix based on the time step
+    stateTransitionMatrix(0, 3) = dt; // dX/dVx
+    stateTransitionMatrix(1, 4) = dt; // dY/dVy
+    stateTransitionMatrix(2, 5) = dt; // dTheta/dOmega
+    return stateTransitionMatrix;
+  }
+
 };
 
 class StateEstimator : public rclcpp::Node {
