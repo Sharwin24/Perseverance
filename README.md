@@ -4,10 +4,10 @@ Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
 # Kalman Filtering for rover state estimation
 Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics.
 
-<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
-  <img src="plots/robot_trajectory_comparison.png" alt="Robot Trajectory Comparison" style="width: 32%; min-width: 200px;">
-  <img src="plots/kalman_filter_states_comparison.png" alt="Kalman Filter States Comparison" style="width: 32%; min-width: 200px;">
-  <img src="plots/kalman_filter_errors_comparison.png" alt="Kalman Filter Errors Comparison" style="width: 32%; min-width: 200px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+  <img src="plots/robot_trajectory_comparison.png" alt="Robot Trajectory Comparison" style="width: 90%; min-width: 200px;">
+  <img src="plots/kalman_filter_states_comparison.png" alt="Kalman Filter States Comparison" style="width: 49%; min-width: 200px;">
+  <img src="plots/kalman_filter_errors_comparison.png" alt="Kalman Filter Errors Comparison" style="width: 49%; min-width: 200px;">
 </div>
 
 <!-- ![robot_trajectory](plots/robot_trajectory_comparison.png) -->
