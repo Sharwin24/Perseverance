@@ -1,0 +1,9 @@
+state_estimator:
+  ros__parameters:
+    timer_frequency: 100 # [Hz]
+    initial_x: 0.0 # Initial x position [m]
+    initial_y: 0.0 # Initial y position [m]
+    initial_theta: 0.0 # Initial orientation [rad]
+    initial_vx: 0.0 # Initial x velocity [m/s]
+    initial_vy: 0.0 # Initial y velocity [m/s]
+    initial_omega: 0.0 # Initial angular velocity [rad/s]
