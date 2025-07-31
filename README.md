@@ -4,6 +4,8 @@ Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
 # Kalman Filtering for rover state estimation
 Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics.
 
+![robot_trajectory](plots/robot_trajectory_comparison.png)
+
 ## Robot State & Dynamics
 The goal of the prediction step in a Kalman filter is to model how the robot's state evolves over a time step $\Delta t$. This model is based on control inputs, which are the commands we send to the robot. For a differential drive robot, these inputs are the left and right wheel velocities. The robot's state vector $X$ and control vector $U$ can be expressed as:
 
