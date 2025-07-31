@@ -19,7 +19,7 @@ $$
 
 The function that describes the state's evolution is the **process model:** $f\left(X_{prev}, U, \Delta t\right) \to X_{next}$
 
-$$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \end{bmatrix} = \underbrace{\begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t\\y_{prev} + V\sin\theta _{prev}\Delta t\\ \theta_{prev} + \omega \Delta t\\ V a_x \Delta t\\ V a_y \Delta t\end{bmatrix}}_{\text{accel from IMU}}$$
+$$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t\\y_{prev} + V\sin\theta _{prev}\Delta t\\ \theta_{prev} + \omega \Delta t\\ V a_x \Delta t\\ V a_y \Delta t\end{bmatrix}$$
 
 Notice that the new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
 
@@ -64,7 +64,7 @@ $$X_{new}​=F X_{prev}​+B U_{imu​}$$
 
 - Control Vector ($U_{imu​}$): Global-frame accelerations derived from IMU readings.
 
-$$U_{imu​}=\begin{bmatrix}a_x\\a_y\end{bmatrix}_{\text{global​}}$$
+$$U_{imu​}=\begin{bmatrix}a_x\\ a_y\end{bmatrix}_{\text{global​}}$$
 
 - State Transition ($F$):
 
