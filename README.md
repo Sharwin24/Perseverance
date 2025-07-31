@@ -5,12 +5,26 @@ Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
 Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics.
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-  <img src="plots/robot_trajectory_comparison.png" alt="Robot Trajectory Comparison" style="width: 90%; min-width: 200px;">
+  <img src="plots/robot_trajectory_comparison.png" alt="Robot Trajectory Comparison" style="width: 100%; min-width: 200px;">
   <img src="plots/kalman_filter_states_comparison.png" alt="Kalman Filter States Comparison" style="width: 49%; min-width: 200px;">
   <img src="plots/kalman_filter_errors_comparison.png" alt="Kalman Filter Errors Comparison" style="width: 49%; min-width: 200px;">
 </div>
 
-<!-- ![robot_trajectory](plots/robot_trajectory_comparison.png) -->
+```txt
+============================================================
+KALMAN FILTER PERFORMANCE COMPARISON
+============================================================
+State           Dynamic RMSE    Kinematic RMSE  Better Model
+------------------------------------------------------------
+x [mm]          1.162           0.390           Kinematic
+y [mm]          1.134           0.288           Kinematic
+theta [rad]     0.097           0.096           Kinematic
+vx [mm/s]       1.306           0.481           Kinematic
+vy [mm/s]       0.495           0.415           Kinematic
+omega [rad/s]   0.197           0.123           Kinematic
+------------------------------------------------------------
+Overall         0.732           0.299           Kinematic
+```
 
 ## Robot State & Dynamics
 The goal of the prediction step in a Kalman filter is to model how the robot's state evolves over a time step $\Delta t$. This model is based on control inputs, which are the commands we send to the robot. For a differential drive robot, these inputs are the left and right wheel velocities. The robot's state vector $X$ and control vector $U$ can be expressed as:
