@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Script to replace transparent backgrounds in SVG files with white backgrounds.
+Create SVG images for equations at https://latex.codecogs.com/editor.html
 """
 
 import os
