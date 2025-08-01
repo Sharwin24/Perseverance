@@ -35,18 +35,13 @@ $$U = \left[v_{left}, v_{right}\right]$$
 
 In order to derive the dynamics and eventually the state transition function, we need to identify how left and right velocities contribute to each entry in the state vector (at each timestep $\Delta t$).
 
-$$V = \frac{v_{left} + v_{right}}{2} \\ \omega = \frac{v_{right} - v_{left}}{L_{base}} $$
+$$V = \frac{v_{left} + v_{right}}{2}$$
+
+$$\omega = \frac{v_{right} - v_{left}}{L_{base}} $$
 
 The function that describes the state's evolution is the **process model:** $f\left(X_{prev}, U, \Delta t\right) \to X_{next}$
 
-$$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t\end{bmatrix}$$
-
-<img
-  src="https://latex.codecogs.com/svg.image?
-    \begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t\end{bmatrix}"
-  alt="Process model"
-/>
-
+$$\begin{bmatrix} x \\ y \\ \theta \\ v_{x} \\ v_{y} \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \end{bmatrix}$$
 
 Notice that the new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
 
