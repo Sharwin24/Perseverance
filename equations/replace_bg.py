@@ -39,15 +39,24 @@ def add_white_background_to_svg(svg_file_path):
             print(f"Warning: Invalid viewBox format in {svg_file_path}")
             return False
 
-        x, y, width, height = viewbox_parts
+        x, y, width, height = map(float, viewbox_parts)
 
-        # Create a white background rectangle
+        # Add 10px padding around the image
+        padding = 10
+        padded_x = x - padding
+        padded_y = y - padding
+        padded_width = width + (2 * padding)
+        padded_height = height + (2 * padding)
+
+        # Create a white background rectangle with rounded corners
         background_rect = ET.Element('rect')
-        background_rect.set('x', x)
-        background_rect.set('y', y)
-        background_rect.set('width', width)
-        background_rect.set('height', height)
+        background_rect.set('x', str(padded_x))
+        background_rect.set('y', str(padded_y))
+        background_rect.set('width', str(padded_width))
+        background_rect.set('height', str(padded_height))
         background_rect.set('fill', BG_COLOR)
+        background_rect.set('rx', '8')  # 8px rounded corners
+        background_rect.set('ry', '8')  # 8px rounded corners
 
         # Insert the background rectangle as the first child
         # This ensures it appears behind all other elements
