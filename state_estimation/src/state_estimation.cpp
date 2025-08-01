@@ -12,6 +12,7 @@
 /// CLIENTS:
 
 #include "state_estimation.hpp"
+#include "kalman_filter.hpp"
 
 const std::string IMUTopic = "/sensors/raw/imu";
 const std::string ODOMTopic = "/sensors/raw/odom";
@@ -46,20 +47,48 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   this->odomSubscription = this->create_subscription<nav_msgs::msg::Odometry>(
     ODOMTopic, rawDataQoS, std::bind(&StateEstimator::odomCallback, this, std::placeholders::_1));
 
-  this->currentState = RobotState(
+
+  auto initialState = RobotState(
     initial_x, initial_y, initial_theta,
     initial_vx, initial_vy, initial_omega
   );
+
   RCLCPP_INFO(this->get_logger(), "Initial state set to: [%f, %f, %f, %f, %f, %f]",
     initial_x, initial_y, initial_theta, initial_vx, initial_vy, initial_omega
   );
-  // Initialize covariance
-  this->covariance.setStateCovariance(0.05, 0.05, 0.01, 0.1, 0.1, 0.0825);
-  this->covariance.setProcessNoiseCovariance(0.005, 0.005, 0.001, 0.075, 0.075, 0.005);
-  this->covariance.setOdomMeasurementNoiseCovariance(1.0, 1.0, 0.05);
-  this->covariance.setImuMeasurementNoiseCovariance(0.0075);
 
-  // Initialize timer for periodic tasks
+  // Initialize covariance
+  Covariance cov;
+  cov.setStateCovariance(0.05, 0.05, 0.01, 0.1, 0.1, 0.0825);
+  cov.setProcessNoiseCovariance(0.005, 0.005, 0.001, 0.075, 0.075, 0.005);
+  cov.setOdomMeasurementNoiseCovariance(1.0, 1.0, 0.05);
+  cov.setImuMeasurementNoiseCovariance(0.0075);
+
+  RCLCPP_INFO(this->get_logger(), "State Covariance (P): diag[%f, %f, %f, %f, %f, %f]",
+    cov.stateCovariance(0, 0), cov.stateCovariance(1, 1),
+    cov.stateCovariance(2, 2), cov.stateCovariance(3, 3),
+    cov.stateCovariance(4, 4), cov.stateCovariance(5, 5)
+  );
+
+  RCLCPP_INFO(this->get_logger(), "Process Noise Covariance (Q): diag[%f, %f, %f, %f, %f, %f]",
+    cov.processNoiseCovariance(0, 0), cov.processNoiseCovariance(1, 1),
+    cov.processNoiseCovariance(2, 2), cov.processNoiseCovariance(3, 3),
+    cov.processNoiseCovariance(4, 4), cov.processNoiseCovariance(5, 5)
+  );
+
+  RCLCPP_INFO(this->get_logger(), "Odom Measurement Noise Covariance (R_odom): diag[%f, %f, %f]",
+    cov.odomMeasurementNoiseCovariance(0, 0),
+    cov.odomMeasurementNoiseCovariance(1, 1),
+    cov.odomMeasurementNoiseCovariance(2, 2)
+  );
+
+  RCLCPP_INFO(this->get_logger(), "IMU Measurement Noise Covariance (R_imu): diag[%f]",
+    cov.imuMeasurementNoiseCovariance(0, 0)
+  );
+
+  // Setup Kalman Filter
+  this->kalmanFilter = KalmanFilter(PredictionModel::DYNAMIC, cov, initialState);
+
   this->timer = this->create_wall_timer(
     std::chrono::duration<double>(1.0 / timer_freq),
     std::bind(&StateEstimator::timerCallback, this)
@@ -67,11 +96,46 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
 }
 
 void StateEstimator::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
-  RCLCPP_INFO(this->get_logger(), "IMU data received.");
+  // Save the measurement
+  const double Z = msg->angular_velocity.z; // [rad/s]
+  const auto H = this->kalmanFilter.imuMeasurementModel();
+  const auto X = this->kalmanFilter.stateVector();
+  // Calculate the innovation
+  const auto Y = Z - (H * X);
+  // Calculate the Kalman Gain [K] using the innovation covariance [S]
+  const auto P = this->kalmanFilter.processNoiseCovariance();
+  const auto R_imu = this->kalmanFilter.imuMeasurementNoiseCovariance();
+  const auto S = H * P * H.transpose() + R_imu;
+  const auto K = P * H.transpose() * S.inverse();
+  // Update the state estimate and covariance
+  const auto X_new = X + K * Y;
+  const auto P_new = (Eigen::Matrix<double, 6, 6>::Identity() - K * H) * P;
+  this->kalmanFilter.updateState(X_new);
+  this->kalmanFilter.updateProcessNoiseCovariance(P_new);
 }
 
 void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
-  RCLCPP_INFO(this->get_logger(), "Odometry data received.");
+  // Save measurement
+  const auto odom = msg->pose.pose.position;
+  const auto quat = msg->pose.pose.orientation;
+  /// TODO: Convert quaternion to yaw angle [Euler Z]
+  const Eigen::Quaternion orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
+  const double theta = orientation.toRotationMatrix().eulerAngles(0, 1, 2).z();
+  const auto Z = Eigen::Vector<double, 3>({odom.x, odom.y, theta});
+  const auto H = this->kalmanFilter.odomMeasurementModel();
+  const auto X = this->kalmanFilter.stateVector();
+  // Calculate the innovation
+  const auto Y = Z - H * X;
+  // Calculate the Kalman Gain [k] using the innovation covariance [S]
+  const auto P = this->kalmanFilter.processNoiseCovariance();
+  const auto R_odom = this->kalmanFilter.odomMeasurementNoiseCovariance();
+  const auto S = H * P * H.transpose() + R_odom;
+  const auto K = P * H.transpose() * S.inverse();
+  // Update the state estimate and covariance
+  const auto X_new = X + K * Y;
+  const auto P_new = (Eigen::Matrix<double, 6, 6>::Identity() - K * H) * P;
+  this->kalmanFilter.updateState(X_new);
+  this->kalmanFilter.updateProcessNoiseCovariance(P_new);
 }
 
 void StateEstimator::timerCallback() {

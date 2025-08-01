@@ -183,9 +183,9 @@ class KalmanFilter:
         # F is the partial derivative of the new state w.r.t the old state
         F = np.zeros((6, 6))
         F[0, 0] = 1.0  # dx'/dx
-        F[0, 2] = V * -np.sin(theta) * dt  # dx'/dtheta
+        F[0, 2] = V * -np.sin(theta_new) * dt  # dx'/dtheta
         F[1, 1] = 1.0  # dy'/dy
-        F[1, 2] = V * np.cos(theta) * dt  # dy'/dtheta
+        F[1, 2] = V * np.cos(theta_new) * dt  # dy'/dtheta
         F[2, 2] = 1.0  # dtheta'/dtheta
         # Velocities are determined by inputs, not previous velocities,
         # but their orientation depends on the old theta.
