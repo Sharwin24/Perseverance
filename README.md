@@ -41,7 +41,7 @@ $$
 
 The function that describes the state's evolution is the **process model:** $f\left(X_{prev}, U, \Delta t\right) \to X_{next}$
 
-$$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t\\ y_{prev} + V\sin\theta _{prev}\Delta t\\ \theta_{prev} + \omega \Delta t\\ V a_x \Delta t\\ V a_y \Delta t\end{bmatrix}$$
+$$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t\end{bmatrix}$$
 
 Notice that the new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
 
@@ -74,6 +74,11 @@ $$z_{odom} = \left[x_{odom}, y_{odom}, \theta_{odom}\right]$$
 The measurement model selects the pose elements from the state:
 
 $$H_{odom}(X) = \left[1, 1, 1, 0, 0, 0\right]$$
+
+### Tuning Measurement Noise Covariance $(R)$
+Collect data with the robot sitting absolutely still for a specified length of time and calculate the variance of the data set for each sensor's respective values in the measurement model.
+
+$$R \approx \sigma^2 = \frac{1}{N}\sum_i^N\left(x_i - \mu\right)^2$$
 
 ## Prediction using Control Inputs
 
