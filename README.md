@@ -41,9 +41,11 @@ $$\omega = \frac{v_{right} - v_{left}}{L_{base}} $$
 
 The function that describes the state's evolution is the **process model:** $f\left(X_{prev}, U, \Delta t\right) \to X_{next}$
 
-$$\begin{bmatrix} x \\ y \\ \theta \\ v_{x} \\ v_{y} \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \end{bmatrix}$$
+$$\begin{bmatrix} x \\ y \\ \theta \\ v_{x} \\ v_{y} \\ \omega \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \\ \omega\end{bmatrix}$$
 
-![Process model](https://latex.codecogs.com/svg.image?f%28X_%7Bprev%7D%2CU%2C%5CDelta%20t%29%20%3D%20%5Cbegin%7Bbmatrix%7D%20x_%7Bprev%7D%2BV%5Ccos%5Ctheta_%7Bprev%7D%5CDelta%20t%5C%5C%20y_%7Bprev%7D%2BV%5Csin%5Ctheta_%7Bprev%7D%5CDelta%20t%5C%5C%20%5Ctheta_%7Bprev%7D%2B%5Comega%5CDelta%20t%5C%5C%20V%20a_x%5CDelta%20t%5C%5C%20V%20a_y%5CDelta%20t%20%5Cend%7Bbmatrix%7D)
+<div align="center" style="background: #fff; padding: 16px; border-radius: 8px;">
+  <img src="https://latex.codecogs.com/svg.image?\begin{bmatrix}x\\y\\\theta\\v_x\\v_y\\\omega\end{bmatrix}_{next}=\begin{bmatrix}x_{prev}+V\cos\theta_{prev}\Delta t\\y_{prev}+V\sin\theta_{prev}\Delta t\\\theta_{prev}+\omega\Delta t\\V\cos\theta_{new}\\V\sin\theta_{new}\\\omega\end{bmatrix}" alt="State Transition Model" style="background: #fff; padding: 8px; border-radius: 4px;">
+</div>
 
 
 Notice that the new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
