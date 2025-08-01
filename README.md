@@ -41,9 +41,15 @@ $$\omega = \frac{v_{right} - v_{left}}{L_{base}} $$
 
 The function that describes the state's evolution is the **process model:** $f\left(X_{prev}, U, \Delta t\right) \to X_{next}$
 
-$$\begin{bmatrix} x \\ y \\ \theta \\ v_{x} \\ v_{y} \\ \omega \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \\ \omega\end{bmatrix}$$
+$$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \\ \omega \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \\ \omega\end{bmatrix}$$
+
+<div style="width: 100%; display: flex; justify-content: center;">
+  <img src="equations/process_model.svg" alt="Process Model Diagram" style="width: 50%;">
+</div>
 
 Notice that the new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
+
+### Tuning the Process Noise Covariance $(Q)$
 
 ### State Transition Matrix (Jacobian)
 Because the process model is non-linear, we must use an Extended Kalman Filter (EKF). This requires a state transition matrix F that is the Jacobian of the process model—a matrix of partial derivatives of the new state with respect to the old state.
@@ -79,6 +85,8 @@ $$H_{odom}(X) = \left[1, 1, 1, 0, 0, 0\right]$$
 Collect data with the robot sitting absolutely still for a specified length of time and calculate the variance of the data set for each sensor's respective values in the measurement model.
 
 $$R \approx \sigma^2 = \frac{1}{N}\sum_i^N\left(x_i - \mu\right)^2$$
+
+The datasheet for each sensor could prove to be useful if they've documented the sensor's noise density and/or standard deviation.
 
 ## Prediction using Control Inputs
 
