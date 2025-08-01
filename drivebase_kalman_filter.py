@@ -1,10 +1,10 @@
-import math
 import numpy as np
 import matplotlib.pyplot as plt
 
 # Constants
 WHEEL_RADIUS = 50  # [mm]
-WHEEL_BASE = 1000  # [mm]
+WHEEL_BASE = 1000  # Robot center to wheel center along Robot X-axis[mm]
+TRACK_WIDTH = 800  # Robot center to wheel center along Robot Y-axis[mm]
 
 
 class RobotState:
@@ -115,6 +115,31 @@ class KalmanFilter:
             [0, 0]
         ])
 
+    def mecanum_forward_kinematics(self) -> np.array:
+        """F = pinv(H0)"""
+        R = WHEEL_RADIUS
+        L = TRACK_WIDTH / 2.0
+        W = WHEEL_BASE / 2.0
+        return (R / 4) * np.array([
+            [-1 / (L + W), 1/(L + W), 1/(L + W), -1/(L + W)],
+            [1, 1, 1, 1],
+            [-1, 1, -1, 1]
+        ])
+
+    def mecanum_inverse_kinematics(self, vx: float, vy: float, omega: float) -> np.array:
+        """Calculate wheel velocities from robot body velocities
+        Returns: [w_fl, w_fr, w_rl, w_rr] (front left, front right, rear left, rear right)
+        """
+        R = WHEEL_RADIUS
+        L = TRACK_WIDTH / 2.0
+        W = WHEEL_BASE / 2.0
+        return (1 / R) * np.array([
+            (-L - W) * vx + vy + (-1) * omega,  # Front left wheel
+            (L + W) * vx + vy + (1) * omega,    # Front right wheel
+            (L + W) * vx + vy + (-1) * omega,   # Rear left wheel
+            (-L - W) * vx + vy + (1) * omega    # Rear right wheel
+        ])
+
     def predict_with_dynamics_model(self, imu_data: IMUData):
         """
         Predicts the next state using a constant acceleration model.
@@ -199,6 +224,45 @@ class KalmanFilter:
         self.P = F @ self.P @ F.T + self.Q
         self.last_timestamp = timestamp
 
+    def predict_with_mecanum_kinematics_model(self, wheel_vels: list[float], timestamp: float):
+        dt = timestamp - self.last_timestamp
+        if dt <= 0:
+            print(
+                "Warning: Non-positive time difference in mecanum kinematics prediction.")
+            return
+
+        # --- 1. Calculate the robot body velocities ---
+        robot_body_velocity = self.mecanum_forward_kinematics() @ np.array(wheel_vels)
+        vx, vy, omega = robot_body_velocity[0], robot_body_velocity[1], robot_body_velocity[2]
+        # Convert to global frame
+        heading = self.state.theta
+        vx_global = vx * np.cos(heading) - vy * np.sin(heading)
+        vy_global = vx * np.sin(heading) + vy * np.cos(heading)
+
+        # --- 2. Predict new state ---
+        x_new = self.state.x + vx_global * dt
+        y_new = self.state.y + vy_global * dt
+        theta_new = self.normalize_angle(self.state.theta + omega * dt)
+        # Update state with new values
+        self.state = RobotState(x_new, y_new, theta_new,
+                                vx_global, vy_global, omega)
+
+        # --- 4. Update Covariance (Jacobian F is more complex now) ---
+        # The Jacobian F must be re-derived for this new state transition.
+        # For example, dx'/dtheta = (-vx*sin(heading) - vy*cos(heading)) * dt
+        # Note: This is a simplified Jacobian. A full derivation is more involved.
+        F = np.eye(6)
+        F[0, 2] = (-vx * np.sin(heading) - vy *
+                   np.cos(heading)) * dt  # dx'/dtheta
+        F[1, 2] = (vx * np.cos(heading) - vy *
+                   np.sin(heading)) * dt  # dy'/dtheta
+        F[0, 3] = dt  # dx'/dvx
+        F[1, 4] = dt  # dy'/dvy
+        F[2, 5] = dt  # dtheta'/domega
+
+        self.P = F @ self.P @ F.T + self.Q
+        self.last_timestamp = timestamp
+
     def update_odom(self, odom_data: OdomData):
         z = np.array(
             [odom_data.odom_x, odom_data.odom_y, odom_data.odom_theta])
@@ -251,14 +315,17 @@ if __name__ == "__main__":
 
     kf_dynamic_model = KalmanFilter(initial_state, initial_timestamp)
     kf_kinematic_model = KalmanFilter(initial_state, initial_timestamp)
+    kf_mecanum_model = KalmanFilter(initial_state, initial_timestamp)
 
     # Lists to store data for plotting
     timestamps = [initial_timestamp]
     estimated_states_dynamic = [kf_dynamic_model.state.to_array().copy()]
     estimated_states_kinematic = [kf_kinematic_model.state.to_array().copy()]
+    estimated_states_mecanum = [kf_mecanum_model.state.to_array().copy()]
     true_states = [initial_state.to_array().copy()]
     odom_readings_dynamic = []
     odom_readings_kinematic = []
+    odom_readings_mecanum = []
 
     # Simulation parameters
     total_time = 10.0  # Total simulation time [seconds]
@@ -348,12 +415,28 @@ if __name__ == "__main__":
             timestamp=timestamp
         )
 
+        # For mecanum model, calculate wheel velocities from robot body velocities
+        # Convert global velocities to robot body frame
+        robot_heading = true_theta_new
+        body_vx = true_vx_new * \
+            np.cos(robot_heading) + true_vy_new * np.sin(robot_heading)
+        body_vy = -true_vx_new * \
+            np.sin(robot_heading) + true_vy_new * np.cos(robot_heading)
+        wheel_velocities = kf_mecanum_model.mecanum_inverse_kinematics(
+            body_vx, body_vy, true_omega)
+        kf_mecanum_model.predict_with_mecanum_kinematics_model(
+            wheel_vels=wheel_velocities.tolist(),
+            timestamp=timestamp
+        )
+
         # 3. Correction Step (with noisy sensor data)
         # Create noisy Odometry measurement
         odom_noise_dynamic_model = np.random.multivariate_normal(
             np.zeros(3), kf_dynamic_model.R_odom)
         odom_noise_kinematic = np.random.multivariate_normal(
             np.zeros(3), kf_kinematic_model.R_odom)
+        odom_noise_mecanum = np.random.multivariate_normal(
+            np.zeros(3), kf_mecanum_model.R_odom)
         odom_data_dynamic_model = OdomData(
             x=true_x_new + odom_noise_dynamic_model[0],
             y=true_y_new + odom_noise_dynamic_model[1],
@@ -368,18 +451,30 @@ if __name__ == "__main__":
                 true_theta_new + odom_noise_kinematic[2]),
             timestamp=timestamp
         )
+        odom_data_mecanum_model = OdomData(
+            x=true_x_new + odom_noise_mecanum[0],
+            y=true_y_new + odom_noise_mecanum[1],
+            theta=kf_mecanum_model.normalize_angle(
+                true_theta_new + odom_noise_mecanum[2]),
+            timestamp=timestamp
+        )
         kf_dynamic_model.update_odom(odom_data_dynamic_model)
         kf_kinematic_model.update_odom(odom_data_kinematic_model)
+        kf_mecanum_model.update_odom(odom_data_mecanum_model)
         odom_readings_dynamic.append(
             [odom_data_dynamic_model.odom_x, odom_data_dynamic_model.odom_y])
         odom_readings_kinematic.append(
             [odom_data_kinematic_model.odom_x, odom_data_kinematic_model.odom_y])
+        odom_readings_mecanum.append(
+            [odom_data_mecanum_model.odom_x, odom_data_mecanum_model.odom_y])
 
         # Create noisy IMU measurement
         imu_gyro_noise_dynamic_model = np.random.normal(
             0, np.sqrt(kf_dynamic_model.R_imu[0, 0]))
         imu_gyro_noise_kinematic_model = np.random.normal(
             0, np.sqrt(kf_kinematic_model.R_imu[0, 0]))
+        imu_gyro_noise_mecanum_model = np.random.normal(
+            0, np.sqrt(kf_mecanum_model.R_imu[0, 0]))
         update_imu_dynamic = IMUData(
             acc_x=true_acc_x,  # Accelerations not used in update
             acc_y=true_acc_y,
@@ -392,8 +487,15 @@ if __name__ == "__main__":
             gyro_z=true_omega + imu_gyro_noise_kinematic_model,
             timestamp=timestamp
         )
+        update_imu_mecanum = IMUData(
+            acc_x=true_acc_x,
+            acc_y=true_acc_y,
+            gyro_z=true_omega + imu_gyro_noise_mecanum_model,
+            timestamp=timestamp
+        )
         kf_dynamic_model.update_imu(update_imu_dynamic)
         kf_kinematic_model.update_imu(update_imu_kinematic)
+        kf_mecanum_model.update_imu(update_imu_mecanum)
 
         # Store results for plotting
         timestamps.append(timestamp)
@@ -401,6 +503,8 @@ if __name__ == "__main__":
             kf_dynamic_model.state.to_array().copy())
         estimated_states_kinematic.append(
             kf_kinematic_model.state.to_array().copy())
+        estimated_states_mecanum.append(
+            kf_mecanum_model.state.to_array().copy())
 
     # --- Plotting ---
     import os
@@ -412,9 +516,11 @@ if __name__ == "__main__":
 
     estimated_states_dynamic = np.array(estimated_states_dynamic)
     estimated_states_kinematic = np.array(estimated_states_kinematic)
+    estimated_states_mecanum = np.array(estimated_states_mecanum)
     true_states = np.array(true_states)
     odom_readings_dynamic = np.array(odom_readings_dynamic)
     odom_readings_kinematic = np.array(odom_readings_kinematic)
+    odom_readings_mecanum = np.array(odom_readings_mecanum)
 
     # Plot Robot Trajectory Comparison
     plt.figure(figsize=(12, 10))
@@ -424,13 +530,17 @@ if __name__ == "__main__":
              linewidth=2, alpha=0.6, label='Dynamic Model KF')
     plt.plot(estimated_states_kinematic[:, 0], estimated_states_kinematic[:, 1], 'r-',
              linewidth=2, alpha=0.6, label='Kinematic Model KF')
+    plt.plot(estimated_states_mecanum[:, 0], estimated_states_mecanum[:, 1], 'm-',
+             linewidth=2, alpha=0.6, label='Mecanum Model KF')
     plt.scatter(odom_readings_dynamic[:, 0], odom_readings_dynamic[:, 1],
                 c='orange', marker='x', s=60, alpha=0.8, label='Noisy Odometry (Dynamic)')
     plt.scatter(odom_readings_kinematic[:, 0], odom_readings_kinematic[:, 1],
                 c='purple', marker='+', s=60, alpha=0.8, label='Noisy Odometry (Kinematic)')
+    plt.scatter(odom_readings_mecanum[:, 0], odom_readings_mecanum[:, 1],
+                c='cyan', marker='o', s=30, alpha=0.8, label='Noisy Odometry (Mecanum)')
     plt.xlabel('x [mm]')
     plt.ylabel('y [mm]')
-    plt.title('Robot Trajectory Estimation: Dynamic vs Kinematic Models')
+    plt.title('Robot Trajectory Estimation: Dynamic vs Kinematic vs Mecanum Models')
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.axis('equal')
@@ -450,6 +560,8 @@ if __name__ == "__main__":
                 'b-', linewidth=2, label='Dynamic Model KF')
         ax.plot(timestamps, estimated_states_kinematic[:, i],
                 'r-', linewidth=2, label='Kinematic Model KF')
+        ax.plot(timestamps, estimated_states_mecanum[:, i],
+                'm-', linewidth=2, label='Mecanum Model KF')
         ax.set_ylabel(label)
         ax.set_title(f'Evolution of State: {label}')
         ax.grid(True, linestyle='--', alpha=0.6)
@@ -457,7 +569,7 @@ if __name__ == "__main__":
     axes.flat[-1].set_xlabel('Time [s]')
     axes.flat[-2].set_xlabel('Time [s]')
     fig.suptitle(
-        'Kalman Filter State Evolution: Dynamic vs Kinematic Models', fontsize=16)
+        'Kalman Filter State Evolution: Dynamic vs Kinematic vs Mecanum Models', fontsize=16)
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(os.path.join(
         plots_dir, 'kalman_filter_states_comparison.png'), dpi=300)
@@ -467,12 +579,15 @@ if __name__ == "__main__":
     fig, axes = plt.subplots(3, 2, figsize=(16, 14), sharex=True)
     error_dynamic = estimated_states_dynamic - true_states
     error_kinematic = estimated_states_kinematic - true_states
+    error_mecanum = estimated_states_mecanum - true_states
 
     # Normalize angle errors
     error_dynamic[:, 2] = np.array(
         [kf_dynamic_model.normalize_angle(e) for e in error_dynamic[:, 2]])
     error_kinematic[:, 2] = np.array(
         [kf_kinematic_model.normalize_angle(e) for e in error_kinematic[:, 2]])
+    error_mecanum[:, 2] = np.array(
+        [kf_mecanum_model.normalize_angle(e) for e in error_mecanum[:, 2]])
 
     error_labels = ['x Error [mm]', 'y Error [mm]', 'theta Error [rad]',
                     'vx Error [mm/s]', 'vy Error [mm/s]', 'omega Error [rad/s]']
@@ -482,6 +597,8 @@ if __name__ == "__main__":
                 linewidth=2, label='Dynamic Model KF')
         ax.plot(timestamps, error_kinematic[:, i], 'r-',
                 linewidth=2, label='Kinematic Model KF')
+        ax.plot(timestamps, error_mecanum[:, i], 'm-',
+                linewidth=2, label='Mecanum Model KF')
         ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
         ax.set_ylabel(label)
         ax.set_title(f'Estimation Error: {label}')
@@ -491,7 +608,7 @@ if __name__ == "__main__":
     axes.flat[-1].set_xlabel('Time [s]')
     axes.flat[-2].set_xlabel('Time [s]')
     fig.suptitle(
-        'Kalman Filter Estimation Errors: Dynamic vs Kinematic Models', fontsize=16)
+        'Kalman Filter Estimation Errors: Dynamic vs Kinematic vs Mecanum Models', fontsize=16)
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(os.path.join(
         plots_dir, 'kalman_filter_errors_comparison.png'), dpi=300)
@@ -500,29 +617,36 @@ if __name__ == "__main__":
     # Print performance metrics
     rmse_dynamic = np.sqrt(np.mean(error_dynamic**2, axis=0))
     rmse_kinematic = np.sqrt(np.mean(error_kinematic**2, axis=0))
+    rmse_mecanum = np.sqrt(np.mean(error_mecanum**2, axis=0))
 
     # Prepare performance summary text
     summary_lines = []
-    summary_lines.append("\n" + "="*60)
+    summary_lines.append("\n" + "="*75)
     summary_lines.append("KALMAN FILTER PERFORMANCE COMPARISON")
-    summary_lines.append("="*60)
+    summary_lines.append("="*75)
     summary_lines.append(
-        f"{'State':<15} {'Dynamic RMSE':<15} {'Kinematic RMSE':<15} {'Better Model'}")
-    summary_lines.append("-"*60)
+        f"{'State':<15} {'Dynamic RMSE':<15} {'Kinematic RMSE':<15} {'Mecanum RMSE':<15} {'Best Model'}")
+    summary_lines.append("-"*75)
 
     state_names = ['x [mm]', 'y [mm]', 'theta [rad]',
                    'vx [mm/s]', 'vy [mm/s]', 'omega [rad/s]']
     for i, state_name in enumerate(state_names):
-        better = "Dynamic" if rmse_dynamic[i] < rmse_kinematic[i] else "Kinematic"
+        rmse_values = [rmse_dynamic[i], rmse_kinematic[i], rmse_mecanum[i]]
+        model_names = ["Dynamic", "Kinematic", "Mecanum"]
+        best_model = model_names[np.argmin(rmse_values)]
         summary_lines.append(
-            f"{state_name:<15} {rmse_dynamic[i]:<15.3f} {rmse_kinematic[i]:<15.3f} {better}")
+            f"{state_name:<15} {rmse_dynamic[i]:<15.3f} {rmse_kinematic[i]:<15.3f} {rmse_mecanum[i]:<15.3f} {best_model}")
 
-    summary_lines.append("-"*60)
+    summary_lines.append("-"*75)
     overall_rmse_dynamic = np.mean(rmse_dynamic)
     overall_rmse_kinematic = np.mean(rmse_kinematic)
-    overall_better = "Dynamic" if overall_rmse_dynamic < overall_rmse_kinematic else "Kinematic"
+    overall_rmse_mecanum = np.mean(rmse_mecanum)
+    overall_rmse_values = [overall_rmse_dynamic,
+                           overall_rmse_kinematic, overall_rmse_mecanum]
+    overall_model_names = ["Dynamic", "Kinematic", "Mecanum"]
+    overall_best = overall_model_names[np.argmin(overall_rmse_values)]
     summary_lines.append(
-        f"{'Overall':<15} {overall_rmse_dynamic:<15.3f} {overall_rmse_kinematic:<15.3f} {overall_better}")
+        f"{'Overall':<15} {overall_rmse_dynamic:<15.3f} {overall_rmse_kinematic:<15.3f} {overall_rmse_mecanum:<15.3f} {overall_best}")
 
     # Print to terminal
     for line in summary_lines:

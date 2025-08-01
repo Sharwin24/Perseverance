@@ -2,7 +2,7 @@
 Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
 
 # Kalman Filtering for Rover State Estimation
-Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics.
+Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics. A kinematic model for a mecanum wheeled drive was also implemented.
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
   <img src="plots/robot_trajectory_comparison.png" alt="Robot Trajectory Comparison" style="width: 100%; min-width: 200px;">
@@ -11,19 +11,19 @@ Approximating the robot as a diff-drive robot makes it easier to compute the sta
 </div>
 
 ```txt
-============================================================
+===========================================================================
 KALMAN FILTER PERFORMANCE COMPARISON
-============================================================
-State           Dynamic RMSE    Kinematic RMSE  Better Model
-------------------------------------------------------------
-x [mm]          0.821           1.206           Dynamic
-y [mm]          0.777           1.182           Dynamic
-theta [rad]     0.102           0.069           Kinematic
-vx [mm/s]       0.978           5.597           Dynamic
-vy [mm/s]       1.083           3.969           Dynamic
-omega [rad/s]   0.152           0.125           Kinematic
-------------------------------------------------------------
-Overall         0.652           2.025           Dynamic
+===========================================================================
+State           Dynamic RMSE    Kinematic RMSE  Mecanum RMSE    Best Model
+---------------------------------------------------------------------------
+x [mm]          0.811           0.198           0.311           Kinematic
+y [mm]          0.785           0.257           0.482           Kinematic
+theta [rad]     0.069           0.050           0.057           Kinematic
+vx [mm/s]       1.216           0.246           0.378           Kinematic
+vy [mm/s]       0.475           0.224           0.367           Kinematic
+omega [rad/s]   0.170           0.035           0.049           Kinematic
+---------------------------------------------------------------------------
+Overall         0.588           0.168           0.274           Kinematic
 ```
 
 ## Robot State & Dynamics
