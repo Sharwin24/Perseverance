@@ -29,7 +29,7 @@ include_directories(
   ${Eigen3_INCLUDE_DIRS}
 )
 
-add_executable(state_estimator src/state_estimation.cpp)
+add_executable(state_estimator src/state_estimation.cpp src/kalman_filter.cpp)
 ament_target_dependencies(state_estimator rclcpp geometry_msgs sensor_msgs nav_msgs std_msgs)
 
 # Install
