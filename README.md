@@ -43,8 +43,8 @@ The function that describes the state's evolution is the **process model:** $f\l
 
 $$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \\ \omega \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \\ \omega\end{bmatrix}$$
 
-<div style="width: 50%; display: flex; justify-content: center;">
-  <img src="equations/process_model.svg" alt="Process Model Diagram" style="width: 100%; background: white; padding: 10px; border-radius: 8px;">
+<div style="display: flex; justify-content: center; align-items: center; width: 50%; background: white; padding: 10px; border-radius: 8px;">
+  <img src="equations/process_model.svg" alt="Process Model Diagram" style="width: 100%;">
 </div>
 
 Notice that the new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
