@@ -35,9 +35,7 @@ $$U = \left[v_{left}, v_{right}\right]$$
 
 In order to derive the dynamics and eventually the state transition function, we need to identify how left and right velocities contribute to each entry in the state vector (at each timestep $\Delta t$).
 
-$$V = \frac{v_{left} + v_{right}}{2} \\
-\omega = \frac{v_{right} - v_{left}}{L_{base}}
-$$
+$$V = \frac{v_{left} + v_{right}}{2} \\ \omega = \frac{v_{right} - v_{left}}{L_{base}} $$
 
 The function that describes the state's evolution is the **process model:** $f\left(X_{prev}, U, \Delta t\right) \to X_{next}$
 
