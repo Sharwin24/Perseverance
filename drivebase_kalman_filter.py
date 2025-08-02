@@ -2,9 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Constants
-WHEEL_RADIUS = 50  # [mm]
-WHEEL_BASE = 1000  # Robot center to wheel center along Robot X-axis[mm]
-TRACK_WIDTH = 800  # Robot center to wheel center along Robot Y-axis[mm]
+WHEEL_RADIUS = 50  # The wheel radius [mm]
+WHEEL_BASE = 1000  # Wheel to Wheel distance along the Robot Y-axis [mm]
+# The back to front wheel distance along the Robot X-axis [mm]
+TRACK_WIDTH = 600
 
 
 class RobotState:

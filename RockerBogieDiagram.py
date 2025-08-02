@@ -1,10 +1,13 @@
 import sys
 import pygame as pg
 from math import sqrt
+import matplotlib.pyplot as plt
 
 # ------ RBM Inputs ------
-ROBOT_LENGTH = 350  # [mm]
-WHEEL_DIAMETER = 100  # [mm]
+WHEEL_RADIUS = 50  # The wheel radius [mm]
+WHEEL_BASE = 250  # Wheel to Wheel distance along the Robot Y-axis [mm]
+# The back to front wheel distance along the Robot X-axis [mm]
+TRACK_WIDTH = 350
 IMAGE_FILE = "rocker_bogie_diagram.png"
 # ------------------------
 
@@ -37,8 +40,7 @@ BN is the RBM height
 BN = sqrt(BC^2 - NC^2)
 """
 
-WHEEL_RADIUS = WHEEL_DIAMETER / 2  # [mm]
-WHEEL_BASE = ROBOT_LENGTH - WHEEL_RADIUS * 2  # [mm]
+WHEEL_BASE = TRACK_WIDTH - WHEEL_RADIUS * 2  # [mm]
 NC = WHEEL_BASE / 2  # [mm]
 BC = sqrt(2) * NC  # [mm]
 BM = sqrt(0.5) * NC  # [mm]
@@ -50,8 +52,8 @@ CENTER_TO_GROUND = WHEEL_RADIUS + BN  # [mm]
 print(
     f'Rover Rocker Bogie Mechanism (RBM) parameters:\n'
     f'----Robot Inputs----\n'
-    f'- Robot Length: {ROBOT_LENGTH} [mm]\n'
-    f'- Wheel Diameter: {WHEEL_DIAMETER} [mm]\n'
+    f'- Robot Length: {TRACK_WIDTH} [mm]\n'
+    f'- Wheel Diameter: {WHEEL_RADIUS * 2} [mm]\n'
     f'--------------------\n'
     f'- Wheel Base (A to C): {WHEEL_BASE:.3f} [mm]\n'
     f'- Center to Front Wheel (B to C): {BC:.3f} [mm]\n'
@@ -66,12 +68,12 @@ print(
 
 # Print the equations from the inputs: Robot Length, Wheel Diameter
 print(
-    f'Equations with Inputs [Robot Length, Wheel Diameter] = [{ROBOT_LENGTH}, {WHEEL_DIAMETER}] mm:\n'
+    f'Equations with Inputs [Robot Length, Wheel Diameter] = [{TRACK_WIDTH}, {WHEEL_RADIUS * 2}] mm:\n'
     f'- Wheel Base (A to C) = RobotLength - 2 * WheelRadius\n'
     f'- Center to Front Wheel (B to C) = sqrt(2) * NC\n'
     f'- Center to Back Pivot (B to M) = sqrt(0.5) * NC\n'
     f'- Height of RBM (B to N) = sqrt(BC^2 - NC^2)\n'
-    f'- Center to Ground = WheelRadius + BN'nnnfnfslqlqlqqqqqqqq nn
+    f'- Center to Ground = WheelRadius + BN'
 )
 
 
@@ -104,6 +106,121 @@ ORANGE = (255, 165, 0)
 # Font for labels
 font = pg.font.Font(None, 28)
 small_font = pg.font.Font(None, 22)
+
+
+def draw_robot_diagram():
+    """
+    Draw a top-down view of the 6-wheeled rocker-bogie robot showing
+    wheel positions and coordinate axes.
+    """
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+
+    # Draw coordinate axes (centered at robot center)
+    ax.arrow(0, 0, 200, 0, head_width=30, head_length=40,
+             fc='red', ec='red', linewidth=2)
+    ax.text(220, -30, 'X (forward)', fontsize=12, color='red', weight='bold')
+
+    ax.arrow(0, 0, 0, 200, head_width=30, head_length=40,
+             fc='green', ec='green', linewidth=2)
+    ax.text(-80, 220, 'Y (left)', fontsize=12, color='green', weight='bold')
+
+    # Draw robot body outline (simplified rectangular body)
+    body_width = WHEEL_BASE + 100  # Add some margin for visual clarity
+    body_length = TRACK_WIDTH + 100
+    body_rect = plt.Rectangle((-body_length/2, -body_width/2), body_length, body_width,
+                              fill=False, edgecolor='black', linewidth=2, linestyle='--', alpha=0.5)
+    ax.add_patch(body_rect)
+
+    # Draw wheels at their positions (as rectangles aligned with X-axis)
+    wheel_width = 20   # Wheel width (along Y-axis)
+    wheel_length = 60  # Wheel length (along X-axis)
+    # Different colors for left/right sides
+    left_colors = ['blue', 'blue', 'blue']   # All left wheels blue
+    right_colors = ['red', 'red', 'red']     # All right wheels red
+
+    left_idx = 0
+    right_idx = 0
+
+    for i, (name, (x, y)) in enumerate(WHEEL_LOCATIONS.items()):
+        # Choose color based on left/right side
+        if 'left' in name:
+            color = left_colors[left_idx]
+            left_idx += 1
+        else:
+            color = right_colors[right_idx]
+            right_idx += 1
+
+        # Draw wheel as a rectangle aligned with X-axis
+        wheel = plt.Rectangle((x - wheel_length/2, y - wheel_width/2),
+                              wheel_length, wheel_width,
+                              color=color, alpha=0.7, ec='black', linewidth=1.5)
+        ax.add_patch(wheel)
+
+        # Add wheel labels
+        label_offset = 60
+        if 'left' in name:
+            ax.text(x + label_offset, y, name.replace('_', '\n'), fontsize=10,
+                    ha='left', va='center', weight='bold')
+        else:
+            ax.text(x - label_offset, y, name.replace('_', '\n'), fontsize=10,
+                    ha='right', va='center', weight='bold')
+
+        # Draw position coordinates
+        ax.plot([0, x], [0, y], 'k--', alpha=0.3, linewidth=1)
+        coord_text = f'({x:.0f}, {y:.0f})'
+        if 'left' in name:
+            ax.text(x + label_offset, y - 30, coord_text, fontsize=8,
+                    ha='left', va='center', style='italic', alpha=0.7)
+        else:
+            ax.text(x - label_offset, y + 30, coord_text, fontsize=8,
+                    ha='right', va='center', style='italic', alpha=0.7)
+
+    # Mark the robot center
+    ax.plot(0, 0, 'ko', markersize=8)
+    ax.text(20, 20, 'Robot Center\n(0, 0)', fontsize=10, weight='bold')
+
+    # Add dimension annotations
+    # TRACK_WIDTH annotation (X-axis: front to back)
+    ax.annotate('', xy=(-TRACK_WIDTH/2, -body_width/2 - 80), xytext=(TRACK_WIDTH/2, -body_width/2 - 80),
+                arrowprops=dict(arrowstyle='<->', color='purple', lw=2))
+    ax.text(0, -body_width/2 - 120, f'TRACK_WIDTH = {TRACK_WIDTH} mm\n(Front to Back)',
+            ha='center', fontsize=11, color='purple', weight='bold')
+
+    # WHEEL_BASE annotation (Y-axis: left to right) - placed on the left side
+    ax.annotate('', xy=(-body_length/2 - 80, -WHEEL_BASE/2), xytext=(-body_length/2 - 80, WHEEL_BASE/2),
+                arrowprops=dict(arrowstyle='<->', color='orange', lw=2))
+    ax.text(-body_length/2 - 120, 0, f'WHEEL_BASE = {WHEEL_BASE} mm\n(Left to Right)',
+            rotation=90, ha='center', va='center', fontsize=11, color='orange', weight='bold')
+
+    # Set equal aspect ratio and limits
+    ax.set_aspect('equal')
+    margin = 300
+    ax.set_xlim(-TRACK_WIDTH/2 - margin, TRACK_WIDTH/2 + margin)
+    ax.set_ylim(-WHEEL_BASE/2 - margin, WHEEL_BASE/2 + margin)
+
+    # Grid and labels
+    ax.grid(True, alpha=0.3)
+    ax.set_xlabel('X Position [mm]', fontsize=12)
+    ax.set_ylabel('Y Position [mm]', fontsize=12)
+    ax.set_title('6-Wheeled Rocker-Bogie Robot - Top View\n(Robot Body Frame)',
+                 fontsize=14, weight='bold', pad=20)
+
+    # Add legend
+    legend_elements = [
+        plt.Line2D([0], [0], marker='s', color='w', markerfacecolor='blue', markersize=10,
+                   label='Left Wheels', alpha=0.7),
+        plt.Line2D([0], [0], marker='s', color='w', markerfacecolor='red', markersize=10,
+                   label='Right Wheels', alpha=0.7),
+        plt.Line2D([0], [0], color='red', linewidth=2,
+                   label='X-axis (forward)'),
+        plt.Line2D([0], [0], color='green', linewidth=2, label='Y-axis (left)')
+    ]
+    ax.legend(handles=legend_elements, loc='upper right', fontsize=10)
+
+    plt.tight_layout()
+    plt.show()
+
+    return fig, ax
 
 
 def draw_rbm():
@@ -206,7 +323,7 @@ def draw_rbm():
 
     # Display key measurements
     measurements = [
-        f'Robot Length: {ROBOT_LENGTH}mm',
+        f'Robot Length: {TRACK_WIDTH}mm',
         f'Wheel Radius: {WHEEL_RADIUS}mm',
         f'Center to Front Wheel Distance (BC): {BC:.1f}mm',
         f'Center to Aft Pivot Distance (BM): {BM:.1f}mm',
