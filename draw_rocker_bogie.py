@@ -1,5 +1,4 @@
 import sys
-import pygame as pg
 from math import sqrt
 import matplotlib.pyplot as plt
 
@@ -10,6 +9,16 @@ WHEEL_BASE = 250  # Wheel to Wheel distance along the Robot Y-axis [mm]
 TRACK_WIDTH = 350
 IMAGE_FILE = "rocker_bogie_diagram.png"
 # ------------------------
+
+# Wheel locations for top-down view: WHEEL_BASE is Y-axis (left-right), TRACK_WIDTH is X-axis (front-back)
+WHEEL_LOCATIONS = {
+    "front_left": (TRACK_WIDTH / 2, WHEEL_BASE / 2),      # Front left
+    "middle_left": (0, WHEEL_BASE / 2),                   # Middle left
+    "rear_left": (-TRACK_WIDTH / 2, WHEEL_BASE / 2),      # Rear left
+    "front_right": (TRACK_WIDTH / 2, -WHEEL_BASE / 2),    # Front right
+    "middle_right": (0, -WHEEL_BASE / 2),                 # Middle right
+    "rear_right": (-TRACK_WIDTH / 2, -WHEEL_BASE / 2)     # Rear right
+}
 
 
 ROBOT_DIAGRAM = r"""
@@ -77,43 +86,14 @@ print(
 )
 
 
-# Initialize Pygame
-pg.init()
-
-# Screen dimensions
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pg.display.set_caption('Rover Rocker Bogie Diagram')
-
-
-def pygame_color_from_hex_code(hex_code):
-    """Convert hex color code to Pygame color tuple."""
-    hex_code = hex_code.lstrip('#')
-    return tuple(int(hex_code[i:i+2], 16) for i in (0, 2, 4))
-
-
-# Colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-GREEN = pygame_color_from_hex_code("#1f6632")
-GRAY = (128, 128, 128)
-YELLOW = (255, 255, 0)
-ORANGE = (255, 165, 0)
-
-# Font for labels
-font = pg.font.Font(None, 28)
-small_font = pg.font.Font(None, 22)
-
-
 def draw_robot_diagram():
     """
-    Draw a top-down view of the 6-wheeled rocker-bogie robot showing
-    wheel positions and coordinate axes.
+    Draw both top-down view and side view of the 6-wheeled rocker-bogie robot
     """
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+
+    # ===== LEFT SUBPLOT: TOP-DOWN VIEW =====
+    ax = ax1
 
     # Draw coordinate axes (centered at robot center)
     ax.arrow(0, 0, 200, 0, head_width=30, head_length=40,
@@ -183,7 +163,7 @@ def draw_robot_diagram():
     # TRACK_WIDTH annotation (X-axis: front to back)
     ax.annotate('', xy=(-TRACK_WIDTH/2, -body_width/2 - 80), xytext=(TRACK_WIDTH/2, -body_width/2 - 80),
                 arrowprops=dict(arrowstyle='<->', color='purple', lw=2))
-    ax.text(0, -body_width/2 - 120, f'TRACK_WIDTH = {TRACK_WIDTH} mm\n(Front to Back)',
+    ax.text(0, -body_width/2 - 125, f'TRACK_WIDTH = {TRACK_WIDTH} mm\n(Front to Back)',
             ha='center', fontsize=11, color='purple', weight='bold')
 
     # WHEEL_BASE annotation (Y-axis: left to right) - placed on the left side
@@ -202,7 +182,7 @@ def draw_robot_diagram():
     ax.grid(True, alpha=0.3)
     ax.set_xlabel('X Position [mm]', fontsize=12)
     ax.set_ylabel('Y Position [mm]', fontsize=12)
-    ax.set_title('6-Wheeled Rocker-Bogie Robot - Top View\n(Robot Body Frame)',
+    ax.set_title('Top View - Robot Body Frame',
                  fontsize=14, weight='bold', pad=20)
 
     # Add legend
@@ -217,161 +197,127 @@ def draw_robot_diagram():
     ]
     ax.legend(handles=legend_elements, loc='upper right', fontsize=10)
 
-    plt.tight_layout()
-    plt.show()
+    # ===== RIGHT SUBPLOT: SIDE VIEW (ROCKER-BOGIE MECHANISM) =====
+    ax = ax2
 
-    return fig, ax
+    # Calculate positions for side view
+    # Ground level (where wheels touch)
+    ground_y = 0
 
+    # Wheel positions (side view - only showing X positions)
+    A_x = -NC  # Back wheel
+    A_y = ground_y + WHEEL_RADIUS
 
-def draw_rbm():
-    """Draw the Rocker Bogie Mechanism with labels"""
-    screen.fill(WHITE)
+    N_x = 0    # Middle wheel
+    N_y = ground_y + WHEEL_RADIUS
 
-    # Scale factor to fit on screen (converting from mm to pixels)
-    scale = 1.5
+    C_x = NC   # Front wheel
+    C_y = ground_y + WHEEL_RADIUS
 
-    # Center the diagram on screen
-    center_x = SCREEN_WIDTH // 2
-    center_y = SCREEN_HEIGHT // 2 + 50
+    # Center axle position
+    B_x = 0
+    B_y = A_y + BN
 
-    # Calculate positions based on RBM geometry
-    # Point coordinates (scaled and centered)
-    A_x = center_x - (NC * scale)  # Back wheel
-    A_y = center_y
+    # Back pivot position
+    M_x = -BM * 0.7  # Adjusted for visual clarity
+    M_y = A_y + BM * 0.7
 
-    N_x = center_x  # Middle wheel
-    N_y = center_y
+    # Draw ground line
+    ax.axhline(y=ground_y, color='brown',
+               linewidth=3, alpha=0.7, label='Ground')
 
-    C_x = center_x + (NC * scale)  # Front wheel
-    C_y = center_y
+    # Draw wheels as circles
+    wheel_radius_plot = WHEEL_RADIUS * 0.8  # Scale down for better visualization
 
-    B_x = center_x  # Center axle
-    B_y = center_y - (BN * scale)
+    # Back wheel (A)
+    wheel_A = plt.Circle((A_x, A_y), wheel_radius_plot,
+                         color='gray', alpha=0.7, ec='black', linewidth=2)
+    ax.add_patch(wheel_A)
+    ax.text(A_x, A_y - wheel_radius_plot - 30, 'A\n(Back)', ha='center',
+            va='top', fontsize=12, weight='bold', color='red')
 
-    # Back pivot (adjusted for visual clarity)
-    M_x = center_x - (BM * scale * 0.7)
-    M_y = center_y - (BM * scale * 0.7)
+    # Middle wheel (N)
+    wheel_N = plt.Circle((N_x, N_y), wheel_radius_plot,
+                         color='gray', alpha=0.7, ec='black', linewidth=2)
+    ax.add_patch(wheel_N)
+    ax.text(N_x, N_y - wheel_radius_plot - 30, 'N\n(Middle)',
+            ha='center', va='top', fontsize=12, weight='bold', color='blue')
 
-    # Draw wheels
-    wheel_radius_scaled = WHEEL_RADIUS * scale * 0.5  # Scale down for visual clarity
-    pg.draw.circle(screen, BLACK, (int(A_x), int(A_y)),
-                   int(wheel_radius_scaled), 3)
-    pg.draw.circle(screen, BLACK, (int(N_x), int(N_y)),
-                   int(wheel_radius_scaled), 3)
-    pg.draw.circle(screen, BLACK, (int(C_x), int(C_y)),
-                   int(wheel_radius_scaled), 3)
+    # Front wheel (C)
+    wheel_C = plt.Circle((C_x, C_y), wheel_radius_plot,
+                         color='gray', alpha=0.7, ec='black', linewidth=2)
+    ax.add_patch(wheel_C)
+    ax.text(C_x, C_y - wheel_radius_plot - 30, 'C\n(Front)',
+            ha='center', va='top', fontsize=12, weight='bold', color='blue')
 
-    # Fill wheels
-    pg.draw.circle(screen, GRAY, (int(A_x), int(A_y)),
-                   int(wheel_radius_scaled))
-    pg.draw.circle(screen, GRAY, (int(N_x), int(N_y)),
-                   int(wheel_radius_scaled))
-    pg.draw.circle(screen, GRAY, (int(C_x), int(C_y)),
-                   int(wheel_radius_scaled))
+    # Draw RBM structure
+    # Front rocker assembly (blue - only B to C connection)
+    ax.plot([B_x, C_x], [B_y, C_y], 'b-', linewidth=4,
+            alpha=0.8, label='Front Rocker')
 
-    # Draw RBM structure lines
-    # Main triangle BNC
-    pg.draw.line(screen, BLUE, (B_x, B_y), (N_x, N_y), 4)  # B to N
-    pg.draw.line(screen, BLUE, (N_x, N_y), (C_x, C_y), 4)  # N to C
-    pg.draw.line(screen, BLUE, (B_x, B_y), (C_x, C_y), 4)  # B to C
+    # Back rocker assembly (red)
+    ax.plot([A_x, M_x], [A_y, M_y], 'r-', linewidth=4,
+            alpha=0.8, label='Back Rocker')
+    ax.plot([M_x, N_x], [M_y, N_y], 'r-', linewidth=4, alpha=0.8)
+    ax.plot([B_x, M_x], [B_y, M_y], 'r-', linewidth=4, alpha=0.8)
 
-    # Back rocker assembly
-    pg.draw.line(screen, RED, (A_x, A_y), (M_x, M_y), 4)   # A to M
-    pg.draw.line(screen, RED, (M_x, M_y), (N_x, N_y), 4)   # M to N
-    pg.draw.line(screen, RED, (B_x, B_y), (M_x, M_y), 4)   # B to M
+    # B to N measurement line (dashed - not a physical connection)
+    ax.plot([B_x, N_x], [B_y, N_y], 'k--', linewidth=2,
+            alpha=0.7, label='Height Measurement (B-N)')
 
     # Draw pivot points
-    pg.draw.circle(screen, RED, (int(B_x), int(B_y)), 6)    # Center pivot B
-    pg.draw.circle(screen, ORANGE, (int(M_x), int(M_y)), 6)  # Back pivot M
+    ax.plot(B_x, B_y, 'ro', markersize=10, label='Center Pivot (B)')
+    ax.text(B_x + 20, B_y, 'B\n(Center)', ha='left',
+            va='center', fontsize=12, weight='bold', color='red')
 
-    # Draw labels for points
-    labels = [
-        ("A (Back)", A_x - 30, A_y + 30, RED),
-        ("N (Middle)", N_x - 30, N_y + 30, BLUE),
-        ("C (Front)", C_x + 10, C_y + 30, BLUE),
-        ("B (Center)", B_x + 10, B_y - 20, RED),
-        ("M (Pivot)", M_x - 40, M_y - 20, ORANGE)
-    ]
+    ax.plot(M_x, M_y, 'o', color='orange',
+            markersize=8, label='Back Pivot (M)')
+    ax.text(M_x - 30, M_y, 'M\n(Pivot)', ha='right', va='center',
+            fontsize=12, weight='bold', color='orange')
 
-    for label, x, y, color in labels:
-        text = font.render(label, True, color)
-        screen.blit(text, (x, y))
+    # Add dimension annotations
+    ax.annotate('', xy=(A_x, A_y + wheel_radius_plot + 80), xytext=(C_x, C_y + wheel_radius_plot + 80),
+                arrowprops=dict(arrowstyle='<->', color='green', lw=2))
+    ax.text((A_x + C_x)/2, A_y + wheel_radius_plot + 100, f'Track Width = {TRACK_WIDTH:.1f} mm',
+            ha='center', fontsize=11, color='green', weight='bold')
 
-    # Draw dimension labels
-    # Wheel base
-    pg.draw.line(screen, GREEN, (A_x, A_y + 60), (C_x, C_y + 60), 2)
-    pg.draw.line(screen, GREEN, (A_x, A_y + 55), (A_x, A_y + 65), 2)
-    pg.draw.line(screen, GREEN, (C_x, C_y + 55), (C_x, C_y + 65), 2)
-    wb_text = small_font.render(f'Wheel Base: {WHEEL_BASE:.1f}mm', True, GREEN)
-    screen.blit(wb_text, (center_x - 80, A_y + 70))
+    # Height (BN)
+    ax.annotate('', xy=(B_x + 120, B_y), xytext=(N_x + 120, N_y),
+                arrowprops=dict(arrowstyle='<->', color='purple', lw=2))
+    ax.text(B_x + 140, (B_y + N_y)/2, f'Height = {BN:.1f} mm',
+            rotation=90, ha='center', va='center', fontsize=11, color='purple', weight='bold')
 
-    # Height
-    pg.draw.line(screen, GREEN, (B_x + 60, B_y), (N_x + 60, N_y), 2)
-    pg.draw.line(screen, GREEN, (B_x + 55, B_y), (B_x + 65, B_y), 2)
-    pg.draw.line(screen, GREEN, (N_x + 55, N_y), (N_x + 65, N_y), 2)
-    height_text = small_font.render(f'Height: {BN:.1f}mm', True, GREEN)
-    screen.blit(height_text, (B_x + 70, (B_y + N_y) // 2))
+    # Center to ground
+    ax.annotate('', xy=(B_x - 120, ground_y), xytext=(B_x - 120, B_y),
+                arrowprops=dict(arrowstyle='<->', color='navy', lw=2))
+    ax.text(B_x - 140, (ground_y + B_y)/2, f'Center to Ground = {CENTER_TO_GROUND:.1f} mm',
+            rotation=90, ha='center', va='center', fontsize=11, color='navy', weight='bold')
 
-    # Add title and key measurements
-    title = font.render('Rover Rocker Bogie Diagram', True, BLACK)
-    screen.blit(title, (center_x - 150, 30))
+    # Set equal aspect ratio and limits
+    ax.set_aspect('equal')
+    margin = 100
+    ax.set_xlim(A_x - margin, C_x + margin)
+    ax.set_ylim(ground_y - 50, B_y + margin)
 
-    # Add help text
-    help_text = small_font.render(
-        'Press any key to close window and save image', True, BLACK)
-    screen.blit(help_text, (center_x - 120, 55))
-
-    # Display key measurements
-    measurements = [
-        f'Robot Length: {TRACK_WIDTH}mm',
-        f'Wheel Radius: {WHEEL_RADIUS}mm',
-        f'Center to Front Wheel Distance (BC): {BC:.1f}mm',
-        f'Center to Aft Pivot Distance (BM): {BM:.1f}mm',
-        f'Center to Ground: {CENTER_TO_GROUND:.1f}mm'
-    ]
-
-    for i, measurement in enumerate(measurements):
-        text = small_font.render(measurement, True, BLACK)
-        screen.blit(text, (20, 80 + i * 20))
+    # Grid and labels
+    ax.grid(True, alpha=0.3)
+    ax.set_xlabel('X Position [mm]', fontsize=12)
+    ax.set_ylabel('Z Position [mm]', fontsize=12)
+    ax.set_title('Side View - Rocker-Bogie Mechanism',
+                 fontsize=14, weight='bold', pad=20)
 
     # Add legend
-    legend_y = SCREEN_HEIGHT - 120
-    legend_items = [
-        ("Blue: Front Rocker Assembly", BLUE),
-        ("Red: Back Rocker Assembly", RED),
-        ("Orange: Pivot Point M", ORANGE),
-        ("Gray: Wheels", GRAY)
-    ]
+    ax.legend(loc='upper right', fontsize=10)
 
-    legend_title = small_font.render("Legend:", True, BLACK)
-    screen.blit(legend_title, (20, legend_y - 20))
+    # Add overall title
+    fig.suptitle('6-Wheeled Rocker-Bogie Robot Diagram',
+                 fontsize=16, weight='bold', y=0.95)
 
-    for i, (text, color) in enumerate(legend_items):
-        pg.draw.circle(screen, color, (30, legend_y + i * 20 + 10), 5)
-        legend_text = small_font.render(text, True, BLACK)
-        screen.blit(legend_text, (45, legend_y + i * 20))
-
-
-def main():
-    clock = pg.time.Clock()
-    running = True
-
-    while running:
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                running = False
-            elif event.type == pg.KEYDOWN:
-                running = False
-
-        draw_rbm()
-        pg.display.flip()
-        clock.tick(24)
-    pg.image.save(screen, IMAGE_FILE)
-    print(f"Diagram saved to '{IMAGE_FILE}'.")
-    pg.quit()
-    sys.exit()
+    plt.tight_layout()
+    plt.savefig(IMAGE_FILE, dpi=300, bbox_inches='tight')
+    plt.show()
 
 
 # Run the visualization
 if __name__ == "__main__":
-    main()
+    draw_robot_diagram()
