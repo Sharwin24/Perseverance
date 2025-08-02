@@ -2,7 +2,7 @@
 Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
 
 <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
-  <img src="rocker_bogie_diagram.png" alt="alt text" style="border-radius: 12px;">
+  <img src="prototyping/rocker_bogie_diagram.png" alt="alt text" style="border-radius: 12px;">
 </div>
 
 *This plot was generated with `draw_rocker_bogie.py`*
@@ -13,9 +13,9 @@ A lot of the math expressions aren't rendering correctly and can best be visuali
 Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics. A kinematic model for a mecanum wheeled drive was also implemented.
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-  <img src="plots/robot_trajectory_comparison.png" alt="Robot Trajectory Comparison" style="width: 100%; min-width: 200px;">
-  <img src="plots/kalman_filter_states_comparison.png" alt="Kalman Filter States Comparison" style="width: 49%; min-width: 200px;">
-  <img src="plots/kalman_filter_errors_comparison.png" alt="Kalman Filter Errors Comparison" style="width: 49%; min-width: 200px;">
+  <img src="prototyping/plots/robot_trajectory_comparison.png" alt="Robot Trajectory Comparison" style="width: 100%; min-width: 200px;">
+  <img src="prototyping/plots/kalman_filter_states_comparison.png" alt="Kalman Filter States Comparison" style="width: 49%; min-width: 200px;">
+  <img src="prototyping/plots/kalman_filter_errors_comparison.png" alt="Kalman Filter Errors Comparison" style="width: 49%; min-width: 200px;">
 </div>
 
 ```txt
