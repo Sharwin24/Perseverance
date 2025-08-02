@@ -138,6 +138,12 @@ $$F = \begin{bmatrix} 1 & 0 & -V\sin(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 1 & V\co
 
 # References
 
+- https://www-robotics.jpl.nasa.gov/media/documents/helmick04_aeroconf.pdf
+- https://ieeexplore.ieee.org/abstract/document/10100875/authors#authors
 - https://amrl.cs.utexas.edu/papers/icra2019_skid_steer_kinematics.pdf
 - https://www.kalmanfilter.net/background2.html
 - https://medium.com/hackernoon/ghost-iv-sensor-fusion-encoders-imu-c099dd40a7b
+- https://ijisrt.com/wp-content/uploads/2017/05/Design-of-Rocker-Bogie-Mechanism-1.pdf
+- https://esmats.eu/amspapers/pastpapers/pdfs/2004/harrington.pdf
+- https://sist.sathyabama.ac.in/sist_naac/aqar_2022_2023/documents/1.3.4/mechatronics_batch%20no.21.pdf
+- https://docs.sunfounder.com/projects/galaxy-rvr/en/latest/lesson2_rocker_bogie.html
