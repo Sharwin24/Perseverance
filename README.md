@@ -135,3 +135,9 @@ $$ U_{wheels} = \begin{bmatrix}V\\ \omega \end{bmatrix}$$
 - State transition matrix ($F$) *as defined earlier*:
 
 $$F = \begin{bmatrix} 1 & 0 & -V\sin(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 1 & V\cos(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 & 0 \\ 0 & 0 & -V\sin(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & V\cos(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}$$
+
+# References
+
+- https://amrl.cs.utexas.edu/papers/icra2019_skid_steer_kinematics.pdf
+- https://www.kalmanfilter.net/background2.html
+- https://medium.com/hackernoon/ghost-iv-sensor-fusion-encoders-imu-c099dd40a7b
