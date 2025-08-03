@@ -80,7 +80,7 @@ Note that the new velocities and angular rate do not depend on the previous velo
 The correction step of the filter uses sensor measurements to refine the predicted state. For each sensor, we need a measurement model $H(X)$ that computes the expected measurement from a given state vector.
 
 ### IMU Sensor
-The IMU measures the angular rate around the Z-axs $\omega$ as well as the linear acceleration $a_x, a_y$.
+The IMU measures the angular rate around the Z-axis $\omega$ as well as the linear acceleration $a_x, a_y$.
 
 $$z_{imu} = \left[\omega, a_x, a_y\right]$$
 
