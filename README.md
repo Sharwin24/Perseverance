@@ -71,7 +71,7 @@ F = \frac{\delta f(X,U)}{\delta X} =\begin{bmatrix}\frac{\delta x_{new}}{\delta 
 $$ -->
 
 <div style="display: flex; justify-content: center; align-items: center; width: 100%; background: white; padding: 10px; border-radius: 8px;">
-  <img src="equations/state_transition_matrix.svg" alt="Process Model Diagram" style="width: 50%;">
+  <img src="equations/state_transition_matrix.svg" alt="Process Model Diagram" style="width: 100%;">
 </div>
 
 Note that the new velocities and angular rate do not depend on the previous velocities or angular rate, making their corresponding derivatives zero.
