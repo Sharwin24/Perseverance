@@ -7,7 +7,7 @@ Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
 
 *This plot was generated with `draw_rocker_bogie.py`*
 
-A lot of the math expressions aren't rendering correctly and can best be visualized by viewing the markdown render locally in an IDE (VS Code). It's a work in progress to create SVG images for each equation and display them once they are finalized...
+*A lot of the math expressions aren't rendering correctly and can best be visualized by viewing the markdown render locally in an IDE (VS Code). It's a work in progress to create SVG images for each equation and display them once they are finalized...*
 
 # Kalman Filtering for Rover State Estimation
 Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics. A kinematic model for a mecanum wheeled drive was also implemented.
