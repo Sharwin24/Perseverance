@@ -55,7 +55,7 @@ The function that describes the state's evolution is the **process model:** $f\l
 <!-- $$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \\ \omega \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \\ \omega\end{bmatrix}$$ -->
 
 <div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
-  <img src="equations/process_model.svg" alt="Process Model Diagram" style="width: 50%;">
+  <img src="equations/process_model.svg" alt="Process Model Equation" style="width: 50%;">
 </div>
 
 Notice that the new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
@@ -71,7 +71,7 @@ F = \frac{\delta f(X,U)}{\delta X} =\begin{bmatrix}\frac{\delta x_{new}}{\delta 
 $$ -->
 
 <div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
-  <img src="equations/state_transition_matrix.svg" alt="Process Model Diagram" style="width: 100%;">
+  <img src="equations/state_transition_matrix.svg" alt="State Transition Matrix" style="width: 100%;">
 </div>
 
 Note that the new velocities and angular rate do not depend on the previous velocities or angular rate, making their corresponding derivatives zero.
@@ -119,11 +119,20 @@ $$U_{imu​}=\begin{bmatrix}a_x\\ a_y\end{bmatrix}_{\text{global​}}$$
 
 - State Transition ($F$):
 
-$$F = \begin{bmatrix} 1 & 0 & 0 & \Delta t & 0 & 0 \\ 0 & 1 & 0 & 0 & \Delta t & 0 \\ 0 & 0 & 1 & 0 & 0 & \Delta t \\ 0 & 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 0 & 0 & 1 \end{bmatrix}$$
+<!-- $$F = \begin{bmatrix} 1 & 0 & 0 & \Delta t & 0 & 0 \\ 0 & 1 & 0 & 0 & \Delta t & 0 \\ 0 & 0 & 1 & 0 & 0 & \Delta t \\ 0 & 0 & 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & 0 & 0 & 1 \end{bmatrix}$$ -->
+
+<div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
+  <img src="equations/F_accel.svg" alt="F_IMU Matrix" style="width: 50%;">
+</div>
 
 - Control Input Matrix ($B$):
 
-$$B = \frac{\delta X}{U_{imu}} = \begin{bmatrix}\frac{\delta X}{a_x} & \frac{\delta X}{a_y}\end{bmatrix} = \begin{bmatrix}0.5\Delta t^2 & 0 \\ 0 & 0.5\Delta t^2\\ 0 & 0 \\ \Delta t & 0 \\ 0 & \Delta t \\ 0 & 0\end{bmatrix}$$
+<!-- $$B = \frac{\delta X}{U_{imu}} = \begin{bmatrix}\frac{\delta X}{a_x} & \frac{\delta X}{a_y}\end{bmatrix} = \begin{bmatrix}0.5\Delta t^2 & 0 \\ 0 & 0.5\Delta t^2\\ 0 & 0 \\ \Delta t & 0 \\ 0 & \Delta t \\ 0 & 0\end{bmatrix}$$ -->
+
+<div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
+  <img src="equations/control_input_matrix.svg" alt="Control Input Matrix" style="width: 50%;">
+</div>
+
 
 ### Wheel Velocities as Control Input (System Kinematics Model)
 This is the more common approach for differential drive robots, where we use the commanded wheel velocities to predict motion.
@@ -138,7 +147,11 @@ $$ U_{wheels} = \begin{bmatrix}V\\ \omega \end{bmatrix}$$
 
 - State transition matrix ($F$) *as defined earlier*:
 
-$$F = \begin{bmatrix} 1 & 0 & -V\sin(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 1 & V\cos(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 & 0 \\ 0 & 0 & -V\sin(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & V\cos(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}$$
+<!-- $$F = \begin{bmatrix} 1 & 0 & -V\sin(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 1 & V\cos(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 & 0 \\ 0 & 0 & -V\sin(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & V\cos(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}$$ -->
+
+<div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
+  <img src="equations/F_Kinematic.svg" alt="F_Kinematic Matrix" style="width: 50%;">
+</div>
 
 # References
 
