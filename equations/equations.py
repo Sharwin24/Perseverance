@@ -42,8 +42,8 @@ def add_white_background_to_svg(svg_file_path):
 
         x, y, width, height = map(float, viewbox_parts)
 
-        # Add 10px padding around the image
-        padding = 10
+        # Add more padding around the image
+        padding = 50  # Increased padding from 20 to 50
         padded_x = x - padding
         padded_y = y - padding
         padded_width = width + (2 * padding)
