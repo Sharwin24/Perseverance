@@ -155,13 +155,17 @@ $$ U_{wheels} = \begin{bmatrix}V\\ \omega \end{bmatrix}$$
 
 # References
 
-- https://www-robotics.jpl.nasa.gov/media/documents/helmick04_aeroconf.pdf
-- https://ieeexplore.ieee.org/abstract/document/10100875/authors#authors
-- https://www.science.org/doi/10.1126/scirobotics.adi3099
-- https://amrl.cs.utexas.edu/papers/icra2019_skid_steer_kinematics.pdf
-- https://www.kalmanfilter.net/background2.html
-- https://medium.com/hackernoon/ghost-iv-sensor-fusion-encoders-imu-c099dd40a7b
-- https://ijisrt.com/wp-content/uploads/2017/05/Design-of-Rocker-Bogie-Mechanism-1.pdf
-- https://esmats.eu/amspapers/pastpapers/pdfs/2004/harrington.pdf
-- https://sist.sathyabama.ac.in/sist_naac/aqar_2022_2023/documents/1.3.4/mechatronics_batch%20no.21.pdf
-- https://docs.sunfounder.com/projects/galaxy-rvr/en/latest/lesson2_rocker_bogie.html
+- [Path Following using Visual Odometry for a Mars Rover
+in High-Slip Environments](https://www-robotics.jpl.nasa.gov/media/documents/helmick04_aeroconf.pdf)
+- [Feature-Based Scanning LiDAR-Inertial Odometry Using Factor Graph Optimization](https://ieeexplore.ieee.org/abstract/document/10100875/authors#authors)
+- [Autonomous robotics is driving Perseverance rover’s progress on Mars](https://www.science.org/doi/10.1126/scirobotics.adi3099)
+- [A Friction-Based Kinematic Model for
+Skid-Steer Wheeled Mobile Robots](https://amrl.cs.utexas.edu/papers/icra2019_skid_steer_kinematics.pdf)
+- [Kalman Filter Overview](https://www.kalmanfilter.net/default.aspx)
+- [Ghost IV — Sensor Fusion: Encoders + IMU](https://medium.com/hackernoon/ghost-iv-sensor-fusion-encoders-imu-c099dd40a7b)
+- [Design of Rocker-Bogie Mechanism](https://ijisrt.com/wp-content/uploads/2017/05/Design-of-Rocker-Bogie-Mechanism-1.pdf)
+- [The Challenges of Designing the Rocker-Bogie Suspension
+for the Mars Exploration Rover](https://esmats.eu/amspapers/pastpapers/pdfs/2004/harrington.pdf)
+- [Design and Fabrication of six wheels Rocker Bogie Mechanisms](https://sist.sathyabama.ac.in/sist_naac/aqar_2022_2023/documents/1.3.4/mechatronics_batch%20no.21.pdf)
+- [Understanding and Making Rocker-Bogie System](https://docs.sunfounder.com/projects/galaxy-rvr/en/latest/lesson2_rocker_bogie.html
+)
