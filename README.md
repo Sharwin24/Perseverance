@@ -54,7 +54,7 @@ The function that describes the state's evolution is the **process model:** $f\l
 
 <!-- $$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \\ \omega \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \\ \omega\end{bmatrix}$$ -->
 
-<div style="display: flex; justify-content: center; align-items: center; width: 100%; background: white; padding: 10px; border-radius: 8px;">
+<div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
   <img src="equations/process_model.svg" alt="Process Model Diagram" style="width: 50%;">
 </div>
 
@@ -70,7 +70,7 @@ Because the process model is non-linear, we must use an Extended Kalman Filter (
 F = \frac{\delta f(X,U)}{\delta X} =\begin{bmatrix}\frac{\delta x_{new}}{\delta x} & \frac{\delta x_{new}}{\delta y} & \frac{\delta x_{new}}{\delta \theta} & \frac{\delta x_{new}}{\delta v_x} & \frac{\delta x_{new}}{\delta v_y}\\ \frac{\delta y_{new}}{\delta x} & \frac{\delta y_{new}}{\delta y} & \frac{\delta y_{new}}{\delta \theta} & \frac{\delta y_{new}}{\delta v_x} & \frac{\delta y_{new}}{\delta v_y}\\ \frac{\delta \theta_{new}}{\delta x} & \frac{\delta \theta_{new}}{\delta y} & \frac{\delta \theta_{new}}{\delta \theta} & \frac{\delta \theta_{new}}{\delta v_x} & \frac{\delta \theta_{new}}{\delta v_y}\\ \frac{\delta v_{x_{new}}}{\delta x} & \frac{\delta v_{x_{new}}}{\delta y} & \frac{\delta v_{x_{new}}}{\delta \theta} & \frac{v_{x_{new}}}{\delta v_x} & \frac{v_{y_{new}}}{\delta v_y} \\ \frac{\delta v_{y_{new}}}{\delta x} & \frac{\delta v_{y_{new}}}{\delta y} & \frac{\delta v_{y_{new}}}{\delta \theta} & \frac{v_{y_{new}}}{\delta v_x} & \frac{v_{y_{new}}}{\delta v_y}\end{bmatrix} = \begin{bmatrix} 1 & 0 & -V\sin(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 1 & V\cos(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 & 0 \\ 0 & 0 & -V\sin(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & V\cos(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}
 $$ -->
 
-<div style="display: flex; justify-content: center; align-items: center; width: 100%; background: white; padding: 10px; border-radius: 8px;">
+<div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
   <img src="equations/state_transition_matrix.svg" alt="Process Model Diagram" style="width: 100%;">
 </div>
 
