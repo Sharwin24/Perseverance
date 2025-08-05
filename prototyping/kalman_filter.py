@@ -1,5 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
+# Create plots directory if it doesn't exist
+PLOTS_DIR = "plots"
+if not os.path.exists(PLOTS_DIR):
+    os.makedirs(PLOTS_DIR)
 
 # Constants
 WHEEL_RADIUS = 50  # The wheel radius [mm]
@@ -334,6 +340,11 @@ if __name__ == "__main__":
     odom_readings_dynamic = []
     odom_readings_kinematic = []
     odom_readings_mecanum = []
+    robot_state_history: dict[str, list[RobotState]] = {
+        "dynamic": [],
+        "kinematic": [],
+        "mecanum": []
+    }
 
     # Simulation parameters
     total_time = 10.0  # Total simulation time [seconds]
@@ -345,24 +356,25 @@ if __name__ == "__main__":
         timestamp = i * dt
 
         # 1. Define True Motion (a cubic trajectory)
-        # Create a cubic path from (0,0) to (0,50) with interesting curvature
+        # Create a cubic path from (0,0) to (1000,1000) with interesting curvature
         # Using parametric equations based on time progression
 
         # Get previous true state
         last_true_state = true_states[-1]
 
         # Define trajectory parameters
-        total_distance = 50.0  # Total distance to travel [mm]
+        total_distance = 2000.0  # Total distance to travel [mm]
         progress = timestamp / total_time  # Progress from 0 to 1
 
-        # Cubic trajectory: x follows a cubic curve, y increases linearly
-        # x = A * t^3 + B * t^2 + C * t + D
-        # Boundary conditions: x(0)=0, x(1)=0, dx/dt(0)=20, dx/dt(1)=-20
-        # This creates an S-curve that starts at (0,0) and ends at (0,50)
+        # Dynamically calculate coefficients for cubic trajectory
+        v_0 = 20.0  # Initial velocity [mm/s]
+        v_1 = 0.0  # Final velocity [mm/s]
 
-        A = -40.0  # Coefficient for t^3
-        B = 60.0   # Coefficient for t^2
-        C = 20.0   # Coefficient for t
+        # Solve for coefficients using boundary conditions
+        # x(0) = 0, x(1) = total_distance, dx/dt(0) = v_0, dx/dt(1) = v_1
+        A = 2 * total_distance - v_0 - v_1
+        B = -3 * total_distance + 2 * v_0 + v_1
+        C = v_0
         D = 0.0    # Constant term
 
         # Calculate position
@@ -514,14 +526,13 @@ if __name__ == "__main__":
         estimated_states_mecanum.append(
             kf_mecanum_model.state.to_array().copy())
 
+        # Save history for drawing the robot later
+        if i % 20 == 0:
+            robot_state_history["dynamic"].append(kf_dynamic_model.state)
+            robot_state_history["kinematic"].append(kf_kinematic_model.state)
+            robot_state_history["mecanum"].append(kf_mecanum_model.state)
+
     # --- Plotting ---
-    import os
-
-    # Create plots directory if it doesn't exist
-    plots_dir = "plots"
-    if not os.path.exists(plots_dir):
-        os.makedirs(plots_dir)
-
     estimated_states_dynamic = np.array(estimated_states_dynamic)
     estimated_states_kinematic = np.array(estimated_states_kinematic)
     estimated_states_mecanum = np.array(estimated_states_mecanum)
@@ -546,6 +557,16 @@ if __name__ == "__main__":
                 c='purple', marker='+', s=60, alpha=0.8, label='Noisy Odometry (Kinematic)')
     plt.scatter(odom_readings_mecanum[:, 0], odom_readings_mecanum[:, 1],
                 c='cyan', marker='o', s=30, alpha=0.8, label='Noisy Odometry (Mecanum)')
+    # At each RobotState in the histories, draw the robot on the same plot
+    ax = plt.gca()
+    from draw_rocker_bogie import draw_robot_at_state
+    # for state in robot_state_history["dynamic"]:
+    #     draw_robot_at_state(ax, state, color='blue')
+    for state in robot_state_history["kinematic"]:
+        draw_robot_at_state(ax, False, x=state.x, y=state.y, theta=state.theta,
+                            vx=state.vx, vy=state.vy, omega=state.omega)
+    # for state in robot_state_history["mecanum"]:
+    #     draw_robot_at_state(ax, state, color='magenta')
     plt.xlabel('x [mm]')
     plt.ylabel('y [mm]')
     plt.title('Robot Trajectory Estimation: Dynamic vs Kinematic vs Mecanum Models')
@@ -554,7 +575,8 @@ if __name__ == "__main__":
     plt.axis('equal')
     plt.tight_layout()
     plt.savefig(os.path.join(
-        plots_dir, 'robot_trajectory_comparison.png'), dpi=300)
+        PLOTS_DIR, 'robot_trajectory_comparison.png'), dpi=300
+    )
     plt.show()
 
     # Plot individual states comparison
@@ -580,7 +602,7 @@ if __name__ == "__main__":
         'Kalman Filter State Evolution: Dynamic vs Kinematic vs Mecanum Models', fontsize=16)
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(os.path.join(
-        plots_dir, 'kalman_filter_states_comparison.png'), dpi=300)
+        PLOTS_DIR, 'kalman_filter_states_comparison.png'), dpi=300)
     plt.show()
 
     # Plot error comparison
@@ -619,7 +641,7 @@ if __name__ == "__main__":
         'Kalman Filter Estimation Errors: Dynamic vs Kinematic vs Mecanum Models', fontsize=16)
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(os.path.join(
-        plots_dir, 'kalman_filter_errors_comparison.png'), dpi=300)
+        PLOTS_DIR, 'kalman_filter_errors_comparison.png'), dpi=300)
     plt.show()
 
     # Print performance metrics
@@ -661,11 +683,11 @@ if __name__ == "__main__":
         print(line)
 
     # Save to file
-    with open(os.path.join(plots_dir, "KF_results.txt"), "w") as f:
+    with open(os.path.join(PLOTS_DIR, "KF_results.txt"), "w") as f:
         for line in summary_lines:
             f.write(line + "\n")
 
-    print(f"\nFigures saved successfully to '{plots_dir}/' directory:")
+    print(f"\nFigures saved successfully to '{PLOTS_DIR}/' directory:")
     print("- robot_trajectory_comparison.png")
     print("- kalman_filter_states_comparison.png")
     print("- kalman_filter_errors_comparison.png")

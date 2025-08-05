@@ -1,6 +1,8 @@
 import sys
 from math import sqrt
 import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.transforms as mtransforms
 
 # ------ RBM Inputs ------
 WHEEL_RADIUS = 50  # The wheel radius [mm]
@@ -84,6 +86,18 @@ print(
     f'- Height of RBM (B to N) = sqrt(BC^2 - NC^2)\n'
     f'- Center to Ground = WheelRadius + BN'
 )
+
+
+def wheel_positions(x=0, y=0, theta=0):
+    # Given the position of the robot's center (x, y) and orientation theta,
+    # return a dictionary of the wheel positions in the robot's frame indexed by name
+    positions = {}
+    for name, (dx, dy) in WHEEL_LOCATIONS.items():
+        # Apply rotation to wheel positions
+        rotated_x = (dx * np.cos(theta) - dy * np.sin(theta)) + x
+        rotated_y = (dx * np.sin(theta) + dy * np.cos(theta)) + y
+        positions[name] = (rotated_x, rotated_y)
+    return positions
 
 
 def draw_robot_diagram():
@@ -318,6 +332,112 @@ def draw_robot_diagram():
     plt.show()
 
 
-# Run the visualization
+def draw_robot_at_state(ax, show_text: bool, x, y, theta, vx, vy, omega):
+    # Draw the robot chassis as a grey rectangle
+    CHASSIS_LENGTH = TRACK_WIDTH * 1.5  # Length of the chassis
+    CHASSIS_WIDTH = WHEEL_BASE * 0.7  # Width of the chassis
+    chassis = plt.Rectangle(
+        (x - CHASSIS_LENGTH / 2, y - CHASSIS_WIDTH / 2),
+        CHASSIS_LENGTH, CHASSIS_WIDTH,
+        angle=0, color='lightgrey', alpha=0.8, ec='black', linewidth=2
+    )
+    t = ax.transData
+    rotate_transform = mtransforms.Affine2D().rotate_around(x, y, theta) + t
+    chassis.set_transform(rotate_transform)
+    ax.add_patch(chassis)
+
+    # Draw the wheels as rectangles
+    WHEEL_LENGTH = WHEEL_RADIUS * 2  # Length of the wheel
+    WHEEL_WIDTH = WHEEL_RADIUS * 0.5  # Width of the wheel
+    positions = wheel_positions(x, y, theta)
+    for name, (wx, wy) in positions.items():
+        wheel = plt.Rectangle(
+            (wx - WHEEL_LENGTH / 2, wy - WHEEL_WIDTH / 2),
+            WHEEL_LENGTH, WHEEL_WIDTH,
+            angle=0, color='darkgrey', ec='black', linewidth=1.5
+        )
+        wheel_t = ax.transData
+        wheel_rotate_transform = mtransforms.Affine2D().rotate_around(
+            wx, wy, theta) + wheel_t
+        wheel.set_transform(wheel_rotate_transform)
+        ax.add_patch(wheel)
+
+    # Draw the heading of the robot as a larger triangle at the front
+    front_x = x + (CHASSIS_LENGTH / 2) * np.cos(theta)
+    front_y = y + (CHASSIS_LENGTH / 2) * np.sin(theta)
+    HEADING_TRIANGLE_SIZE = 40  # Size of the heading triangle
+    heading_triangle = plt.Polygon(
+        [
+            (front_x, front_y),
+            (front_x - HEADING_TRIANGLE_SIZE * np.cos(theta + np.pi / 6),
+             front_y - HEADING_TRIANGLE_SIZE * np.sin(theta + np.pi / 6)),
+            (front_x - HEADING_TRIANGLE_SIZE * np.cos(theta - np.pi / 6),
+             front_y - HEADING_TRIANGLE_SIZE * np.sin(theta - np.pi / 6))
+        ],
+        closed=True, color='red', alpha=0.8, ec='black', linewidth=1.5
+    )
+    ax.add_patch(heading_triangle)
+
+    # Draw a black circle at the center of the chassis
+    ax.plot(x, y, 'ko', markersize=12)
+
+    # --- Velocity Vector Visualization ---
+    # The velocity (vx, vy) is in the robot's body frame.
+    # We need to rotate it by theta to align it with the world frame.
+    world_vx = vx * np.cos(theta) - vy * np.sin(theta)
+    world_vy = vx * np.sin(theta) + vy * np.cos(theta)
+
+    # Calculate magnitude and scale the arrow length
+    magnitude = np.sqrt(world_vx**2 + world_vy**2)
+    if magnitude > 1e-6:  # Avoid division by zero
+        ARROW_LENGTH = (CHASSIS_LENGTH / 2) - (HEADING_TRIANGLE_SIZE * 1.2)
+
+        # Calculate the final arrow components for plotting
+        arrow_dx = (world_vx / magnitude) * ARROW_LENGTH
+        arrow_dy = (world_vy / magnitude) * ARROW_LENGTH
+
+        # Draw the velocity vector as an arrow
+        ax.arrow(
+            x, y,
+            arrow_dx, arrow_dy,
+            head_width=25, head_length=35, fc='blue', ec='blue', linewidth=2,
+            length_includes_head=True
+        )
+
+    # Add a small label for the robot state above the chassis center
+    if show_text:
+        ax.text(
+            x, y + (CHASSIS_LENGTH / 4),
+            f'X=[x={x:.0f} mm, y={y:.0f} mm, θ={np.degrees(theta):.1f}°]\n'
+            f'V=[vx={vx:.1f} mm/s, vy={vy:.1f} mm/s, ω={omega:.1f} rad/s]',
+            fontsize=8, ha='center', va='bottom', color='black', weight='bold',
+            bbox=dict(facecolor='white', edgecolor='red', linewidth=1,
+                      boxstyle='round,pad=0.3', alpha=0.8)
+        )
+
+
 if __name__ == "__main__":
-    draw_robot_diagram()
+    # draw_robot_diagram()
+
+    # Create a new figure for trajectory visualization
+    fig, ax = plt.subplots(figsize=(10, 10))
+    MAX_SIZE = 1000
+    ax.set_xlim(-MAX_SIZE, MAX_SIZE)
+    ax.set_ylim(-MAX_SIZE, MAX_SIZE)
+    test_robot_positions = [
+        (0, 0, 0, 10, 0, 0),  # Centered at origin, no rotation
+        # Diagonal position with 45-degree rotation
+        (500, 500, np.pi/4, 10, 0, 0),
+        (-300, -450, np.pi/2, 10, 0, 0),  # Left side with 90-degree rotation
+        (300, -500, -np.pi/3, 10, 0, 0)   # Right side with -60-degree rotation
+    ]
+    for pos in test_robot_positions:
+        draw_robot_at_state(ax, True, *pos)
+        plt.title('Top-Down View of Rocker-Bogie Robot Trajectory')
+        plt.xlabel('X Position [mm]')
+        plt.ylabel('Y Position [mm]')
+        plt.grid(True)
+        plt.gca().set_aspect('equal', adjustable='box')
+    plt.savefig(f"top_down_rover.png",
+                dpi=300, bbox_inches='tight')
+    plt.show()
