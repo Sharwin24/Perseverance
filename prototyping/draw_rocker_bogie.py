@@ -332,7 +332,7 @@ def draw_robot_diagram():
     plt.show()
 
 
-def draw_robot_at_state(ax, show_text: bool, x, y, theta, vx, vy, omega):
+def draw_rocker_bogie_at_state(ax, show_text: bool, x, y, theta, vx, vy, omega):
     # Draw the robot chassis as a grey rectangle
     CHASSIS_LENGTH = TRACK_WIDTH * 1.5  # Length of the chassis
     CHASSIS_WIDTH = WHEEL_BASE * 0.7  # Width of the chassis
@@ -432,7 +432,7 @@ if __name__ == "__main__":
         (300, -500, -np.pi/3, 10, 0, 0)   # Right side with -60-degree rotation
     ]
     for pos in test_robot_positions:
-        draw_robot_at_state(ax, True, *pos)
+        draw_rocker_bogie_at_state(ax, True, *pos)
         plt.title('Top-Down View of Rocker-Bogie Robot Trajectory')
         plt.xlabel('X Position [mm]')
         plt.ylabel('Y Position [mm]')

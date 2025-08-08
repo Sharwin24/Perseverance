@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from draw_rocker_bogie import draw_rocker_bogie_at_state
 
 # Create plots directory if it doesn't exist
 PLOTS_DIR = "plots"
@@ -12,6 +13,16 @@ WHEEL_RADIUS = 50  # The wheel radius [mm]
 WHEEL_BASE = 1000  # Wheel to Wheel distance along the Robot Y-axis [mm]
 # The back to front wheel distance along the Robot X-axis [mm]
 TRACK_WIDTH = 600
+
+# Wheel locations: WHEEL_BASE is Y-axis (left-right), TRACK_WIDTH is X-axis (front-back)
+WHEEL_LOCATIONS = {
+    "front_left": (TRACK_WIDTH / 2, WHEEL_BASE / 2),      # Front left
+    "middle_left": (0, WHEEL_BASE / 2),                   # Middle left
+    "rear_left": (-TRACK_WIDTH / 2, WHEEL_BASE / 2),      # Rear left
+    "front_right": (TRACK_WIDTH / 2, -WHEEL_BASE / 2),    # Front right
+    "middle_right": (0, -WHEEL_BASE / 2),                 # Middle right
+    "rear_right": (-TRACK_WIDTH / 2, -WHEEL_BASE / 2)     # Rear right
+}
 
 
 class RobotState:
@@ -154,6 +165,79 @@ class KalmanFilter:
             (-L - W) * vx + vy + (1) * omega    # Rear right wheel
         ])
 
+    def rocker_bogie_forward_kinematics(self, wheel_drive_speeds, wheel_steer_angles):
+        """
+        Calculates the robot's body frame velocities (v_bx, v_by, omega_b)
+        for a 6-wheeled rocker-bogie using a least-squares fit.
+
+        Args:
+            wheel_positions (dict): A dictionary mapping wheel names to their (x, y)
+                                    coordinate tuples relative to the robot's center.
+                                    e.g., {'fl': (x_fl, y_fl), ...}
+            wheel_drive_speeds (dict): A dictionary mapping wheel names to their
+                                    tangential drive speed (e.g., from encoders).
+                                    e.g., {'fl': v_fl, ...}
+            wheel_steer_angles (dict): A dictionary mapping wheel names to their
+                                    current steering angle in radians.
+                                    e.g., {'fl': delta_fl, ...}
+
+        Returns:
+            numpy.ndarray: A 3-element array containing [v_bx, v_by, omega_b].
+        """
+        # Define the order of wheels to ensure consistent matrix construction.
+        # This order must match the order of data in the dictionaries.
+        wheel_names = WHEEL_LOCATIONS.keys()
+
+        # Initialize the A (12x3) and b (12x1) matrices with zeros.
+        A = np.zeros((12, 3))
+        b = np.zeros((12, 1))
+
+        # Loop through each of the 6 wheels to populate the matrices.
+        for i, name in enumerate(wheel_names):
+            # Get the wheel's position, speed, and steering angle.
+            x_i, y_i = WHEEL_LOCATIONS[name]
+            v_i = wheel_drive_speeds[name]
+            delta_i = wheel_steer_angles[name]
+
+            # Calculate the starting row index for this wheel in the matrices.
+            # Each wheel contributes two rows.
+            row_start = i * 2
+
+            # --- Populate the A matrix for the current wheel ---
+            # Equation for the x-component of the wheel's velocity:
+            # v_ix = v_bx - omega_b * y_i
+            A[row_start, 0] = 1
+            A[row_start, 1] = 0
+            A[row_start, 2] = -y_i
+
+            # Equation for the y-component of the wheel's velocity:
+            # v_iy = v_by + omega_b * x_i
+            A[row_start + 1, 0] = 0
+            A[row_start + 1, 1] = 1
+            A[row_start + 1, 2] = x_i
+
+            # --- Populate the b vector for the current wheel ---
+            # The observed x-component of the wheel's velocity vector.
+            b[row_start, 0] = v_i * np.cos(delta_i)
+
+            # The observed y-component of the wheel's velocity vector.
+            b[row_start + 1, 0] = v_i * np.sin(delta_i)
+
+        # --- Solve the system A * x = b for x ---
+        # We use the Moore-Penrose pseudo-inverse (np.linalg.pinv) because it's
+        # numerically stable and finds the best-fit (least-squares) solution
+        # for an overdetermined system.
+        # The solution x will be the [v_bx, v_by, omega_b] vector.
+        try:
+            body_vel_solution = np.linalg.pinv(A) @ b
+        except np.linalg.LinAlgError:
+            # This is unlikely but good practice to handle.
+            # It could happen if A is a singular matrix (e.g., all wheels at the origin).
+            return np.zeros(3)
+
+        # Return as a 1D array [v_bx, v_by, omega_b]
+        return body_vel_solution.flatten()
+
     def predict_with_dynamics_model(self, imu_data: IMUData):
         """
         Predicts the next state using a constant acceleration model.
@@ -190,7 +274,7 @@ class KalmanFilter:
         # Update the last timestamp
         self.last_timestamp = imu_data.timestamp
 
-    def predict_with_kinematics_model(self, left_vel: float, right_vel: float, timestamp: float):
+    def predict_with_diff_drive_kinematics_model(self, left_vel: float, right_vel: float, timestamp: float):
         """
         Predicts the next state using a differential drive kinematics model.
         left_vel and right_vel are wheel velocities in mm/s.
@@ -234,7 +318,7 @@ class KalmanFilter:
         F[4, 2] = V * np.cos(theta_new) * (W*dt)
         # Omega is determined entirely by input W.
 
-        # --- 4. Predict the covariance ---
+        # --- 4. Update the covariance ---
         self.P = F @ self.P @ F.T + self.Q
         self.last_timestamp = timestamp
 
@@ -261,7 +345,7 @@ class KalmanFilter:
         self.state = RobotState(x_new, y_new, theta_new,
                                 vx_global, vy_global, omega)
 
-        # --- 4. Update Covariance (Jacobian F is more complex now) ---
+        # --- 3. Calculate the Jacobian ---
         # The Jacobian F must be re-derived for this new state transition.
         # For example, dx'/dtheta = (-vx*sin(heading) - vy*cos(heading)) * dt
         # Note: This is a simplified Jacobian. A full derivation is more involved.
@@ -274,6 +358,75 @@ class KalmanFilter:
         F[1, 4] = dt  # dy'/dvy
         F[2, 5] = dt  # dtheta'/domega
 
+        # --- 4. Update the covariance ---
+        self.P = F @ self.P @ F.T + self.Q
+        self.last_timestamp = timestamp
+
+    def predict_with_rocker_bogie_kinematics_model(
+            self,
+            wheel_drive_speeds: dict[str, float],
+            wheel_steer_angles: dict[str, float],
+            timestamp: float):
+        """Predict the state using the rocker-bogie kinematics model.
+
+        Wheel names: ["front_left", "middle_left", "rear_left",
+                      "front_right", "middle_right", "rear_right"]
+
+        Args:
+            wheel_drive_speeds (dict[str, float]): The drive speeds for each wheel using their names as the keys.
+            wheel_steer_angles (dict[str, float]): The steer angles for each wheel.
+            timestamp (float): The current timestamp.
+        """
+        dt = timestamp - self.last_timestamp
+        if dt <= 0:
+            print(
+                "Warning: Non-positive time difference in mecanum kinematics prediction.")
+            return
+
+        # --- 1. Calculate the wheel velocities in the robot frame ---
+        robot_velocity = self.rocker_bogie_forward_kinematics(
+            wheel_drive_speeds, wheel_steer_angles
+        )
+        vx, vy, omega = robot_velocity[0], robot_velocity[1], robot_velocity[2]
+        # Convert to global frame
+        heading = self.state.theta
+        sin_heading = np.sin(heading)
+        cos_heading = np.cos(heading)
+        vx_global = vx * cos_heading - vy * sin_heading
+        vy_global = vx * sin_heading + vy * cos_heading
+
+        # --- 2. Predict new state ---
+        x_new = self.state.x + vx_global * dt
+        y_new = self.state.y + vy_global * dt
+        theta_new = self.normalize_angle(self.state.theta + omega * dt)
+
+        # Update state with new values. The new velocities are the global velocities.
+        self.state = RobotState(x_new, y_new, theta_new,
+                                vx_global, vy_global, omega)
+
+        # --- 3. Calculate Jacobian ---
+        F = np.eye(6)
+        # Partial derivative of new position w.r.t old orientation (theta)
+        # This comes from the chain rule on the coordinate transformation.
+        # d(x')/d(theta) = (-vx*sin(h) - vy*cos(h)) * dt
+        F[0, 2] = (-vx * sin_heading - vy * cos_heading) * dt
+        # d(y')/d(theta) = (vx*cos(h) - vy*sin(h)) * dt
+        F[1, 2] = (vx * cos_heading - vy * sin_heading) * dt
+
+        # Partial derivative of new velocity w.r.t old orientation (theta)
+        # d(vx_global)/d(theta) = -vx*sin(h) - vy*cos(h)
+        F[3, 2] = -vx * sin_heading - vy * cos_heading
+        # d(vy_global)/d(theta) = vx*cos(h) - vy*sin(h)
+        F[4, 2] = vx * cos_heading - vy * sin_heading
+
+        # In this kinematic model, the new velocities and angular rate depend only
+        # on the control inputs (wheel speeds), not the previous velocities.
+        # Therefore, the derivatives of the new velocities w.r.t old velocities are 0.
+        F[3, 3] = F[3, 4] = F[3, 5] = 0.0
+        F[4, 3] = F[4, 4] = F[4, 5] = 0.0
+        F[5, 3] = F[5, 4] = F[5, 5] = 0.0
+
+        # --- 4. Update the covariance ---
         self.P = F @ self.P @ F.T + self.Q
         self.last_timestamp = timestamp
 
@@ -315,89 +468,61 @@ class KalmanFilter:
 
 
 if __name__ == "__main__":
-    # --- Simulation Setup ---
-    # Initial state and time
     initial_timestamp = 0.0
     initial_state = RobotState(
-        x=0, y=0, theta=np.pi/4, vx=100.0, vy=0, omega=0.2
-    )
-
-    # Let's adjust initial velocities to match the initial theta for a smooth start
-    V = 100.0  # Speed in the robot's forward direction
+        x=0, y=0, theta=np.pi/4, vx=100.0, vy=0, omega=0.2)
+    V = 100.0
     initial_state.vx = V * np.cos(initial_state.theta)
     initial_state.vy = V * np.sin(initial_state.theta)
 
     kf_dynamic_model = KalmanFilter(initial_state, initial_timestamp)
     kf_kinematic_model = KalmanFilter(initial_state, initial_timestamp)
     kf_mecanum_model = KalmanFilter(initial_state, initial_timestamp)
+    kf_rocker_bogie_model = KalmanFilter(initial_state, initial_timestamp)
 
-    # Lists to store data for plotting
     timestamps = [initial_timestamp]
     estimated_states_dynamic = [kf_dynamic_model.state.to_array().copy()]
     estimated_states_kinematic = [kf_kinematic_model.state.to_array().copy()]
     estimated_states_mecanum = [kf_mecanum_model.state.to_array().copy()]
+    estimated_states_rocker_bogie = [
+        kf_rocker_bogie_model.state.to_array().copy()]
     true_states = [initial_state.to_array().copy()]
     odom_readings_dynamic = []
     odom_readings_kinematic = []
     odom_readings_mecanum = []
+    odom_readings_rocker_bogie = []
     robot_state_history: dict[str, list[RobotState]] = {
-        "dynamic": [],
-        "kinematic": [],
-        "mecanum": []
+        "dynamic": [], "kinematic": [], "mecanum": [], "rocker_bogie": []
     }
 
-    # Simulation parameters
-    total_time = 10.0  # Total simulation time [seconds]
+    total_time = 10.0
     dt = 0.1
     num_steps = int(total_time / dt)
 
-    # --- Simulation Loop ---
     for i in range(1, num_steps + 1):
         timestamp = i * dt
-
-        # 1. Define True Motion (a cubic trajectory)
-        # Create a cubic path from (0,0) to (1000,1000) with interesting curvature
-        # Using parametric equations based on time progression
-
-        # Get previous true state
         last_true_state = true_states[-1]
-
-        # Define trajectory parameters
-        total_distance = 2000.0  # Total distance to travel [mm]
-        progress = timestamp / total_time  # Progress from 0 to 1
-
-        # Dynamically calculate coefficients for cubic trajectory
-        v_0 = 20.0  # Initial velocity [mm/s]
-        v_1 = 0.0  # Final velocity [mm/s]
-
-        # Solve for coefficients using boundary conditions
-        # x(0) = 0, x(1) = total_distance, dx/dt(0) = v_0, dx/dt(1) = v_1
+        total_distance = 2000.0
+        progress = timestamp / total_time
+        v_0 = 20.0
+        v_1 = 0.0
         A = 2 * total_distance - v_0 - v_1
         B = -3 * total_distance + 2 * v_0 + v_1
         C = v_0
-        D = 0.0    # Constant term
-
-        # Calculate position
+        D = 0.0
         true_x_new = A * (progress**3) + B * (progress**2) + C * progress + D
         true_y_new = total_distance * progress
-
-        # Calculate velocities (derivatives with respect to time)
         dt_dprogress = dt / total_time
         dx_dt = (3*A*(progress**2) + 2*B*progress + C) * (1/total_time)
         dy_dt = total_distance / total_time
-
         true_vx_new = dx_dt
         true_vy_new = dy_dt
         actual_speed = np.sqrt(true_vx_new**2 + true_vy_new**2)
-
-        # Calculate heading and angular velocity
         true_theta_new = np.arctan2(true_vy_new, true_vx_new)
 
-        # Calculate angular velocity from change in heading
         if len(true_states) > 0:
             last_theta = last_true_state[2]
             theta_change = true_theta_new - last_theta
-            # Normalize angle difference
             while theta_change > np.pi:
                 theta_change -= 2*np.pi
             while theta_change < -np.pi:
@@ -406,37 +531,51 @@ if __name__ == "__main__":
         else:
             true_omega = 0.0
 
-        # Calculate accelerations
         if len(true_states) > 0:
             last_speed = np.sqrt(last_true_state[3]**2 + last_true_state[4]**2)
             speed_change = actual_speed - last_speed
-            true_acc_x = speed_change / dt  # Tangential acceleration
-            # Centripetal acceleration
+            true_acc_x = speed_change / dt
             true_acc_y = actual_speed * abs(true_omega)
         else:
-            true_acc_x = 0.0
-            true_acc_y = 0.0
+            true_acc_x, true_acc_y = 0.0, 0.0
 
         current_true_state = np.array(
             [true_x_new, true_y_new, true_theta_new, true_vx_new, true_vy_new, true_omega])
         true_states.append(current_true_state)
 
-        # 2. Prediction Step
-        # Create IMU data object for prediction (using true acceleration as control input)
         predict_imu = IMUData(
             acc_x=true_acc_x, acc_y=true_acc_y, gyro_z=0, timestamp=timestamp)
         kf_dynamic_model.predict_with_dynamics_model(predict_imu)
 
-        # For kinematic model, calculate wheel velocities from robot motion
         robot_speed = np.sqrt(true_vx_new**2 + true_vy_new**2)
-        kf_kinematic_model.predict_with_kinematics_model(
+        kf_kinematic_model.predict_with_diff_drive_kinematics_model(
             left_vel=robot_speed - (true_omega * WHEEL_BASE / 2),
             right_vel=robot_speed + (true_omega * WHEEL_BASE / 2),
             timestamp=timestamp
         )
+        # Rocker-bogie uses wheel speeds and steering angles for the 2 front and 2 rear wheels
+        # Generate Rocker-Bogie wheel inputs from true motion
+        body_vx = true_vx_new * \
+            np.cos(last_theta) + true_vy_new * np.sin(last_theta)
+        turn_radius = np.inf if abs(
+            true_omega) < 1e-6 else body_vx / true_omega
+        steer_angle = 0 if not np.isfinite(turn_radius) else np.arctan(
+            TRACK_WIDTH / (2 * turn_radius))
 
-        # For mecanum model, calculate wheel velocities from robot body velocities
-        # Convert global velocities to robot body frame
+        drive_speed = body_vx
+        wheel_drive_speeds = {
+            name: drive_speed for name in WHEEL_LOCATIONS.keys()}
+        wheel_steer_angles = {
+            "front_left": steer_angle, "middle_left": 0, "rear_left": -steer_angle,
+            "front_right": steer_angle, "middle_right": 0, "rear_right": -steer_angle
+        }
+
+        kf_rocker_bogie_model.predict_with_rocker_bogie_kinematics_model(
+            wheel_drive_speeds,
+            wheel_steer_angles,
+            timestamp
+        )
+
         robot_heading = true_theta_new
         body_vx = true_vx_new * \
             np.cos(robot_heading) + true_vy_new * np.sin(robot_heading)
@@ -445,79 +584,64 @@ if __name__ == "__main__":
         wheel_velocities = kf_mecanum_model.mecanum_inverse_kinematics(
             body_vx, body_vy, true_omega)
         kf_mecanum_model.predict_with_mecanum_kinematics_model(
-            wheel_vels=wheel_velocities.tolist(),
-            timestamp=timestamp
-        )
+            wheel_vels=wheel_velocities.tolist(), timestamp=timestamp)
 
-        # 3. Correction Step (with noisy sensor data)
-        # Create noisy Odometry measurement
-        odom_noise_dynamic_model = np.random.multivariate_normal(
+        # Correction Step
+        odom_noise_dynamic = np.random.multivariate_normal(
             np.zeros(3), kf_dynamic_model.R_odom)
         odom_noise_kinematic = np.random.multivariate_normal(
             np.zeros(3), kf_kinematic_model.R_odom)
         odom_noise_mecanum = np.random.multivariate_normal(
             np.zeros(3), kf_mecanum_model.R_odom)
-        odom_data_dynamic_model = OdomData(
-            x=true_x_new + odom_noise_dynamic_model[0],
-            y=true_y_new + odom_noise_dynamic_model[1],
-            theta=kf_dynamic_model.normalize_angle(
-                true_theta_new + odom_noise_dynamic_model[2]),
-            timestamp=timestamp
-        )
-        odom_data_kinematic_model = OdomData(
-            x=true_x_new + odom_noise_kinematic[0],
-            y=true_y_new + odom_noise_kinematic[1],
-            theta=kf_kinematic_model.normalize_angle(
-                true_theta_new + odom_noise_kinematic[2]),
-            timestamp=timestamp
-        )
-        odom_data_mecanum_model = OdomData(
-            x=true_x_new + odom_noise_mecanum[0],
-            y=true_y_new + odom_noise_mecanum[1],
-            theta=kf_mecanum_model.normalize_angle(
-                true_theta_new + odom_noise_mecanum[2]),
-            timestamp=timestamp
-        )
-        kf_dynamic_model.update_odom(odom_data_dynamic_model)
-        kf_kinematic_model.update_odom(odom_data_kinematic_model)
-        kf_mecanum_model.update_odom(odom_data_mecanum_model)
-        odom_readings_dynamic.append(
-            [odom_data_dynamic_model.odom_x, odom_data_dynamic_model.odom_y])
-        odom_readings_kinematic.append(
-            [odom_data_kinematic_model.odom_x, odom_data_kinematic_model.odom_y])
-        odom_readings_mecanum.append(
-            [odom_data_mecanum_model.odom_x, odom_data_mecanum_model.odom_y])
+        odom_noise_rocker_bogie = np.random.multivariate_normal(
+            np.zeros(3), kf_rocker_bogie_model.R_odom)
 
-        # Create noisy IMU measurement
-        imu_gyro_noise_dynamic_model = np.random.normal(
+        odom_data_dynamic = OdomData(x=true_x_new + odom_noise_dynamic[0], y=true_y_new + odom_noise_dynamic[1],
+                                     theta=kf_dynamic_model.normalize_angle(true_theta_new + odom_noise_dynamic[2]), timestamp=timestamp)
+        odom_data_kinematic = OdomData(x=true_x_new + odom_noise_kinematic[0], y=true_y_new + odom_noise_kinematic[1],
+                                       theta=kf_kinematic_model.normalize_angle(true_theta_new + odom_noise_kinematic[2]), timestamp=timestamp)
+        odom_data_mecanum = OdomData(x=true_x_new + odom_noise_mecanum[0], y=true_y_new + odom_noise_mecanum[1],
+                                     theta=kf_mecanum_model.normalize_angle(true_theta_new + odom_noise_mecanum[2]), timestamp=timestamp)
+        odom_data_rocker_bogie = OdomData(x=true_x_new + odom_noise_rocker_bogie[0], y=true_y_new + odom_noise_rocker_bogie[1],
+                                          theta=kf_rocker_bogie_model.normalize_angle(true_theta_new + odom_noise_rocker_bogie[2]), timestamp=timestamp)
+
+        kf_dynamic_model.update_odom(odom_data_dynamic)
+        kf_kinematic_model.update_odom(odom_data_kinematic)
+        kf_mecanum_model.update_odom(odom_data_mecanum)
+        kf_rocker_bogie_model.update_odom(odom_data_rocker_bogie)
+
+        odom_readings_dynamic.append(
+            [odom_data_dynamic.odom_x, odom_data_dynamic.odom_y])
+        odom_readings_kinematic.append(
+            [odom_data_kinematic.odom_x, odom_data_kinematic.odom_y])
+        odom_readings_mecanum.append(
+            [odom_data_mecanum.odom_x, odom_data_mecanum.odom_y])
+        odom_readings_rocker_bogie.append(
+            [odom_data_rocker_bogie.odom_x, odom_data_rocker_bogie.odom_y])
+
+        imu_gyro_noise_dynamic = np.random.normal(
             0, np.sqrt(kf_dynamic_model.R_imu[0, 0]))
-        imu_gyro_noise_kinematic_model = np.random.normal(
+        imu_gyro_noise_kinematic = np.random.normal(
             0, np.sqrt(kf_kinematic_model.R_imu[0, 0]))
-        imu_gyro_noise_mecanum_model = np.random.normal(
+        imu_gyro_noise_mecanum = np.random.normal(
             0, np.sqrt(kf_mecanum_model.R_imu[0, 0]))
-        update_imu_dynamic = IMUData(
-            acc_x=true_acc_x,  # Accelerations not used in update
-            acc_y=true_acc_y,
-            gyro_z=true_omega + imu_gyro_noise_dynamic_model,
-            timestamp=timestamp
-        )
-        update_imu_kinematic = IMUData(
-            acc_x=true_acc_x,
-            acc_y=true_acc_y,
-            gyro_z=true_omega + imu_gyro_noise_kinematic_model,
-            timestamp=timestamp
-        )
-        update_imu_mecanum = IMUData(
-            acc_x=true_acc_x,
-            acc_y=true_acc_y,
-            gyro_z=true_omega + imu_gyro_noise_mecanum_model,
-            timestamp=timestamp
-        )
+        imu_gyro_noise_rocker_bogie = np.random.normal(
+            0, np.sqrt(kf_rocker_bogie_model.R_imu[0, 0]))
+
+        update_imu_dynamic = IMUData(acc_x=true_acc_x, acc_y=true_acc_y,
+                                     gyro_z=true_omega + imu_gyro_noise_dynamic, timestamp=timestamp)
+        update_imu_kinematic = IMUData(acc_x=true_acc_x, acc_y=true_acc_y,
+                                       gyro_z=true_omega + imu_gyro_noise_kinematic, timestamp=timestamp)
+        update_imu_mecanum = IMUData(acc_x=true_acc_x, acc_y=true_acc_y,
+                                     gyro_z=true_omega + imu_gyro_noise_mecanum, timestamp=timestamp)
+        update_imu_rocker_bogie = IMUData(
+            acc_x=true_acc_x, acc_y=true_acc_y, gyro_z=true_omega + imu_gyro_noise_rocker_bogie, timestamp=timestamp)
+
         kf_dynamic_model.update_imu(update_imu_dynamic)
         kf_kinematic_model.update_imu(update_imu_kinematic)
         kf_mecanum_model.update_imu(update_imu_mecanum)
+        kf_rocker_bogie_model.update_imu(update_imu_rocker_bogie)
 
-        # Store results for plotting
         timestamps.append(timestamp)
         estimated_states_dynamic.append(
             kf_dynamic_model.state.to_array().copy())
@@ -525,170 +649,110 @@ if __name__ == "__main__":
             kf_kinematic_model.state.to_array().copy())
         estimated_states_mecanum.append(
             kf_mecanum_model.state.to_array().copy())
+        estimated_states_rocker_bogie.append(
+            kf_rocker_bogie_model.state.to_array().copy())
 
-        # Save history for drawing the robot later
         if i % 20 == 0:
             robot_state_history["dynamic"].append(kf_dynamic_model.state)
             robot_state_history["kinematic"].append(kf_kinematic_model.state)
             robot_state_history["mecanum"].append(kf_mecanum_model.state)
+            robot_state_history["rocker_bogie"].append(
+                kf_rocker_bogie_model.state)
 
-    # --- Plotting ---
     estimated_states_dynamic = np.array(estimated_states_dynamic)
     estimated_states_kinematic = np.array(estimated_states_kinematic)
     estimated_states_mecanum = np.array(estimated_states_mecanum)
+    estimated_states_rocker_bogie = np.array(estimated_states_rocker_bogie)
     true_states = np.array(true_states)
     odom_readings_dynamic = np.array(odom_readings_dynamic)
     odom_readings_kinematic = np.array(odom_readings_kinematic)
     odom_readings_mecanum = np.array(odom_readings_mecanum)
+    odom_readings_rocker_bogie = np.array(odom_readings_rocker_bogie)
 
-    # Plot Robot Trajectory Comparison
+    # --- Plotting ---
+
+    # Plot 1: Dynamic Model
     plt.figure(figsize=(12, 10))
     plt.plot(true_states[:, 0], true_states[:, 1], 'g-',
              linewidth=6, alpha=0.8, label='True Path')
-    plt.plot(estimated_states_dynamic[:, 0], estimated_states_dynamic[:, 1], 'b-',
-             linewidth=2, alpha=0.6, label='Dynamic Model KF')
-    plt.plot(estimated_states_kinematic[:, 0], estimated_states_kinematic[:, 1], 'r-',
-             linewidth=2, alpha=0.6, label='Kinematic Model KF')
-    plt.plot(estimated_states_mecanum[:, 0], estimated_states_mecanum[:, 1], 'm-',
-             linewidth=2, alpha=0.6, label='Mecanum Model KF')
+    plt.plot(estimated_states_dynamic[:, 0], estimated_states_dynamic[:,
+             1], 'b-', linewidth=2, alpha=0.6, label='Dynamic Model KF')
     plt.scatter(odom_readings_dynamic[:, 0], odom_readings_dynamic[:, 1],
-                c='orange', marker='x', s=60, alpha=0.8, label='Noisy Odometry (Dynamic)')
-    plt.scatter(odom_readings_kinematic[:, 0], odom_readings_kinematic[:, 1],
-                c='purple', marker='+', s=60, alpha=0.8, label='Noisy Odometry (Kinematic)')
-    plt.scatter(odom_readings_mecanum[:, 0], odom_readings_mecanum[:, 1],
-                c='cyan', marker='o', s=30, alpha=0.8, label='Noisy Odometry (Mecanum)')
-    # At each RobotState in the histories, draw the robot on the same plot
-    ax = plt.gca()
-    from draw_rocker_bogie import draw_robot_at_state
-    # for state in robot_state_history["dynamic"]:
-    #     draw_robot_at_state(ax, state, color='blue')
-    for state in robot_state_history["kinematic"]:
-        draw_robot_at_state(ax, False, x=state.x, y=state.y, theta=state.theta,
-                            vx=state.vx, vy=state.vy, omega=state.omega)
-    # for state in robot_state_history["mecanum"]:
-    #     draw_robot_at_state(ax, state, color='magenta')
+                c='orange', marker='x', s=60, alpha=0.8, label='Noisy Odometry')
     plt.xlabel('x [mm]')
     plt.ylabel('y [mm]')
-    plt.title('Robot Trajectory Estimation: Dynamic vs Kinematic vs Mecanum Models')
+    plt.title('Robot Trajectory Estimation: Dynamic Model')
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.axis('equal')
     plt.tight_layout()
     plt.savefig(os.path.join(
-        PLOTS_DIR, 'robot_trajectory_comparison.png'), dpi=300
-    )
-    plt.show()
+        PLOTS_DIR, 'robot_trajectory_dynamic_model.png'), dpi=300)
+    plt.close()
 
-    # Plot individual states comparison
-    fig, axes = plt.subplots(3, 2, figsize=(16, 14), sharex=True)
-    state_labels = ['x [mm]', 'y [mm]', 'theta [rad]',
-                    'vx [mm/s]', 'vy [mm/s]', 'omega [rad/s]']
-    for i, (ax, label) in enumerate(zip(axes.flat, state_labels)):
-        ax.plot(timestamps, true_states[:, i], 'g-',
-                linewidth=3, alpha=0.7, label='True')
-        ax.plot(timestamps, estimated_states_dynamic[:, i],
-                'b-', linewidth=2, label='Dynamic Model KF')
-        ax.plot(timestamps, estimated_states_kinematic[:, i],
-                'r-', linewidth=2, label='Kinematic Model KF')
-        ax.plot(timestamps, estimated_states_mecanum[:, i],
-                'm-', linewidth=2, label='Mecanum Model KF')
-        ax.set_ylabel(label)
-        ax.set_title(f'Evolution of State: {label}')
-        ax.grid(True, linestyle='--', alpha=0.6)
-        ax.legend()
-    axes.flat[-1].set_xlabel('Time [s]')
-    axes.flat[-2].set_xlabel('Time [s]')
-    fig.suptitle(
-        'Kalman Filter State Evolution: Dynamic vs Kinematic vs Mecanum Models', fontsize=16)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.96])
+    # Plot 2: Diff-Drive Kinematic Model
+    plt.figure(figsize=(12, 10))
+    plt.plot(true_states[:, 0], true_states[:, 1], 'g-',
+             linewidth=6, alpha=0.8, label='True Path')
+    plt.plot(estimated_states_kinematic[:, 0], estimated_states_kinematic[:, 1],
+             'r-', linewidth=2, alpha=0.6, label='Diff-Drive Kinematic Model KF')
+    plt.scatter(odom_readings_kinematic[:, 0], odom_readings_kinematic[:, 1],
+                c='purple', marker='+', s=60, alpha=0.8, label='Noisy Odometry')
+    plt.xlabel('x [mm]')
+    plt.ylabel('y [mm]')
+    plt.title('Robot Trajectory Estimation: Diff-Drive Kinematic Model')
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.axis('equal')
+    plt.tight_layout()
     plt.savefig(os.path.join(
-        PLOTS_DIR, 'kalman_filter_states_comparison.png'), dpi=300)
-    plt.show()
+        PLOTS_DIR, 'robot_trajectory_diff_drive_kinematic.png'), dpi=300)
+    plt.close()
 
-    # Plot error comparison
-    fig, axes = plt.subplots(3, 2, figsize=(16, 14), sharex=True)
-    error_dynamic = estimated_states_dynamic - true_states
-    error_kinematic = estimated_states_kinematic - true_states
-    error_mecanum = estimated_states_mecanum - true_states
-
-    # Normalize angle errors
-    error_dynamic[:, 2] = np.array(
-        [kf_dynamic_model.normalize_angle(e) for e in error_dynamic[:, 2]])
-    error_kinematic[:, 2] = np.array(
-        [kf_kinematic_model.normalize_angle(e) for e in error_kinematic[:, 2]])
-    error_mecanum[:, 2] = np.array(
-        [kf_mecanum_model.normalize_angle(e) for e in error_mecanum[:, 2]])
-
-    error_labels = ['x Error [mm]', 'y Error [mm]', 'theta Error [rad]',
-                    'vx Error [mm/s]', 'vy Error [mm/s]', 'omega Error [rad/s]']
-
-    for i, (ax, label) in enumerate(zip(axes.flat, error_labels)):
-        ax.plot(timestamps, error_dynamic[:, i], 'b-',
-                linewidth=2, label='Dynamic Model KF')
-        ax.plot(timestamps, error_kinematic[:, i], 'r-',
-                linewidth=2, label='Kinematic Model KF')
-        ax.plot(timestamps, error_mecanum[:, i], 'm-',
-                linewidth=2, label='Mecanum Model KF')
-        ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
-        ax.set_ylabel(label)
-        ax.set_title(f'Estimation Error: {label}')
-        ax.grid(True, linestyle='--', alpha=0.6)
-        ax.legend()
-
-    axes.flat[-1].set_xlabel('Time [s]')
-    axes.flat[-2].set_xlabel('Time [s]')
-    fig.suptitle(
-        'Kalman Filter Estimation Errors: Dynamic vs Kinematic vs Mecanum Models', fontsize=16)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.96])
+    # Plot 3: Mecanum Kinematic Model
+    plt.figure(figsize=(12, 10))
+    plt.plot(true_states[:, 0], true_states[:, 1], 'g-',
+             linewidth=6, alpha=0.8, label='True Path')
+    plt.plot(estimated_states_mecanum[:, 0], estimated_states_mecanum[:,
+             1], 'm-', linewidth=2, alpha=0.6, label='Mecanum Model KF')
+    plt.scatter(odom_readings_mecanum[:, 0], odom_readings_mecanum[:, 1],
+                c='cyan', marker='o', s=30, alpha=0.8, label='Noisy Odometry')
+    plt.xlabel('x [mm]')
+    plt.ylabel('y [mm]')
+    plt.title('Robot Trajectory Estimation: Mecanum Kinematic Model')
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.axis('equal')
+    plt.tight_layout()
     plt.savefig(os.path.join(
-        PLOTS_DIR, 'kalman_filter_errors_comparison.png'), dpi=300)
-    plt.show()
+        PLOTS_DIR, 'robot_trajectory_mecanum_kinematic.png'), dpi=300)
+    plt.close()
 
-    # Print performance metrics
-    rmse_dynamic = np.sqrt(np.mean(error_dynamic**2, axis=0))
-    rmse_kinematic = np.sqrt(np.mean(error_kinematic**2, axis=0))
-    rmse_mecanum = np.sqrt(np.mean(error_mecanum**2, axis=0))
-
-    # Prepare performance summary text
-    summary_lines = []
-    summary_lines.append("\n" + "="*75)
-    summary_lines.append("KALMAN FILTER PERFORMANCE COMPARISON")
-    summary_lines.append("="*75)
-    summary_lines.append(
-        f"{'State':<15} {'Dynamic RMSE':<15} {'Kinematic RMSE':<15} {'Mecanum RMSE':<15} {'Best Model'}")
-    summary_lines.append("-"*75)
-
-    state_names = ['x [mm]', 'y [mm]', 'theta [rad]',
-                   'vx [mm/s]', 'vy [mm/s]', 'omega [rad/s]']
-    for i, state_name in enumerate(state_names):
-        rmse_values = [rmse_dynamic[i], rmse_kinematic[i], rmse_mecanum[i]]
-        model_names = ["Dynamic", "Kinematic", "Mecanum"]
-        best_model = model_names[np.argmin(rmse_values)]
-        summary_lines.append(
-            f"{state_name:<15} {rmse_dynamic[i]:<15.3f} {rmse_kinematic[i]:<15.3f} {rmse_mecanum[i]:<15.3f} {best_model}")
-
-    summary_lines.append("-"*75)
-    overall_rmse_dynamic = np.mean(rmse_dynamic)
-    overall_rmse_kinematic = np.mean(rmse_kinematic)
-    overall_rmse_mecanum = np.mean(rmse_mecanum)
-    overall_rmse_values = [overall_rmse_dynamic,
-                           overall_rmse_kinematic, overall_rmse_mecanum]
-    overall_model_names = ["Dynamic", "Kinematic", "Mecanum"]
-    overall_best = overall_model_names[np.argmin(overall_rmse_values)]
-    summary_lines.append(
-        f"{'Overall':<15} {overall_rmse_dynamic:<15.3f} {overall_rmse_kinematic:<15.3f} {overall_rmse_mecanum:<15.3f} {overall_best}")
-
-    # Print to terminal
-    for line in summary_lines:
-        print(line)
-
-    # Save to file
-    with open(os.path.join(PLOTS_DIR, "KF_results.txt"), "w") as f:
-        for line in summary_lines:
-            f.write(line + "\n")
+    # Plot 4: Rocker-Bogie Kinematic Model
+    plt.figure(figsize=(12, 10))
+    ax = plt.gca()
+    plt.plot(true_states[:, 0], true_states[:, 1], 'g-',
+             linewidth=6, alpha=0.8, label='True Path')
+    plt.plot(estimated_states_rocker_bogie[:, 0], estimated_states_rocker_bogie[:, 1],
+             'y-', linewidth=2, alpha=0.6, label='Rocker-Bogie Kinematic Model KF')
+    plt.scatter(odom_readings_rocker_bogie[:, 0], odom_readings_rocker_bogie[:, 1],
+                c='brown', marker='s', s=30, alpha=0.8, label='Noisy Odometry')
+    for state in robot_state_history["rocker_bogie"]:
+        draw_rocker_bogie_at_state(ax, show_text=False, x=state.x, y=state.y, theta=state.theta,
+                                   vx=state.vx, vy=state.vy, omega=state.omega)
+    plt.xlabel('x [mm]')
+    plt.ylabel('y [mm]')
+    plt.title('Robot Trajectory Estimation: Rocker-Bogie Kinematic Model')
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.axis('equal')
+    plt.tight_layout()
+    plt.savefig(os.path.join(
+        PLOTS_DIR, 'robot_trajectory_rocker_bogie_kinematic.png'), dpi=300)
+    plt.close()
 
     print(f"\nFigures saved successfully to '{PLOTS_DIR}/' directory:")
-    print("- robot_trajectory_comparison.png")
-    print("- kalman_filter_states_comparison.png")
-    print("- kalman_filter_errors_comparison.png")
-    print("- KF_results.txt")
+    print("- robot_trajectory_dynamic_model.png")
+    print("- robot_trajectory_diff_drive_kinematic.png")
+    print("- robot_trajectory_mecanum_kinematic.png")
+    print("- robot_trajectory_rocker_bogie_kinematic.png")

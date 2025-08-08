@@ -2,7 +2,6 @@
 # determining body frame velocities from wheel speeds
 # for a 6-wheeled rocker-bogie robot (e.g., Mars rovers).
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Constants
 WHEEL_RADIUS = 50  # The wheel radius [mm]
@@ -17,7 +16,11 @@ TRACK_WIDTH = 350
 # plus the rotational velocity ω_b around the center.
 # vix​ = vbx​−ωb​⋅yi​
 # viy​ = vby​+ωb​⋅xi
-
+# We also know what the wheel's velocity vector should be
+# based on its own drive speed v_i and steering angle δ_i:
+# vix​ = vi​cos(δi​)
+# viy​ = vi​sin(δi​)
+# Build a linear system of equations: A * x = b
 
 # Wheel locations: WHEEL_BASE is Y-axis (left-right), TRACK_WIDTH is X-axis (front-back)
 WHEEL_LOCATIONS = {
@@ -29,15 +32,8 @@ WHEEL_LOCATIONS = {
     "rear_right": (-TRACK_WIDTH / 2, -WHEEL_BASE / 2)     # Rear right
 }
 
-# We also know what the wheel's velocity vector should be
-# based on its own drive speed v_i and steering angle δ_i:
-# vix​ = vi​cos(δi​)
-# viy​ = vi​sin(δi​)
 
-# Build a linear system of equations: A * x = b
-
-
-def calculate_body_velocities(wheel_drive_speeds, wheel_steer_angles):
+def rocker_bogie_forward_kinematics(wheel_drive_speeds, wheel_steer_angles):
     """
     Calculates the robot's body frame velocities (v_bx, v_by, omega_b)
     for a 6-wheeled rocker-bogie using a least-squares fit.
@@ -120,7 +116,7 @@ if __name__ == '__main__':
     angles_straight = {'front_left': 0, 'front_right': 0,
                        'middle_left': 0, 'middle_right': 0, 'rear_left': 0, 'rear_right': 0}
 
-    body_vel_straight = calculate_body_velocities(
+    body_vel_straight = rocker_bogie_forward_kinematics(
         speeds_straight, angles_straight
     )
     print(
@@ -141,7 +137,7 @@ if __name__ == '__main__':
     angles_turn = {'front_left': -steer_angle, 'front_right': steer_angle,
                    'middle_left': 0, 'middle_right': 0, 'rear_left': steer_angle, 'rear_right': -steer_angle}
 
-    body_vel_turn = calculate_body_velocities(
+    body_vel_turn = rocker_bogie_forward_kinematics(
         speeds_turn, angles_turn)
     print(
         f"Calculated Body Velocity: [v_bx, v_by, omega_b] = {np.round(body_vel_turn, 2)}")
