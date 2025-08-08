@@ -1,5 +1,15 @@
 # Perseverance
-Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
+Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch and open-source including mechanical design, electronics, and software. The end goal of this project is to gain experience with mobile robotics concepts including SLAM, state estimation, and dynamic environment navigation.
+
+## Work In Progress
+This project is currently in progress and I'm currently focusing on the drive-base with the following tasks:
+
+- Building a Kalman Filter focusing on the kinematic model of a 6-wheel Mars Rover
+  - I have also implemented the filter for diff-drive, mecanum, and skid-steering kinematic models for the educational value.
+- Creating a data-driven layout for the physical robot, focusing on the important features such as: rocker-bogie assembly, rocker-bogie differential system, and the 4/6 independently steered wheels.
+- Architecting the ROS2 package to easily fit sensors and modularize the filter.
+
+---
 
 <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
   <img src="prototyping/rocker_bogie_diagram.png" alt="alt text" style="border-radius: 12px;">
@@ -8,6 +18,8 @@ Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch
 *This plot was generated with `draw_rocker_bogie.py`*
 
 *A lot of the math expressions aren't rendering correctly and can best be visualized by viewing the markdown render locally in an IDE (VS Code). It's a work in progress to create SVG images for each equation and display them once they are finalized...*
+
+---
 
 # Kalman Filtering for Rover State Estimation
 Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics. A kinematic model for a mecanum wheeled drive was also implemented.
