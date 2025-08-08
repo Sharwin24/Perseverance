@@ -1,3 +1,5 @@
+name: Auto-format C++ code, Build, and Test ROS Package
+
 on:
   push:
     branches:
