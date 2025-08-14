@@ -27,12 +27,12 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
 
   // Declare parameters
   double timer_freq = this->declare_parameter("timer_frequency", 100.0); // [Hz]
-  double initial_x = this->declare_parameter("initial_x", 0.0);
-  double initial_y = this->declare_parameter("initial_y", 0.0);
-  double initial_theta = this->declare_parameter("initial_theta", 0.0);
-  double initial_vx = this->declare_parameter("initial_vx", 0.0);
-  double initial_vy = this->declare_parameter("initial_vy", 0.0);
-  double initial_omega = this->declare_parameter("initial_omega", 0.0);
+  double initial_x = this->declare_parameter("initial_x", 0.0); // [m]
+  double initial_y = this->declare_parameter("initial_y", 0.0); // [m]
+  double initial_theta = this->declare_parameter("initial_theta", 0.0); // [rad]
+  double initial_vx = this->declare_parameter("initial_vx", 0.0); // [m/s]
+  double initial_vy = this->declare_parameter("initial_vy", 0.0); // [m/s]
+  double initial_omega = this->declare_parameter("initial_omega", 0.0); // [rad/s]
   double wheel_base = this->declare_parameter("wheel_base", 1.0); // [m]
   double wheel_radius = this->declare_parameter("wheel_radius", 0.05); // [m]
   double track_width = this->declare_parameter("track_width", 0.6); // [m]
