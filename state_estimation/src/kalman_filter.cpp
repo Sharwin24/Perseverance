@@ -2,7 +2,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <array>
 
-RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu imu, const long timestamp) {
+RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu imu) {
   const long imuTimestamp = imu.header.stamp.sec + imu.header.stamp.nanosec / 1e9;
   const long dt = imuTimestamp - this->previousPredictionTimeStamp;
   if (dt <= 0) {

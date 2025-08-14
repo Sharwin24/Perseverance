@@ -45,7 +45,7 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   // Raw Sensor Data (Subscribers)
   const auto rawDataQoS = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort().durability_volatile();
   // Filtered Sensor Data (Publishers)
-  const auto filteredDataQoS = rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile();
+  // const auto filteredDataQoS = rclcpp::QoS(rclcpp::KeepLast(10)).reliable().durability_volatile();
 
   // Initialize subscriptions
   this->imuSubscription = this->create_subscription<sensor_msgs::msg::Imu>(
