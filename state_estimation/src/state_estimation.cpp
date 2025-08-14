@@ -156,7 +156,26 @@ void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) 
   this->kalmanFilter.updateProcessNoiseCovariance(P_new);
 }
 
-void StateEstimator::timerCallback() {}
+void StateEstimator::timerCallback() {
+  // Run prediction model to update the current state estimate
+  switch (this->kalmanFilter.getPredictionModel()) {
+  case PredictionModel::DYNAMIC: {
+    // Predict using the dynamic model
+    const auto imu = this->imuSubscription->get_last_message();
+    if (imu) {
+      this->kalmanFilter.predictDynamicModel(*imu);
+    }
+    break;
+  }
+  case PredictionModel::KINEMATIC: {
+    // Predict using the kinematic model
+    const auto kinematicParams = KinematicModelInput(); // TODO: Get actual kinematic parameters
+    const long timestamp = this->now().seconds();
+    this->kalmanFilter.predictKinematicModel(kinematicParams, timestamp);
+    break;
+  }
+  }
+}
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);

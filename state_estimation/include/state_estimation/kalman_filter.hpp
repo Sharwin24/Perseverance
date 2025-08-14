@@ -292,6 +292,7 @@ public:
   Eigen::Matrix<double, 3, 3> odomMeasurementNoiseCovariance()  const { return this->covariance.odomMeasurementNoiseCovariance; }
   Eigen::Matrix<double, 1, 1> imuMeasurementNoiseCovariance() const { return this->covariance.imuMeasurementNoiseCovariance; }
   Eigen::Vector<double, 6> stateVector() const { return this->currentState.vec(); }
+  PredictionModel getPredictionModel() const { return this->predictionModel; }
 
   void updateState(Eigen::Vector<double, 6> X) { this->currentState = RobotState(X); }
   void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6> P) { this->covariance.setProcessNoiseCovariance(P); }
