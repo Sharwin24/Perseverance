@@ -104,7 +104,7 @@ def draw_robot_diagram():
     """
     Draw both top-down view and side view of the 6-wheeled rocker-bogie robot
     """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 9))
 
     # ===== LEFT SUBPLOT: TOP-DOWN VIEW =====
     ax = ax1
@@ -197,7 +197,7 @@ def draw_robot_diagram():
     ax.set_xlabel('X Position [mm]', fontsize=12)
     ax.set_ylabel('Y Position [mm]', fontsize=12)
     ax.set_title('Top View - Robot Body Frame',
-                 fontsize=14, weight='bold', pad=20)
+                 fontsize=14, weight='bold', pad=15)
 
     # Add legend
     legend_elements = [
@@ -318,7 +318,7 @@ def draw_robot_diagram():
     ax.set_xlabel('X Position [mm]', fontsize=12)
     ax.set_ylabel('Z Position [mm]', fontsize=12)
     ax.set_title('Side View - Rocker-Bogie Mechanism',
-                 fontsize=14, weight='bold', pad=20)
+                 fontsize=14, weight='bold', pad=15)
 
     # Add legend
     ax.legend(loc='upper right', fontsize=10)
@@ -417,7 +417,7 @@ def draw_rocker_bogie_at_state(ax, show_text: bool, x, y, theta, vx, vy, omega):
 
 
 if __name__ == "__main__":
-    # draw_robot_diagram()
+    draw_robot_diagram()
 
     # Create a new figure for trajectory visualization
     fig, ax = plt.subplots(figsize=(10, 10))
@@ -433,11 +433,10 @@ if __name__ == "__main__":
     ]
     for pos in test_robot_positions:
         draw_rocker_bogie_at_state(ax, True, *pos)
-        plt.title('Top-Down View of Rocker-Bogie Robot Trajectory')
+        plt.title('Top-Down View of Rocker-Bogie Robot in different states')
         plt.xlabel('X Position [mm]')
         plt.ylabel('Y Position [mm]')
         plt.grid(True)
         plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(f"top_down_rover.png",
                 dpi=300, bbox_inches='tight')
-    plt.show()
