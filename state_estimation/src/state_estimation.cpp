@@ -28,6 +28,9 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   double initial_vx = this->declare_parameter("initial_vx", 0.0);
   double initial_vy = this->declare_parameter("initial_vy", 0.0);
   double initial_omega = this->declare_parameter("initial_omega", 0.0);
+  double wheel_base = this->declare_parameter("wheel_base", 1.0); // [m]
+  double wheel_radius = this->declare_parameter("wheel_radius", 0.05); // [m]
+  double track_width = this->declare_parameter("track_width", 0.6); // [m]
   // Get parameters from yaml config file
   timer_freq = this->get_parameter("timer_frequency").as_double();
   initial_x = this->get_parameter("initial_x").as_double();
@@ -36,6 +39,9 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   initial_vx = this->get_parameter("initial_vx").as_double();
   initial_vy = this->get_parameter("initial_vy").as_double();
   initial_omega = this->get_parameter("initial_omega").as_double();
+  wheel_base = this->get_parameter("wheel_base").as_double();
+  wheel_radius = this->get_parameter("wheel_radius").as_double();
+  track_width = this->get_parameter("track_width").as_double();
   // Raw Sensor Data (Subscribers)
   const auto rawDataQoS = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort().durability_volatile();
   // Filtered Sensor Data (Publishers)
@@ -86,8 +92,15 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
     cov.imuMeasurementNoiseCovariance(0, 0)
   );
 
+  // Create Robot Constants
+  RobotConstants robotConstants(wheel_base, wheel_radius, track_width);
+
   // Setup Kalman Filter
-  this->kalmanFilter = KalmanFilter(PredictionModel::DYNAMIC, cov, initialState);
+  this->kalmanFilter = KalmanFilter(
+    robotConstants,
+    PredictionModel::DYNAMIC, KinematicModel::ROCKER_BOGIE,
+    cov, initialState
+  );
 
   this->timer = this->create_wall_timer(
     std::chrono::duration<double>(1.0 / timer_freq),
@@ -138,8 +151,7 @@ void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) 
   this->kalmanFilter.updateProcessNoiseCovariance(P_new);
 }
 
-void StateEstimator::timerCallback() {
-}
+void StateEstimator::timerCallback() {}
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);

@@ -261,6 +261,15 @@ struct RobotConstants {
   // MECANUM keys: {"front_left", "front_right", "rear_left", "rear_right"}
   // ROCKER_BOGIE keys: {"front_left", "front_right", "middle_left", "middle_right", "rear_left", "rear_right"}
   std::unordered_map<std::string, Eigen::Vector2d> wheelLocations;
+
+  RobotConstants() = default;
+  RobotConstants(const double wheelBase, const double wheelRadius, const double trackWidth)
+    : wheelBase(wheelBase), wheelRadius(wheelRadius), trackWidth(trackWidth) {
+    wheelLocations["front_left"] = Eigen::Vector2d(-trackWidth / 2.0, wheelBase / 2.0);
+    wheelLocations["front_right"] = Eigen::Vector2d(trackWidth / 2.0, wheelBase / 2.0);
+    wheelLocations["rear_left"] = Eigen::Vector2d(-trackWidth / 2.0, -wheelBase / 2.0);
+    wheelLocations["rear_right"] = Eigen::Vector2d(trackWidth / 2.0, -wheelBase / 2.0);
+  }
 };
 
 
@@ -285,9 +294,7 @@ public:
   Eigen::Vector<double, 6> stateVector() const { return this->currentState.vec(); }
 
   void updateState(Eigen::Vector<double, 6> X) { this->currentState = RobotState(X); }
-  void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6> P) {
-    this->covariance.setProcessNoiseCovariance(P);
-  }
+  void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6> P) { this->covariance.setProcessNoiseCovariance(P); }
 
 private:
   // Robot constants (e.g., wheel base, wheel radius, track width)
@@ -305,7 +312,7 @@ private:
   // The current robot's state estimation
   RobotState currentState;
   // The timestamp of the previous prediction [s]
-  long previousPredictionTimeStamp;
+  long previousPredictionTimeStamp = 0;
 
   Eigen::Matrix<double, 3, 4> mecanumForwardKinematics() const {
     // Calculate the forward kinematics matrix for a mecanum drive robot
