@@ -1,11 +1,16 @@
 /// @file state_estimation.cpp
-/// @brief State Estimation for mobile robot using Kalman Filter to fuse IMU and Odometry data.
+/// @brief State Estimation for mobile robot using Kalman Filter to fuse IMU and Odometry data
 ///
 /// PARAMETERS:
+///   timer_frequency (float64) : Frequency of the timer for updating the state estimate [Hz]
 ///
 /// PUBLISHERS:
+///   /sensors/filtered/imu (sensor_msgs::msg::Imu): Filtered IMU data
+///   /sensors/filtered/odom (nav_msgs::msg::Odometry): Filtered Odometry data
 ///
 /// SUBSCRIBERS:
+///   /sensors/raw/imu (sensor_msgs::msg::Imu): Raw IMU data
+///   /sensors/raw/odom (nav_msgs::msg::Odometry): Raw Odometry data
 ///
 /// SERVICES:
 ///
@@ -54,12 +59,12 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
     ODOMTopic, rawDataQoS, std::bind(&StateEstimator::odomCallback, this, std::placeholders::_1));
 
 
-  auto initialState = RobotState(
+  RobotState initialState(
     initial_x, initial_y, initial_theta,
     initial_vx, initial_vy, initial_omega
   );
 
-  RCLCPP_INFO(this->get_logger(), "Initial state set to: [%f, %f, %f, %f, %f, %f]",
+  RCLCPP_INFO(this->get_logger(), "Initial state set to: [x=%f, y=%f, theta=%f, vx=%f, vy=%f, omega=%f]",
     initial_x, initial_y, initial_theta, initial_vx, initial_vy, initial_omega
   );
 
