@@ -4,6 +4,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <mutex>
 
 #include "kalman_filter.hpp"
 
@@ -23,6 +24,10 @@ private:
   rclcpp::TimerBase::SharedPtr timer;
 
   KalmanFilter kalmanFilter;
+
+  // Cache of the latest IMU message for use in the timer
+  std::mutex imuMutex;
+  sensor_msgs::msg::Imu::SharedPtr lastImuMsg;
 };
 
 #endif // !STATE_ESTIMATION_HPP

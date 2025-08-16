@@ -114,6 +114,11 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
 }
 
 void StateEstimator::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
+  // Cache the latest IMU message
+  {
+    std::lock_guard<std::mutex> lock(this->imuMutex);
+    this->lastImuMsg = msg;
+  }
   // Save the measurement
   const double Z = msg->angular_velocity.z; // [rad/s]
   const auto H = this->kalmanFilter.imuMeasurementModel();
@@ -136,10 +141,9 @@ void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) 
   // Save measurement
   const auto odom = msg->pose.pose.position;
   const auto quat = msg->pose.pose.orientation;
-  /// TODO: Convert quaternion to yaw angle [Euler Z]
-  const Eigen::Quaternion orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
-  const double theta = orientation.toRotationMatrix().eulerAngles(0, 1, 2).z();
-  const auto Z = Eigen::Vector<double, 3>({odom.x, odom.y, theta});
+  const Eigen::Quaterniond orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
+  const double yaw = orientation.toRotationMatrix().eulerAngles(0, 1, 2).z();
+  const auto Z = Eigen::Vector<double, 3>({odom.x, odom.y, yaw});
   const auto H = this->kalmanFilter.odomMeasurementModel();
   const auto X = this->kalmanFilter.stateVector();
   // Calculate the innovation
@@ -161,7 +165,11 @@ void StateEstimator::timerCallback() {
   switch (this->kalmanFilter.getPredictionModel()) {
   case PredictionModel::DYNAMIC: {
     // Predict using the dynamic model
-    const auto imu = this->imuSubscription->get_last_message();
+    sensor_msgs::msg::Imu::SharedPtr imu;
+    {
+      std::lock_guard<std::mutex> lock(this->imuMutex);
+      imu = this->lastImuMsg;
+    }
     if (imu) {
       this->kalmanFilter.predictDynamicModel(*imu);
     }
