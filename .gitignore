@@ -7,4 +7,7 @@ build/
 install/
 log/
 
-*.pt
+prototyping/navigation_reinforcement_learning/checkpoints/
+prototyping/navigation_reinforcement_learning/eval_logs/
+prototyping/navigation_reinforcement_learning/logs/
+prototyping/navigation_reinforcement_learning/tb/

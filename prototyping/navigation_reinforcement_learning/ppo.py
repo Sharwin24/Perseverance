@@ -222,7 +222,7 @@ class PPOAgent:
             # Surrogate Objective Function (Loss Function)
             surrogate1 = ratio * advantages
             surrogate2 = torch.clamp(
-                ratio, 1 - self.epsilon_clip, 1 + self.epsilon_clip)
+                ratio, 1 - self.epsilon_clip, 1 + self.epsilon_clip) * advantages
 
             # Actor
             # Maximize the min of the two surrogates
