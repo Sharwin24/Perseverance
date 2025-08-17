@@ -178,8 +178,7 @@ void StateEstimator::timerCallback() {
   case PredictionModel::KINEMATIC: {
     // Predict using the kinematic model
     const auto kinematicParams = KinematicModelInput(); // TODO: Get actual kinematic parameters
-    const long timestamp = this->now().seconds();
-    this->kalmanFilter.predictKinematicModel(kinematicParams, timestamp);
+    this->kalmanFilter.predictKinematicModel(kinematicParams);
     break;
   }
   }

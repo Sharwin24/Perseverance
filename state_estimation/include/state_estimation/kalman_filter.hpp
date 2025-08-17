@@ -280,7 +280,7 @@ public:
     : robotConstants(robotConstants), predictionModel(predModel), kinematicModel(kinematicModel),
     systemModel(SystemModel(predModel, kinematicModel)), covariance(cov), currentState(initialState) {}
 
-  RobotState predictDynamicModel(const sensor_msgs::msg::Imu imu);
+  RobotState predictDynamicModel(const sensor_msgs::msg::Imu& imu);
 
   RobotState predictKinematicModel(const KinematicModelInput& kinematicParams);
 

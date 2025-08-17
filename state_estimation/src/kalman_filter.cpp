@@ -2,7 +2,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <array>
 
-RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu imu) {
+RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu& imu) {
   const double dt = this->computeDeltaTime(imu.header.stamp);
   if (dt <= 0) {
     RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "IMU message has non-positive timestamp difference. Skipping prediction");
@@ -15,11 +15,11 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu imu) {
   const double globalAccY = imu.linear_acceleration.x * std::sin(theta) + imu.linear_acceleration.y * std::cos(theta);
 
   // Acquire State Transition matrix (F) and Control Input Model (B)
-  const auto F = this->systemModel.getStateTransitionMatrix(dt);
-  const auto B = this->systemModel.getControlInputModel(dt);
+  const auto& F = this->systemModel.getStateTransitionMatrix(dt);
+  const auto& B = this->systemModel.getControlInputModel(dt);
 
   // Establish Control Vector (U)
-  const auto U = Eigen::Vector2d(globalAccX, globalAccY);
+  const auto& U = Eigen::Vector2d(globalAccX, globalAccY);
 
   // Predict the next state: x_pred = F * x + B * u
   Eigen::Vector<double, 6> predictedStateVector = F * this->currentState.vec() + B * U;
@@ -27,8 +27,8 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu imu) {
   RobotState predictedState(predictedStateVector);
 
   // Update the state covariance with the process noise and state transition matrix
-  const auto P = this->covariance.stateCovariance;
-  const auto Q = this->covariance.processNoiseCovariance;
+  const auto& P = this->covariance.stateCovariance;
+  const auto& Q = this->covariance.processNoiseCovariance;
   this->covariance.stateCovariance = F * P * F.transpose() + Q;
 
   // Update the previous prediction timestamp
@@ -73,13 +73,13 @@ RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocit
   }
 
   // Calculate kinematic inputs V (forward) and W (angular)
-  const auto V = (leftVelocity + rightVelocity) / 2.0; // Average velocity
-  const auto W = (rightVelocity - leftVelocity) / this->robotConstants.wheelBase; // Angular velocity
+  const double V = (leftVelocity + rightVelocity) / 2.0; // Average velocity
+  const double W = (rightVelocity - leftVelocity) / this->robotConstants.wheelBase; // Angular velocity
 
   // Predict new state with non-linear state transition function
-  const auto xOld = this->currentState.x;
-  const auto yOld = this->currentState.y;
-  const auto thetaOld = this->currentState.theta;
+  const double xOld = this->currentState.x;
+  const double yOld = this->currentState.y;
+  const double thetaOld = this->currentState.theta;
 
   // Update state using kinematic equations
   const double xNew = xOld + V * std::cos(thetaOld) * dt;
@@ -90,11 +90,11 @@ RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocit
   RobotState predictedState(xNew, yNew, thetaNew, vXNew, vYNew, W);
 
   // Calculate the Jacobian (F)
-  const auto F = this->systemModel.getStateTransitionMatrix(dt, V, W, thetaOld);
+  const auto& F = this->systemModel.getStateTransitionMatrix(dt, V, W, thetaOld);
 
   // Update the state covariance with the process noise and state transition matrix
-  const auto P = this->covariance.stateCovariance;
-  const auto Q = this->covariance.processNoiseCovariance;
+  const auto& P = this->covariance.stateCovariance;
+  const auto& Q = this->covariance.processNoiseCovariance;
   this->covariance.stateCovariance = F * P * F.transpose() + Q;
 
   // Update the previous prediction timestamp
@@ -138,11 +138,11 @@ RobotState KalmanFilter::predictMecanumKinematicModel(const std::unordered_map<s
   RobotState predictedState(xNew, yNew, thetaNew, globalVX, globalVY, globalOmega);
 
   // Calculate the Jacobian (F)
-  const auto F = this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY);
+  const auto& F = this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY);
 
   // Update the state covariance with the process noise and state transition matrix
-  const auto P = this->covariance.stateCovariance;
-  const auto Q = this->covariance.processNoiseCovariance;
+  const auto& P = this->covariance.stateCovariance;
+  const auto& Q = this->covariance.processNoiseCovariance;
   this->covariance.stateCovariance = F * P * F.transpose() + Q;
 
   // Update the previous prediction timestamp
@@ -187,11 +187,11 @@ RobotState KalmanFilter::predictRockerBogieKinematicModel(
   RobotState predictedState(xNew, yNew, thetaNew, globalVX, globalVY, globalOmega);
 
   // Calculate the Jacobian (F)
-  const auto F = this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY);
+  const auto& F = this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY);
 
   // Update the state covariance with the process noise and state transition matrix
-  const auto P = this->covariance.stateCovariance;
-  const auto Q = this->covariance.processNoiseCovariance;
+  const auto& P = this->covariance.stateCovariance;
+  const auto& Q = this->covariance.processNoiseCovariance;
   this->covariance.stateCovariance = F * P * F.transpose() + Q;
 
   // Update the previous prediction timestamp
