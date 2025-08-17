@@ -148,106 +148,25 @@ def parse_args():
     p.add_argument("--render", action="store_true",
                    help="Render pygame", default=False)
     p.add_argument("--render-fps", type=int, default=60)
-    # Evaluation options
-    p.add_argument("--eval-ckpt", type=str, default="",
-                   help="Path to a .pt checkpoint or a directory containing checkpoints to evaluate")
-    p.add_argument("--eval-episodes", type=int, default=5)
-    p.add_argument("--deterministic", action="store_true",
-                   help="Use mean action (no sampling) at eval")
     return p.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-
-    # Evaluation mode if a checkpoint path or directory is provided
-    if args.eval_ckpt:
-        def _find_latest(path: str) -> str:
-            if os.path.isdir(path):
-                cks = [f for f in os.listdir(path) if f.endswith(".pt")]
-                if not cks:
-                    raise FileNotFoundError(
-                        f"No .pt checkpoints found in {path}")
-                cks.sort()  # names are zero-padded; last is latest
-                return os.path.join(path, cks[-1])
-            return path
-
-        ckpt_path = _find_latest(args.eval_ckpt)
-        print(f"Evaluating checkpoint: {ckpt_path}")
-
-        # Load checkpoint
-        ckpt = torch.load(ckpt_path, map_location="cpu")
-        cfg = ckpt.get("config", {})
-        state_dim = cfg.get("state_dim", 3)
-        action_dim = cfg.get("action_dim", 2)
-        action_low = cfg.get("action_low", np.array(
-            [-1.0, -1.0], dtype=np.float32))
-        action_high = cfg.get("action_high", np.array(
-            [1.0, 1.0], dtype=np.float32))
-
-        agent = PPOAgent(
-            state_dim=state_dim,
-            action_dim=action_dim,
-            lr_actor=cfg.get("lr_actor", 3e-4),
-            lr_critic=cfg.get("lr_critic", 1e-3),
-            gamma=cfg.get("gamma", 0.995),
-            epsilon_clip=cfg.get("epsilon_clip", 0.2),
-            K_epochs=cfg.get("K_epochs", 10),
-            entropy_coef=cfg.get("entropy_coef", 0.01),
-            gae_lambda=cfg.get("gae_lambda", 0.98),
-            action_space_low=action_low,
-            action_space_high=action_high,
-        )
-        agent.actor.load_state_dict(ckpt["actor"])  # type: ignore[index]
-        agent.critic.load_state_dict(ckpt["critic"])  # type: ignore[index]
-        agent.actor.eval()
-        agent.critic.eval()
-
-        env = RoverNavEnv(seed=args.seed, normalized_actions=True)
-        returns: List[float] = []
-        for ep in range(args.eval_episodes):
-            obs = env.reset()
-            done = False
-            steps = 0
-            ep_ret = 0.0
-            while not done and steps < args.max_ep_len:
-                if args.deterministic:
-                    with torch.no_grad():
-                        st = torch.tensor(
-                            obs, dtype=torch.float32, device=agent.device).unsqueeze(0)
-                        mean, _std = agent.actor(st)
-                        act = torch.clamp(
-                            mean, agent.action_space_low, agent.action_space_high)
-                        action = act.squeeze(0).cpu().numpy()
-                else:
-                    action, _ = agent.select_action(obs)
-
-                obs, reward, done, _ = env.step(action)
-                if args.render:
-                    env.render(fps=args.render_fps)
-                ep_ret += reward
-                steps += 1
-            returns.append(ep_ret)
-            print(
-                f"Episode {ep+1}/{args.eval_episodes} Return: {ep_ret:.3f} Steps: {steps}")
-        print(
-            f"Average Return over {args.eval_episodes} episodes: {float(np.mean(returns)):.3f}")
-        env.close()
-    else:
-        train(
-            total_updates=args.total_updates,
-            rollout_steps=args.rollout_steps,
-            max_ep_len=args.max_ep_len,
-            lr_actor=args.lr_actor,
-            lr_critic=args.lr_critic,
-            gamma=args.gamma,
-            epsilon_clip=args.epsilon_clip,
-            K_epochs=args.K_epochs,
-            entropy_coef=args.entropy_coef,
-            gae_lambda=args.gae_lambda,
-            seed=args.seed,
-            save_dir=args.save_dir,
-            save_every=args.save_every,
-            render=args.render,
-            render_fps=args.render_fps,
-        )
+    train(
+        total_updates=args.total_updates,
+        rollout_steps=args.rollout_steps,
+        max_ep_len=args.max_ep_len,
+        lr_actor=args.lr_actor,
+        lr_critic=args.lr_critic,
+        gamma=args.gamma,
+        epsilon_clip=args.epsilon_clip,
+        K_epochs=args.K_epochs,
+        entropy_coef=args.entropy_coef,
+        gae_lambda=args.gae_lambda,
+        seed=args.seed,
+        save_dir=args.save_dir,
+        save_every=args.save_every,
+        render=args.render,
+        render_fps=args.render_fps,
+    )
