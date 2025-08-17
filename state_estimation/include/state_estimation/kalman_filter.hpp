@@ -5,6 +5,7 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <unordered_map>
 #include <string>
+#include <rclcpp/time.hpp>
 
 // MECANUM wheel names (4)
 constexpr std::array<const char*, 4> MECANUM_WHEEL_NAMES = {
@@ -233,8 +234,6 @@ struct MeasurementModel {
   }
 };
 
-
-
 struct KinematicModelInput {
   // The velocity [rad/s] of the left wheel (DIFF_DRIVE)
   double leftVelocity;
@@ -248,6 +247,9 @@ struct KinematicModelInput {
   // The steering angles [rad] of the steerable wheels (ROCKER_BOGIE only)
   // ROCKER_BOGIE keys: {"front_left", "front_right", "middle_left", "middle_right", "rear_left", "rear_right"}
   std::unordered_map<std::string, double> wheelSteeringAngles;
+
+  // Timestamp of the commanded motion
+  rclcpp::Time timestamp;
 };
 
 struct RobotConstants {
@@ -271,9 +273,6 @@ struct RobotConstants {
     wheelLocations["rear_right"] = Eigen::Vector2d(trackWidth / 2.0, -wheelBase / 2.0);
   }
 };
-
-
-
 class KalmanFilter {
 public:
   KalmanFilter() = default;
@@ -283,7 +282,7 @@ public:
 
   RobotState predictDynamicModel(const sensor_msgs::msg::Imu imu);
 
-  RobotState predictKinematicModel(const KinematicModelInput& kinematicParams, const long timestamp);
+  RobotState predictKinematicModel(const KinematicModelInput& kinematicParams);
 
   Eigen::Matrix<double, 3, 6> odomMeasurementModel() const { return this->measurementModel.odom; }
   Eigen::Matrix<double, 1, 6> imuMeasurementModel() const { return this->measurementModel.imu; }
@@ -313,7 +312,12 @@ private:
   // The current robot's state estimation
   RobotState currentState;
   // The timestamp of the previous prediction [s]
-  long previousPredictionTimeStamp = 0;
+  rclcpp::Time previousPredictionTime = rclcpp::Time(0);
+
+  double computeDeltaTime(const rclcpp::Time currentTime) const {
+    const double dtSeconds = (currentTime - previousPredictionTime).seconds();
+    return dtSeconds;
+  }
 
   Eigen::Matrix<double, 3, 4> mecanumForwardKinematics() const {
     // Calculate the forward kinematics matrix for a mecanum drive robot
@@ -399,11 +403,14 @@ private:
     return twist;
   }
 
-  RobotState predictDiffDriveKinematicModel(const double leftVelocity, const double rightVelocity, const long timestamp);
+  RobotState predictDiffDriveKinematicModel(const double leftVelocity, const double rightVelocity, const rclcpp::Time timestamp);
 
-  RobotState predictMecanumKinematicModel(const std::unordered_map<std::string, double>& wheelVelocities, const long timestamp);
+  RobotState predictMecanumKinematicModel(const std::unordered_map<std::string, double>& wheelVelocities, const rclcpp::Time timestamp);
 
-  RobotState predictRockerBogieKinematicModel(const std::unordered_map<std::string, double>& wheelVelocities, const std::unordered_map<std::string, double>& wheelSteeringAngles, const long timestamp);
+  RobotState predictRockerBogieKinematicModel(
+    const std::unordered_map<std::string, double>& wheelVelocities,
+    const std::unordered_map<std::string, double>& wheelSteeringAngles,
+    const rclcpp::Time timestamp);
 };
 
 #endif // !KALMAN_FILTER_HPP

@@ -3,8 +3,7 @@
 #include <array>
 
 RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu imu) {
-  const long imuTimestamp = imu.header.stamp.sec + imu.header.stamp.nanosec / 1e9;
-  const long dt = imuTimestamp - this->previousPredictionTimeStamp;
+  const double dt = this->computeDeltaTime(imu.header.stamp);
   if (dt <= 0) {
     RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "IMU message has non-positive timestamp difference. Skipping prediction");
     return this->currentState; // No update if the timestamp is not valid
@@ -33,13 +32,13 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu imu) {
   this->covariance.stateCovariance = F * P * F.transpose() + Q;
 
   // Update the previous prediction timestamp
-  this->previousPredictionTimeStamp = imuTimestamp;
+  this->previousPredictionTimeStamp = imu.header.stamp;
 
   // Return the newly predicted state
   return predictedState;
 }
 
-RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinematicParams, const long timestamp) {
+RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinematicParams, const rclcpp::Time timestamp) {
   switch (this->kinematicModel) {
   case KinematicModel::DIFF_DRIVE:
     return this->predictDiffDriveKinematicModel(kinematicParams.leftVelocity, kinematicParams.rightVelocity, timestamp);
@@ -66,8 +65,8 @@ RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinema
 }
 
 
-RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocity, const double rightVelocity, const long timestamp) {
-  const double dt = timestamp - this->previousPredictionTimeStamp;
+RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocity, const double rightVelocity, const rclcpp::Time timestamp) {
+  const double dt = this->computeDeltaTime(timestamp);
   if (dt <= 0) {
     RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "Kinematic model prediction has non-positive timestamp difference. Skipping prediction");
     return this->currentState; // No update if the timestamp is not valid
@@ -105,8 +104,8 @@ RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocit
   return predictedState;
 }
 
-RobotState KalmanFilter::predictMecanumKinematicModel(const std::unordered_map<std::string, double>& wheelVelocities, const long timestamp) {
-  const double dt = timestamp - this->previousPredictionTimeStamp;
+RobotState KalmanFilter::predictMecanumKinematicModel(const std::unordered_map<std::string, double>& wheelVelocities, const rclcpp::Time timestamp) {
+  const double dt = this->computeDeltaTime(timestamp);
   if (dt <= 0) {
     RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "Kinematic model prediction has non-positive timestamp difference. Skipping prediction");
     return this->currentState; // No update if the timestamp is not valid
@@ -153,8 +152,11 @@ RobotState KalmanFilter::predictMecanumKinematicModel(const std::unordered_map<s
   return predictedState;
 }
 
-RobotState KalmanFilter::predictRockerBogieKinematicModel(const std::unordered_map<std::string, double>& wheelVelocities, const std::unordered_map<std::string, double>& wheelSteeringAngles, const long timestamp) {
-  const double dt = timestamp - this->previousPredictionTimeStamp;
+RobotState KalmanFilter::predictRockerBogieKinematicModel(
+  const std::unordered_map<std::string, double>& wheelVelocities,
+  const std::unordered_map<std::string, double>& wheelSteeringAngles,
+  const rclcpp::Time timestamp) {
+  const double dt = this->computeDeltaTime(timestamp);
   if (dt <= 0) {
     RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "Kinematic model prediction has non-positive timestamp difference. Skipping prediction");
     return this->currentState; // No update if the timestamp is not valid
