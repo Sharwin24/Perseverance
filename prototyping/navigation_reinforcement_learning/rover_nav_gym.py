@@ -14,6 +14,10 @@ except ImportError:
     pygame = None
 
 
+def rpm_to_rad_per_sec(rpm: float) -> float:
+    return rpm * (2 * math.pi / 60)
+
+
 def _angle_wrap(a: float) -> float:
     return ((a + math.pi) % (2 * math.pi)) - math.pi
 
@@ -30,15 +34,26 @@ class RewardFunctions:
 
     def __init__(
         self,
-        progress_weight: float = 1.5,
-        heading_penalty_weight: float = 0.05,
+        progress_weight: float = 1.0,
+        heading_penalty_weight: float = 0.01,
         turn_penalty_weight: float = 0.01,
         step_penalty: float = 0.01,
         success_bonus: float = 5.0,
         dist_threshold: float = 0.1,  # meters
-        angle_threshold_rad: float = math.radians(8),
-        max_w: float = math.radians(60),
+        angle_threshold_rad: float = math.radians(5),
+        max_w: float = math.radians(60)
     ):
+        """Initializes the reward function parameters.
+
+        Args:
+            progress_weight (float, optional): Reward for progress towards the goal. Defaults to 1.5.
+            heading_penalty_weight (float, optional): Penalty for heading error. Defaults to 0.05.
+            turn_penalty_weight (float, optional): Penalty for turn error. Defaults to 0.01.
+            step_penalty (float, optional): Penalty for each step taken. Defaults to 0.01.
+            success_bonus (float, optional): Bonus for successfully reaching the goal. Defaults to 5.0.
+            dist_threshold (float, optional): Distance threshold for success. Defaults to 0.1.
+            max_w (float, optional): Maximum angular velocity. Defaults to math.radians(60).
+        """
         self.k_progress = progress_weight
         self.k_bear = heading_penalty_weight
         self.k_head = turn_penalty_weight
@@ -118,7 +133,7 @@ class RoverNavEnv(gym.Env):
         pixels_per_meter: int = 80,
         render_mode: Optional[str] = None,
         normalized_actions: bool = True,
-        max_v: float = 1.5,                # m/s
+        max_v: float = 0.5,                # m/s
         max_w: float = math.radians(30),   # rad/s
     ):
         super().__init__()

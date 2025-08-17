@@ -54,22 +54,6 @@ if __name__ == "__main__":
         seed=42,
     )
 
-    # Eval env (no reward normalization during eval)
-    # eval_env = make_env()()
-    # eval_env = VecMonitor(eval_env)
-
-    # callback_on_best = StopTrainingOnRewardThreshold(
-    #     reward_threshold=4.5, verbose=1)
-    # eval_callback = EvalCallback(
-    #     eval_env,
-    #     callback_on_new_best=callback_on_best,
-    #     best_model_save_path="./checkpoints",
-    #     log_path="./eval_logs",
-    #     eval_freq=5000,
-    #     deterministic=True,
-    #     render=False,
-    # )
-
     # ---- before training (for EvalCallback) ----
     eval_env = make_vec_env(make_env(), n_envs=1)
     eval_env = VecMonitor(eval_env)
@@ -98,15 +82,7 @@ if __name__ == "__main__":
     vec_env.save("./checkpoints/vecnormalize.pkl")
     print("Training complete. Saved model and normalization stats.")
 
-    # # -------- Evaluation --------
-    # # Load for inference
-    # # (If running in a new process: VecNormalize.load and set training=False)
-    # eval_env = make_vec_env(make_env(), n_envs=1)
-    # eval_env = VecMonitor(eval_env)
-    # eval_env = VecNormalize.load("./checkpoints/vecnormalize.pkl", eval_env)
-    # eval_env.training = False
-    # eval_env.norm_reward = False
-    # -------- Evaluation after training --------
+    # -------- Evaluation --------
     eval_env = make_vec_env(make_env(), n_envs=1)
     eval_env = VecMonitor(eval_env)
     eval_env = VecNormalize.load("./checkpoints/vecnormalize.pkl", eval_env)
@@ -121,12 +97,3 @@ if __name__ == "__main__":
         obs, reward, dones, infos = eval_env.step(action)
         if dones[0]:
             obs = eval_env.reset()
-
-    # model = PPO.load("./checkpoints/ppo_rover_nav", eval_env)
-
-    # obs = eval_env.reset()
-    # for _ in range(5000):
-    #     action, _ = model.predict(obs, deterministic=True)
-    #     obs, reward, done, info = eval_env.step(action)
-    #     if done:
-    #         obs = eval_env.reset()
