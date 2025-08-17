@@ -36,38 +36,63 @@ class RewardFunctions:
         step_penalty: float = 0.01,
         success_bonus: float = 5.0,
         dist_threshold: float = 0.1,  # meters
-        angle_threshold_rad: float = math.radians(10),
+        angle_threshold_rad: float = math.radians(8),
         max_w: float = math.radians(60),
     ):
-        self.progress_weight = progress_weight
-        self.heading_penalty_weight = heading_penalty_weight
-        self.turn_penalty_weight = turn_penalty_weight
+        self.k_progress = progress_weight
+        self.k_bear = heading_penalty_weight
+        self.k_head = turn_penalty_weight
+        self.k_w = step_penalty
+        self.k_v_slow = success_bonus
         self.step_penalty = step_penalty
         self.success_bonus = success_bonus
         self.dist_threshold = dist_threshold
-        self.angle_threshold_rad = angle_threshold_rad
+        self.ang_threshold = angle_threshold_rad
+
+        self.d_near = 0.6
+        self.sig = 0.20               # meters for the sigmoid ramp
         self.max_w = max_w
 
-    def is_success(self, dist: float, angle_error_abs: float) -> bool:
-        return (dist < self.dist_threshold) and (angle_error_abs < self.angle_threshold_rad)
+        # optional: require dwell time at goal to mark success
+        self.hold_steps = 10
+        self._hold_counter = 0
 
-    def reward(
-        self,
-        prev_dist: float,
-        dist: float,
-        angle_error_abs: float,
-        turn_rate: float,
-        success: bool,
-    ) -> float:
-        # progress is positive when robot gets closer
-        progress = (prev_dist - dist)
-        heading_pen = -self.heading_penalty_weight * \
-            (angle_error_abs / math.pi)
-        turn_pen = -self.turn_penalty_weight * \
-            (abs(turn_rate) / max(self.max_w, 1e-6))
-        r = self.progress_weight * progress + heading_pen + turn_pen - self.step_penalty
-        if success:
-            r += self.success_bonus
+    def _sigmoid(self, z):       # smooth weight ramp
+        return 1.0 / (1.0 + math.exp(-z))
+
+    def is_success(self, dist, ang_abs):
+        return (dist < self.dist_threshold) and (ang_abs < self.ang_threshold)
+
+    def reward(self, prev_dist, dist, bearing_err_abs, head_err_abs, v, w) -> float:
+        # 1) progress toward goal (potential-like)
+        r = self.k_progress * (prev_dist - dist)
+
+        # 2) orientation shaping (blend)
+        w_orient = self._sigmoid((self.d_near - dist) / max(self.sig, 1e-6))
+        # Far => penalize bearing error; Near => penalize final heading error
+        r -= (1 - w_orient) * self.k_bear * (bearing_err_abs / math.pi)
+        r -= w_orient * self.k_head * (head_err_abs / math.pi)
+
+        # 3) control smoothing (more strict near goal)
+        turn_scale = 0.5 + 0.5 * w_orient
+        r -= self.k_w * turn_scale * (abs(w) / self.max_w)
+
+        # Slow down when very close, to stop overshoot & spin
+        if dist < self.d_near:
+            # discourage racing in the pocket
+            r -= self.k_v_slow * max(0.0, abs(v) - 0.2)
+
+        # 4) step penalty
+        r -= self.step_penalty
+
+        # 5) success bonus with dwell-time
+        if self.is_success(dist, bearing_err_abs):
+            self._hold_counter += 1
+            if self._hold_counter >= self.hold_steps:
+                r += self.success_bonus
+        else:
+            self._hold_counter = 0
+
         return float(r)
 
 
@@ -177,11 +202,18 @@ class RoverNavEnv(gym.Env):
         self.pose = Pose(x, y, th)
 
         dist = self._goal_distance()
-        th_err_abs = abs(_angle_wrap(self.goal.theta - self.pose.theta))
-        terminated = self.rewards.is_success(dist, th_err_abs)
+        dx, dy = self.goal.x - self.pose.x, self.goal.y - self.pose.y
+        bearing_world = math.atan2(dy, dx)
+        bearing_err = _angle_wrap(
+            bearing_world - self.pose.theta)  # <- bearing-to-goal
+        head_err = _angle_wrap(
+            self.goal.theta - self.pose.theta)   # <- final heading
+        bearing_abs, head_abs = abs(bearing_err), abs(head_err)
         reward = self.rewards.reward(
-            self._prev_goal_dist, dist, th_err_abs, w, terminated)
+            self._prev_goal_dist, dist, bearing_abs, head_abs, v, w
+        )
         self._prev_goal_dist = dist
+        terminated = self.rewards.is_success(dist, bearing_abs)
 
         obs = self._get_obs()
         truncated = False  # handled by TimeLimit wrapper externally
