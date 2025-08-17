@@ -312,10 +312,10 @@ private:
   // The current robot's state estimation
   RobotState currentState;
   // The timestamp of the previous prediction [s]
-  rclcpp::Time previousPredictionTime = rclcpp::Time(0);
+  rclcpp::Time previousPredictionTimeStamp = rclcpp::Time(0);
 
   double computeDeltaTime(const rclcpp::Time currentTime) const {
-    const double dtSeconds = (currentTime - previousPredictionTime).seconds();
+    const double dtSeconds = (currentTime - this->previousPredictionTimeStamp).seconds();
     return dtSeconds;
   }
 

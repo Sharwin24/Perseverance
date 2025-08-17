@@ -38,10 +38,10 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu imu) {
   return predictedState;
 }
 
-RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinematicParams, const rclcpp::Time timestamp) {
+RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinematicParams) {
   switch (this->kinematicModel) {
   case KinematicModel::DIFF_DRIVE:
-    return this->predictDiffDriveKinematicModel(kinematicParams.leftVelocity, kinematicParams.rightVelocity, timestamp);
+    return this->predictDiffDriveKinematicModel(kinematicParams.leftVelocity, kinematicParams.rightVelocity, kinematicParams.timestamp);
   case KinematicModel::MECANUM:
     if (kinematicParams.wheelVelocities.size() != MECANUM_WHEEL_NAMES.size()) {
       throw std::invalid_argument(
@@ -49,7 +49,7 @@ RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinema
         + std::to_string(kinematicParams.wheelVelocities.size())
         + " (expected 4: {front_left, front_right, rear_left, rear_right}).");
     }
-    return this->predictMecanumKinematicModel(kinematicParams.wheelVelocities, timestamp);
+    return this->predictMecanumKinematicModel(kinematicParams.wheelVelocities, kinematicParams.timestamp);
   case KinematicModel::ROCKER_BOGIE:
     if (kinematicParams.wheelVelocities.size() != ROCKER_BOGIE_WHEEL_NAMES.size() ||
       kinematicParams.wheelSteeringAngles.size() != ROCKER_BOGIE_WHEEL_NAMES.size()) {
@@ -58,7 +58,7 @@ RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinema
         + std::to_string(kinematicParams.wheelVelocities.size()) + " (expected 6: {front_left, front_right, middle_left, middle_right, rear_left, rear_right}) and "
         + std::to_string(kinematicParams.wheelSteeringAngles.size()) + " (expected 6: {front_left, front_right, middle_left, middle_right, rear_left, rear_right}).");
     }
-    return this->predictRockerBogieKinematicModel(kinematicParams.wheelVelocities, kinematicParams.wheelSteeringAngles, timestamp);
+    return this->predictRockerBogieKinematicModel(kinematicParams.wheelVelocities, kinematicParams.wheelSteeringAngles, kinematicParams.timestamp);
   default:
     throw std::runtime_error("Unknown kinematic model type.");
   }
