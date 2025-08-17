@@ -87,23 +87,24 @@ def relative_to_global(robot_velocity: tuple[float, float, float], heading: floa
     return vx_global, vy_global
 
 
-wheel_speeds = [-30, 30, -30, 30]  # Example wheel speeds
-vx, vy, omega = forward_kinematics(wheel_speeds)
-print(
-    f"Mecanum Wheel FK: [{wheel_speeds[0]:.2f}, {wheel_speeds[1]:.2f}, {wheel_speeds[2]:.2f}, {wheel_speeds[3]:.2f}]"
-    f" -> [{vx:.2f}, {vy:.2f}, {omega:.2f}] (vx, vy, omega)"
-)
+if __name__ == "__main__":
+    wheel_speeds = [-30, 30, -30, 30]  # Example wheel speeds
+    vx, vy, omega = forward_kinematics(wheel_speeds)
+    print(
+        f"Mecanum Wheel FK: [{wheel_speeds[0]:.2f}, {wheel_speeds[1]:.2f}, {wheel_speeds[2]:.2f}, {wheel_speeds[3]:.2f}]"
+        f" -> [{vx:.2f}, {vy:.2f}, {omega:.2f}] (vx, vy, omega)"
+    )
 
-# Verify FK <-> IK
-wheel_speeds_ik = inverse_kinematics(vx, vy, omega)
-print(
-    f"Mecanum Wheel IK: [{vx:.2f}, {vy:.2f}, {omega:.2f}] (vx, vy, omega)"
-    f" -> [{wheel_speeds_ik[0]:.2f}, {wheel_speeds_ik[1]:.2f}, {wheel_speeds_ik[2]:.2f}, {wheel_speeds_ik[3]:.2f}]"
-    f" (w_fl, w_fr, w_rl, w_rr)"
-)
+    # Verify FK <-> IK
+    wheel_speeds_ik = inverse_kinematics(vx, vy, omega)
+    print(
+        f"Mecanum Wheel IK: [{vx:.2f}, {vy:.2f}, {omega:.2f}] (vx, vy, omega)"
+        f" -> [{wheel_speeds_ik[0]:.2f}, {wheel_speeds_ik[1]:.2f}, {wheel_speeds_ik[2]:.2f}, {wheel_speeds_ik[3]:.2f}]"
+        f" (w_fl, w_fr, w_rl, w_rr)"
+    )
 
-assert np.allclose(
-    wheel_speeds,
-    wheel_speeds_ik,
-    atol=1e-5
-), "Inverse kinematics did not return the original wheel speeds."
+    assert np.allclose(
+        wheel_speeds,
+        wheel_speeds_ik,
+        atol=1e-5
+    ), "Inverse kinematics did not return the original wheel speeds."
