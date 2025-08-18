@@ -107,7 +107,7 @@ struct Covariance {
     processNoiseCovariance(5, 5) = omegaNoise; // Angular Velocity
   }
 
-  void setProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6> P) {
+  void setProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& P) {
     processNoiseCovariance = P;
   }
 
@@ -220,6 +220,66 @@ struct SystemModel {
     controlInputModel(4, 1) = dt; // dVy/day
     return controlInputModel;
   }
+
+  void getStateTransitionMatrix(
+    const double dt,
+    const double V = 0, const double W = 0, const double theta = 0,
+    const double vX = 0, const double vY = 0, Eigen::Matrix<double, 6, 6>& F) {
+    switch (predModel) {
+    case PredictionModel::DYNAMIC: {
+      F(0, 0) = 1.0;
+      F(1, 1) = 1.0;
+      F(2, 2) = 1.0;
+      F(3, 3) = 1.0;
+      F(4, 4) = 1.0;
+      F(5, 5) = 1.0;
+      F(0, 3) = dt; // dX/dVx
+      F(1, 4) = dt; // dY/dVy
+      F(2, 5) = dt; // dTheta/dOmega
+      break;
+    }
+    case PredictionModel::KINEMATIC: {
+      switch (kinematicModel) {
+      case KinematicModel::DIFF_DRIVE: {
+        F(0, 0) = 1.0; // dX/dx
+        F(0, 2) = -1.0 * V * std::sin(theta) * dt; // dX/dtheta
+        F(1, 1) = 1.0; // dY/dy
+        F(1, 2) = V * std::cos(theta) * dt; // dY/dtheta
+        F(2, 2) = 1.0; // dTheta/dtheta
+        F(3, 2) = -1.0 * V * std::sin(theta) * (W * dt); // dVx/dtheta
+        F(4, 2) = V * std::cos(theta) * (W * dt); // dVy/dtheta
+        break;
+      }
+      case KinematicModel::MECANUM: {
+        F(0, 2) = (-vX * std::sin(theta) - vY * std::cos(theta)) * dt; // dX/dtheta
+        F(1, 2) = (vX * std::cos(theta) - vY * std::sin(theta)) * dt; // dY/dtheta
+        F(0, 3) = dt; // dX/dVx
+        F(1, 4) = dt; // dY/dVy
+        F(2, 5) = dt; // dTheta/dOmega
+        break;
+      }
+      case KinematicModel::ROCKER_BOGIE: {
+        F(0, 2) = (-vX * std::sin(theta) - vY * std::cos(theta)) * dt; // dX/dtheta
+        F(1, 2) = (vX * std::cos(theta) - vY * std::sin(theta)) * dt; // dY/dtheta
+        F(3, 2) = -vX * std::sin(theta) - vY * std::cos(theta); // dVx/dtheta
+        F(4, 2) = vX * std::cos(theta) - vY * std::sin(theta); // dVy/dtheta
+        break;
+      }
+      default:
+        throw std::runtime_error("Unknown kinematic model type");
+      }
+      break;
+    }
+    }
+  }
+
+  void getControlInputModel(const double dt, Eigen::Matrix<double, 6, 2>& B) {
+    const double dt2 = dt * dt;
+    B(0, 0) = 0.5 * (dt2); // dX/dax
+    B(1, 1) = 0.5 * (dt2); // dY/day
+    B(3, 0) = dt; // dVx/dax
+    B(4, 1) = dt; // dVy/day
+  }
 };
 
 struct MeasurementModel {
@@ -281,20 +341,13 @@ public:
     systemModel(SystemModel(predModel, kinematicModel)), covariance(cov), currentState(initialState) {}
 
   RobotState predictDynamicModel(const sensor_msgs::msg::Imu& imu);
-
   RobotState predictKinematicModel(const KinematicModelInput& kinematicParams);
 
-  Eigen::Matrix<double, 3, 6> odomMeasurementModel() const { return this->measurementModel.odom; }
-  Eigen::Matrix<double, 1, 6> imuMeasurementModel() const { return this->measurementModel.imu; }
-  Eigen::Matrix<double, 6, 6> stateCovariance() const { return this->covariance.stateCovariance; }
-  Eigen::Matrix<double, 6, 6> processNoiseCovariance() const { return this->covariance.processNoiseCovariance; }
-  Eigen::Matrix<double, 3, 3> odomMeasurementNoiseCovariance()  const { return this->covariance.odomMeasurementNoiseCovariance; }
-  Eigen::Matrix<double, 1, 1> imuMeasurementNoiseCovariance() const { return this->covariance.imuMeasurementNoiseCovariance; }
-  Eigen::Vector<double, 6> stateVector() const { return this->currentState.vec(); }
   PredictionModel getPredictionModel() const { return this->predictionModel; }
+  KinematicModel getKinematicModel() const { return this->kinematicModel; }
 
-  void updateState(Eigen::Vector<double, 6> X) { this->currentState = RobotState(X); }
-  void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6> P) { this->covariance.setProcessNoiseCovariance(P); }
+  void updateState(const Eigen::Vector<double, 6>& X) { this->currentState = RobotState(X); }
+  void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& P) { this->covariance.setProcessNoiseCovariance(P); }
 
 private:
   // Robot constants (e.g., wheel base, wheel radius, track width)

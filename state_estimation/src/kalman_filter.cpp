@@ -15,8 +15,10 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu& imu) {
   const double globalAccY = imu.linear_acceleration.x * std::sin(theta) + imu.linear_acceleration.y * std::cos(theta);
 
   // Acquire State Transition matrix (F) and Control Input Model (B)
-  const auto& F = this->systemModel.getStateTransitionMatrix(dt);
-  const auto& B = this->systemModel.getControlInputModel(dt);
+  Eigen::Matrix<double, 6, 6> F;
+  Eigen::Matrix<double, 6, 2> B;
+  this->systemModel.getStateTransitionMatrix(dt, 0, 0, 0, 0, 0, F);
+  this->systemModel.getControlInputModel(dt, B);
 
   // Establish Control Vector (U)
   const auto& U = Eigen::Vector2d(globalAccX, globalAccY);
@@ -40,9 +42,11 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu& imu) {
 
 RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinematicParams) {
   switch (this->kinematicModel) {
-  case KinematicModel::DIFF_DRIVE:
+  case KinematicModel::DIFF_DRIVE: {
+
     return this->predictDiffDriveKinematicModel(kinematicParams.leftVelocity, kinematicParams.rightVelocity, kinematicParams.timestamp);
-  case KinematicModel::MECANUM:
+  }
+  case KinematicModel::MECANUM: {
     if (kinematicParams.wheelVelocities.size() != MECANUM_WHEEL_NAMES.size()) {
       throw std::invalid_argument(
         "Invalid wheel velocities vector size for MECANUM model: "
@@ -50,7 +54,8 @@ RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinema
         + " (expected 4: {front_left, front_right, rear_left, rear_right}).");
     }
     return this->predictMecanumKinematicModel(kinematicParams.wheelVelocities, kinematicParams.timestamp);
-  case KinematicModel::ROCKER_BOGIE:
+  }
+  case KinematicModel::ROCKER_BOGIE: {
     if (kinematicParams.wheelVelocities.size() != ROCKER_BOGIE_WHEEL_NAMES.size() ||
       kinematicParams.wheelSteeringAngles.size() != ROCKER_BOGIE_WHEEL_NAMES.size()) {
       throw std::invalid_argument(
@@ -59,8 +64,10 @@ RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinema
         + std::to_string(kinematicParams.wheelSteeringAngles.size()) + " (expected 6: {front_left, front_right, middle_left, middle_right, rear_left, rear_right}).");
     }
     return this->predictRockerBogieKinematicModel(kinematicParams.wheelVelocities, kinematicParams.wheelSteeringAngles, kinematicParams.timestamp);
-  default:
+  }
+  default: {
     throw std::runtime_error("Unknown kinematic model type.");
+  }
   }
 }
 
@@ -90,7 +97,8 @@ RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocit
   RobotState predictedState(xNew, yNew, thetaNew, vXNew, vYNew, W);
 
   // Calculate the Jacobian (F)
-  const auto& F = this->systemModel.getStateTransitionMatrix(dt, V, W, thetaOld);
+  Eigen::Matrix<double, 6, 6> F;
+  this->systemModel.getStateTransitionMatrix(dt, V, W, thetaOld, 0, 0, F);
 
   // Update the state covariance with the process noise and state transition matrix
   const auto& P = this->covariance.stateCovariance;
@@ -138,7 +146,8 @@ RobotState KalmanFilter::predictMecanumKinematicModel(const std::unordered_map<s
   RobotState predictedState(xNew, yNew, thetaNew, globalVX, globalVY, globalOmega);
 
   // Calculate the Jacobian (F)
-  const auto& F = this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY);
+  Eigen::Matrix<double, 6, 6> F;
+  this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY, F);
 
   // Update the state covariance with the process noise and state transition matrix
   const auto& P = this->covariance.stateCovariance;
@@ -187,7 +196,8 @@ RobotState KalmanFilter::predictRockerBogieKinematicModel(
   RobotState predictedState(xNew, yNew, thetaNew, globalVX, globalVY, globalOmega);
 
   // Calculate the Jacobian (F)
-  const auto& F = this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY);
+  Eigen::Matrix<double, 6, 6> F;
+  this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY, F);
 
   // Update the state covariance with the process noise and state transition matrix
   const auto& P = this->covariance.stateCovariance;
