@@ -150,9 +150,9 @@ struct SystemModel {
   SystemModel(PredictionModel predModel, KinematicModel kinematicModel) : predModel(predModel), kinematicModel(kinematicModel) {}
 
   void getStateTransitionMatrix(
-    const double dt,
+    Eigen::Matrix<double, 6, 6>& F, const double dt,
     const double V = 0, const double W = 0, const double theta = 0,
-    const double vX = 0, const double vY = 0, Eigen::Matrix<double, 6, 6>& F) {
+    const double vX = 0, const double vY = 0) {
     switch (predModel) {
     case PredictionModel::DYNAMIC: {
       F(0, 0) = 1.0;
@@ -304,7 +304,7 @@ public:
   Eigen::Matrix<double, 1, 6> getIMUMeasurementModel() const { return this->measurementModel.imu; }
   Eigen::Matrix<double, 3, 6> getOdometryMeasurementModel() const { return this->measurementModel.odom; }
   Eigen::Matrix<double, 6, 6> getProcessNoiseCovariance() const { return this->covariance.processNoiseCovariance; }
-  Eigen::Matrix<double, 6, 1> getIMUMeasurementNoiseCovariance() const { return this->covariance.imuMeasurementNoiseCovariance; }
+  Eigen::Matrix<double, 1, 1> getIMUMeasurementNoiseCovariance() const { return this->covariance.imuMeasurementNoiseCovariance; }
   Eigen::Matrix<double, 3, 3> getOdometryMeasurementNoiseCovariance() const { return this->covariance.odomMeasurementNoiseCovariance; }
 
   void updateState(const Eigen::Vector<double, 6>& X) { this->currentState = RobotState(X); }

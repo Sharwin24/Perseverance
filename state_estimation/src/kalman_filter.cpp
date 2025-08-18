@@ -17,7 +17,7 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu& imu) {
   // Acquire State Transition matrix (F) and Control Input Model (B)
   Eigen::Matrix<double, 6, 6> F;
   Eigen::Matrix<double, 6, 2> B;
-  this->systemModel.getStateTransitionMatrix(dt, 0, 0, 0, 0, 0, F);
+  this->systemModel.getStateTransitionMatrix(F, dt, 0, 0, 0, 0, 0);
   this->systemModel.getControlInputModel(dt, B);
 
   // Establish Control Vector (U)
@@ -90,7 +90,7 @@ RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocit
 
   // Calculate the Jacobian (F)
   Eigen::Matrix<double, 6, 6> F;
-  this->systemModel.getStateTransitionMatrix(dt, V, W, thetaOld, 0, 0, F);
+  this->systemModel.getStateTransitionMatrix(F, dt, V, W, thetaOld, 0, 0);
 
   // Update the state covariance with the process noise and state transition matrix
   const auto& P = this->covariance.stateCovariance;
@@ -127,7 +127,7 @@ RobotState KalmanFilter::predictMecanumKinematicModel(const std::array<double, 4
 
   // Calculate the Jacobian (F)
   Eigen::Matrix<double, 6, 6> F;
-  this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY, F);
+  this->systemModel.getStateTransitionMatrix(F, dt, 0, 0, thetaOld, globalVX, globalVY);
 
   // Update the state covariance with the process noise and state transition matrix
   const auto& P = this->covariance.stateCovariance;
@@ -167,7 +167,7 @@ RobotState KalmanFilter::predictRockerBogieKinematicModel(
 
   // Calculate the Jacobian (F)
   Eigen::Matrix<double, 6, 6> F;
-  this->systemModel.getStateTransitionMatrix(dt, 0, 0, thetaOld, globalVX, globalVY, F);
+  this->systemModel.getStateTransitionMatrix(F, dt, 0, 0, thetaOld, globalVX, globalVY);
 
   // Update the state covariance with the process noise and state transition matrix
   const auto& P = this->covariance.stateCovariance;
