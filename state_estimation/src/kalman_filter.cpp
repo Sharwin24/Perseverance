@@ -43,26 +43,18 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu& imu) {
 RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinematicParams) {
   switch (this->kinematicModel) {
   case KinematicModel::DIFF_DRIVE: {
-
     return this->predictDiffDriveKinematicModel(kinematicParams.leftVelocity, kinematicParams.rightVelocity, kinematicParams.timestamp);
   }
   case KinematicModel::MECANUM: {
-    if (kinematicParams.wheelVelocities.size() != MECANUM_WHEEL_NAMES.size()) {
-      throw std::invalid_argument(
-        "Invalid wheel velocities vector size for MECANUM model: "
-        + std::to_string(kinematicParams.wheelVelocities.size())
-        + " (expected 4: {front_left, front_right, rear_left, rear_right}).");
-    }
-    return this->predictMecanumKinematicModel(kinematicParams.wheelVelocities, kinematicParams.timestamp);
+    const std::array<double, 4> mecanumWheelVelocities = {
+      kinematicParams.wheelVelocities[static_cast<size_t>(MecanumWheelID::MECANUM_FRONT_LEFT)],
+      kinematicParams.wheelVelocities[static_cast<size_t>(MecanumWheelID::MECANUM_FRONT_RIGHT)],
+      kinematicParams.wheelVelocities[static_cast<size_t>(MecanumWheelID::MECANUM_REAR_LEFT)],
+      kinematicParams.wheelVelocities[static_cast<size_t>(MecanumWheelID::MECANUM_REAR_RIGHT)],
+    };
+    return this->predictMecanumKinematicModel(mecanumWheelVelocities, kinematicParams.timestamp);
   }
   case KinematicModel::ROCKER_BOGIE: {
-    if (kinematicParams.wheelVelocities.size() != ROCKER_BOGIE_WHEEL_NAMES.size() ||
-      kinematicParams.wheelSteeringAngles.size() != ROCKER_BOGIE_WHEEL_NAMES.size()) {
-      throw std::invalid_argument(
-        "Invalid wheel velocities or steering angles map size for ROCKER_BOGIE model: "
-        + std::to_string(kinematicParams.wheelVelocities.size()) + " (expected 6: {front_left, front_right, middle_left, middle_right, rear_left, rear_right}) and "
-        + std::to_string(kinematicParams.wheelSteeringAngles.size()) + " (expected 6: {front_left, front_right, middle_left, middle_right, rear_left, rear_right}).");
-    }
     return this->predictRockerBogieKinematicModel(kinematicParams.wheelVelocities, kinematicParams.wheelSteeringAngles, kinematicParams.timestamp);
   }
   default: {
@@ -112,28 +104,16 @@ RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocit
   return predictedState;
 }
 
-RobotState KalmanFilter::predictMecanumKinematicModel(const std::unordered_map<std::string, double>& wheelVelocities, const rclcpp::Time timestamp) {
+RobotState KalmanFilter::predictMecanumKinematicModel(const std::array<double, 4>& wheelVelocities, const rclcpp::Time timestamp) {
   const double dt = this->computeDeltaTime(timestamp);
   if (dt <= 0) {
     RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "Kinematic model prediction has non-positive timestamp difference. Skipping prediction");
     return this->currentState; // No update if the timestamp is not valid
   }
 
-  // Expected keys: front_left, front_right, rear_left, rear_right
-  for (const auto& k : MECANUM_WHEEL_NAMES) {
-    if (wheelVelocities.find(k) == wheelVelocities.end()) {
-      throw std::invalid_argument(std::string("Missing wheel velocity key for MECANUM: ") + k);
-    }
-  }
-
   // Calculate the robot body twist
-  const Eigen::Vector4d wheelVelocitiesVector(
-    wheelVelocities.at("front_left"),
-    wheelVelocities.at("front_right"),
-    wheelVelocities.at("rear_left"),
-    wheelVelocities.at("rear_right")
-  );
-  const Eigen::Vector3d bodyTwist = this->mecanumForwardKinematics() * wheelVelocitiesVector;
+  Eigen::Map<const Eigen::Vector4d> wheelVelocitiesVector(wheelVelocities.data());
+  const Eigen::Vector3d bodyTwist = this->mecanumForwardKinematicsMatrix * wheelVelocitiesVector;
   // Convert to global frame
   const double thetaOld = this->currentState.theta;
   const double globalVX = bodyTwist(0) * std::cos(thetaOld) - bodyTwist(1) * std::sin(thetaOld);
@@ -162,23 +142,13 @@ RobotState KalmanFilter::predictMecanumKinematicModel(const std::unordered_map<s
 }
 
 RobotState KalmanFilter::predictRockerBogieKinematicModel(
-  const std::unordered_map<std::string, double>& wheelVelocities,
-  const std::unordered_map<std::string, double>& wheelSteeringAngles,
+  const std::array<double, 6>& wheelVelocities,
+  const std::array<double, 6>& wheelSteeringAngles,
   const rclcpp::Time timestamp) {
   const double dt = this->computeDeltaTime(timestamp);
   if (dt <= 0) {
     RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "Kinematic model prediction has non-positive timestamp difference. Skipping prediction");
     return this->currentState; // No update if the timestamp is not valid
-  }
-
-  // Expected velocity keys (6) and steering keys (6)
-  for (const auto& k : ROCKER_BOGIE_WHEEL_NAMES) {
-    if (wheelVelocities.find(k) == wheelVelocities.end()) {
-      throw std::invalid_argument(std::string("Missing wheel velocity key for ROCKER_BOGIE: ") + k);
-    }
-    if (wheelSteeringAngles.find(k) == wheelSteeringAngles.end()) {
-      throw std::invalid_argument(std::string("Missing wheel steering key for ROCKER_BOGIE: ") + k);
-    }
   }
 
   // Calculate the robot body twist

@@ -121,13 +121,13 @@ void StateEstimator::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
   }
   // Save the measurement
   const double Z = msg->angular_velocity.z; // [rad/s]
-  const auto H = this->kalmanFilter.imuMeasurementModel();
-  const auto X = this->kalmanFilter.stateVector();
+  const auto& H = this->kalmanFilter.getIMUMeasurementModel();
+  const auto& X = this->kalmanFilter.getStateVector();
   // Calculate the innovation
   const auto Y = Z - (H * X);
   // Calculate the Kalman Gain [K] using the innovation covariance [S]
-  const auto P = this->kalmanFilter.processNoiseCovariance();
-  const auto R_imu = this->kalmanFilter.imuMeasurementNoiseCovariance();
+  const auto& P = this->kalmanFilter.getProcessNoiseCovariance();
+  const auto& R_imu = this->kalmanFilter.getIMUMeasurementNoiseCovariance();
   const auto S = H * P * H.transpose() + R_imu;
   const auto K = P * H.transpose() * S.inverse();
   // Update the state estimate and covariance
@@ -144,13 +144,13 @@ void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) 
   const Eigen::Quaterniond orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
   const double yaw = orientation.toRotationMatrix().eulerAngles(0, 1, 2).z();
   const auto Z = Eigen::Vector<double, 3>({odom.x, odom.y, yaw});
-  const auto H = this->kalmanFilter.odomMeasurementModel();
-  const auto X = this->kalmanFilter.stateVector();
+  const auto H = this->kalmanFilter.getOdometryMeasurementModel();
+  const auto X = this->kalmanFilter.getStateVector();
   // Calculate the innovation
   const auto Y = Z - H * X;
   // Calculate the Kalman Gain [k] using the innovation covariance [S]
-  const auto P = this->kalmanFilter.processNoiseCovariance();
-  const auto R_odom = this->kalmanFilter.odomMeasurementNoiseCovariance();
+  const auto P = this->kalmanFilter.getProcessNoiseCovariance();
+  const auto R_odom = this->kalmanFilter.getOdometryMeasurementNoiseCovariance();
   const auto S = H * P * H.transpose() + R_odom;
   const auto K = P * H.transpose() * S.inverse();
   // Update the state estimate and covariance

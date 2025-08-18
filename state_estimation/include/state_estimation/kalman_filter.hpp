@@ -7,16 +7,6 @@
 #include <string>
 #include <rclcpp/time.hpp>
 
-// MECANUM wheel names (4)
-constexpr std::array<const char*, 4> MECANUM_WHEEL_NAMES = {
-  "front_left", "front_right", "rear_left", "rear_right"
-};
-
-// ROCKER_BOGIE wheel names (6)
-constexpr std::array<const char*, 6> ROCKER_BOGIE_WHEEL_NAMES = {
-  "front_left", "front_right", "middle_left", "middle_right", "rear_left", "rear_right"
-};
-
 struct RobotState {
   double x = 0.0; // X Position [m]
   double y = 0.0; // Y Position [m]
@@ -159,68 +149,6 @@ struct SystemModel {
   SystemModel() = default;
   SystemModel(PredictionModel predModel, KinematicModel kinematicModel) : predModel(predModel), kinematicModel(kinematicModel) {}
 
-  Eigen::Matrix<double, 6, 6> getStateTransitionMatrix(
-    const double dt,
-    const double V = 0, const double W = 0, const double theta = 0,
-    const double vX = 0, const double vY = 0) {
-    switch (predModel) {
-    case PredictionModel::DYNAMIC: {
-      stateTransitionMatrix(0, 0) = 1.0;
-      stateTransitionMatrix(1, 1) = 1.0;
-      stateTransitionMatrix(2, 2) = 1.0;
-      stateTransitionMatrix(3, 3) = 1.0;
-      stateTransitionMatrix(4, 4) = 1.0;
-      stateTransitionMatrix(5, 5) = 1.0;
-      stateTransitionMatrix(0, 3) = dt; // dX/dVx
-      stateTransitionMatrix(1, 4) = dt; // dY/dVy
-      stateTransitionMatrix(2, 5) = dt; // dTheta/dOmega
-      break;
-    }
-    case PredictionModel::KINEMATIC: {
-      switch (kinematicModel) {
-      case KinematicModel::DIFF_DRIVE: {
-        stateTransitionMatrix(0, 0) = 1.0; // dX/dx
-        stateTransitionMatrix(0, 2) = -1.0 * V * std::sin(theta) * dt; // dX/dtheta
-        stateTransitionMatrix(1, 1) = 1.0; // dY/dy
-        stateTransitionMatrix(1, 2) = V * std::cos(theta) * dt; // dY/dtheta
-        stateTransitionMatrix(2, 2) = 1.0; // dTheta/dtheta
-        stateTransitionMatrix(3, 2) = -1.0 * V * std::sin(theta) * (W * dt); // dVx/dtheta
-        stateTransitionMatrix(4, 2) = V * std::cos(theta) * (W * dt); // dVy/dtheta
-        break;
-      }
-      case KinematicModel::MECANUM: {
-        stateTransitionMatrix(0, 2) = (-vX * std::sin(theta) - vY * std::cos(theta)) * dt; // dX/dtheta
-        stateTransitionMatrix(1, 2) = (vX * std::cos(theta) - vY * std::sin(theta)) * dt; // dY/dtheta
-        stateTransitionMatrix(0, 3) = dt; // dX/dVx
-        stateTransitionMatrix(1, 4) = dt; // dY/dVy
-        stateTransitionMatrix(2, 5) = dt; // dTheta/dOmega
-        break;
-      }
-      case KinematicModel::ROCKER_BOGIE: {
-        stateTransitionMatrix(0, 2) = (-vX * std::sin(theta) - vY * std::cos(theta)) * dt; // dX/dtheta
-        stateTransitionMatrix(1, 2) = (vX * std::cos(theta) - vY * std::sin(theta)) * dt; // dY/dtheta
-        stateTransitionMatrix(3, 2) = -vX * std::sin(theta) - vY * std::cos(theta); // dVx/dtheta
-        stateTransitionMatrix(4, 2) = vX * std::cos(theta) - vY * std::sin(theta); // dVy/dtheta
-        break;
-      }
-      default:
-        throw std::runtime_error("Unknown kinematic model type");
-      }
-      break;
-    }
-    }
-    return stateTransitionMatrix;
-  }
-
-  Eigen::Matrix<double, 6, 2> getControlInputModel(const double dt) {
-    const double dt2 = dt * dt;
-    controlInputModel(0, 0) = 0.5 * (dt2); // dX/dax
-    controlInputModel(1, 1) = 0.5 * (dt2); // dY/day
-    controlInputModel(3, 0) = dt; // dVx/dax
-    controlInputModel(4, 1) = dt; // dVy/day
-    return controlInputModel;
-  }
-
   void getStateTransitionMatrix(
     const double dt,
     const double V = 0, const double W = 0, const double theta = 0,
@@ -294,22 +222,38 @@ struct MeasurementModel {
   }
 };
 
+enum class MecanumWheelID {
+  MECANUM_FRONT_LEFT = 0, MECANUM_FRONT_RIGHT = 1,
+  MECANUM_REAR_LEFT = 4, MECANUM_REAR_RIGHT = 5
+};
+
+enum class RockerBogieWheelID {
+  RB_FRONT_LEFT = 0, RB_FRONT_RIGHT = 1,
+  RB_MIDDLE_LEFT = 2, RB_MIDDLE_RIGHT = 3,
+  RB_REAR_LEFT = 4, RB_REAR_RIGHT = 5
+};
+
 struct KinematicModelInput {
   // The velocity [rad/s] of the left wheel (DIFF_DRIVE)
   double leftVelocity;
   // The velocity [rad/s] of the right wheel (DIFF_DRIVE)
   double rightVelocity;
-  // The velocities [rad/s] of the wheels (MECANUM, ROCKER_BOGIE)
-  // MECANUM keys: {"front_left", "front_right", "rear_left", "rear_right"}
-  // ROCKER_BOGIE keys: {"front_left", "front_right", "middle_left", "middle_right", "rear_left", "rear_right"}
-  std::unordered_map<std::string, double> wheelVelocities;
 
-  // The steering angles [rad] of the steerable wheels (ROCKER_BOGIE only)
-  // ROCKER_BOGIE keys: {"front_left", "front_right", "middle_left", "middle_right", "rear_left", "rear_right"}
-  std::unordered_map<std::string, double> wheelSteeringAngles;
+  // The velocities [rad/s] of the wheels (MECANUM & ROCKER_BOGIE)
+  std::array<double, 6> wheelVelocities;
+  // The steering angles [rad] of the wheels (ROCKER_BOGIE)
+  std::array<double, 6> wheelSteeringAngles;
 
   // Timestamp of the commanded motion
   rclcpp::Time timestamp;
+
+  KinematicModelInput() = default;
+  KinematicModelInput(const double leftVel, const double rightVel, const rclcpp::Time time)
+    : leftVelocity(leftVel), rightVelocity(rightVel), timestamp(time) {}
+  KinematicModelInput(std::array<double, 4> wheelVels, const rclcpp::Time time)
+    : wheelVelocities({wheelVels[0], wheelVels[1], 0.0, 0.0, wheelVels[2], wheelVels[3]}), timestamp(time) {}
+  KinematicModelInput(std::array<double, 6> wheelVels, std::array<double, 6> wheelSteers, const rclcpp::Time time)
+    : wheelVelocities(wheelVels), wheelSteeringAngles(wheelSteers), timestamp(time) {}
 };
 
 struct RobotConstants {
@@ -319,18 +263,18 @@ struct RobotConstants {
   double wheelRadius;
   // The back wheel to front wheel distance along the Robot X-axis [m]
   double trackWidth;
-  // Map from wheel name to location
-  // MECANUM keys: {"front_left", "front_right", "rear_left", "rear_right"}
-  // ROCKER_BOGIE keys: {"front_left", "front_right", "middle_left", "middle_right", "rear_left", "rear_right"}
-  std::unordered_map<std::string, Eigen::Vector2d> wheelLocations;
+  // Array that holds all 6 wheel locations since Mecanum locations align with rocker bogie
+  std::array<Eigen::Vector2d, 6> wheelLocations;
 
   RobotConstants() = default;
   RobotConstants(const double wheelBase, const double wheelRadius, const double trackWidth)
     : wheelBase(wheelBase), wheelRadius(wheelRadius), trackWidth(trackWidth) {
-    wheelLocations["front_left"] = Eigen::Vector2d(-trackWidth / 2.0, wheelBase / 2.0);
-    wheelLocations["front_right"] = Eigen::Vector2d(trackWidth / 2.0, wheelBase / 2.0);
-    wheelLocations["rear_left"] = Eigen::Vector2d(-trackWidth / 2.0, -wheelBase / 2.0);
-    wheelLocations["rear_right"] = Eigen::Vector2d(trackWidth / 2.0, -wheelBase / 2.0);
+    wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_FRONT_LEFT)] = Eigen::Vector2d(-trackWidth / 2.0, wheelBase / 2.0);
+    wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_FRONT_RIGHT)] = Eigen::Vector2d(trackWidth / 2.0, wheelBase / 2.0);
+    wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_MIDDLE_LEFT)] = Eigen::Vector2d(-trackWidth / 2.0, 0.0);
+    wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_MIDDLE_RIGHT)] = Eigen::Vector2d(trackWidth / 2.0, 0.0);
+    wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_REAR_LEFT)] = Eigen::Vector2d(-trackWidth / 2.0, -wheelBase / 2.0);
+    wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_REAR_RIGHT)] = Eigen::Vector2d(trackWidth / 2.0, -wheelBase / 2.0);
   }
 };
 class KalmanFilter {
@@ -338,13 +282,30 @@ public:
   KalmanFilter() = default;
   KalmanFilter(RobotConstants robotConstants, PredictionModel predModel, KinematicModel kinematicModel, Covariance cov, RobotState initialState)
     : robotConstants(robotConstants), predictionModel(predModel), kinematicModel(kinematicModel),
-    systemModel(SystemModel(predModel, kinematicModel)), covariance(cov), currentState(initialState) {}
+    systemModel(SystemModel(predModel, kinematicModel)), covariance(cov), currentState(initialState) {
+    // Calculate the forward kinematics matrix for a mecanum drive robot
+    const double R = this->robotConstants.wheelRadius;
+    const double L = this->robotConstants.trackWidth / 2.0;
+    const double W = this->robotConstants.wheelBase / 2.0;
+    this->mecanumForwardKinematicsMatrix = (R / 4) * Eigen::Matrix<double, 3, 4>{
+      {-1 / (L + W), 1 / (L + W), 1 / (L + W), -1 / (L + W)},
+      {1, 1, 1, 1},
+      {-1, 1, -1, 1}
+    };
+  }
 
   RobotState predictDynamicModel(const sensor_msgs::msg::Imu& imu);
   RobotState predictKinematicModel(const KinematicModelInput& kinematicParams);
 
   PredictionModel getPredictionModel() const { return this->predictionModel; }
   KinematicModel getKinematicModel() const { return this->kinematicModel; }
+
+  Eigen::Vector<double, 6> getStateVector() const { return this->currentState.vec(); }
+  Eigen::Matrix<double, 1, 6> getIMUMeasurementModel() const { return this->measurementModel.imu; }
+  Eigen::Matrix<double, 3, 6> getOdometryMeasurementModel() const { return this->measurementModel.odom; }
+  Eigen::Matrix<double, 6, 6> getProcessNoiseCovariance() const { return this->covariance.processNoiseCovariance; }
+  Eigen::Matrix<double, 6, 1> getIMUMeasurementNoiseCovariance() const { return this->covariance.imuMeasurementNoiseCovariance; }
+  Eigen::Matrix<double, 3, 3> getOdometryMeasurementNoiseCovariance() const { return this->covariance.odomMeasurementNoiseCovariance; }
 
   void updateState(const Eigen::Vector<double, 6>& X) { this->currentState = RobotState(X); }
   void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& P) { this->covariance.setProcessNoiseCovariance(P); }
@@ -372,17 +333,7 @@ private:
     return dtSeconds;
   }
 
-  Eigen::Matrix<double, 3, 4> mecanumForwardKinematics() const {
-    // Calculate the forward kinematics matrix for a mecanum drive robot
-    const double R = this->robotConstants.wheelRadius;
-    const double L = this->robotConstants.trackWidth / 2.0;
-    const double W = this->robotConstants.wheelBase / 2.0;
-    return (R / 4) * Eigen::Matrix<double, 3, 4>{
-      {-1 / (L + W), 1 / (L + W), 1 / (L + W), -1 / (L + W)},
-      {1, 1, 1, 1},
-      {-1, 1, -1, 1}
-    };
-  }
+  Eigen::Matrix<double, 3, 4> mecanumForwardKinematicsMatrix;
 
   Eigen::Vector4d mecanumInverseKinematics(const double vX, const double vY, const double omega) const {
     // Calculate wheel velocities from robot body velocities
@@ -399,31 +350,23 @@ private:
   }
 
   Eigen::Vector3d rockerBogieForwardKinematics(
-    const std::unordered_map<std::string, double>& wheelVelocities,
-    const std::unordered_map<std::string, double>& wheelSteeringAngles) const {
+    const std::array<double, 6>& wheelVelocities,
+    const std::array<double, 6>& wheelSteeringAngles) const {
     // Calculate the forward kinematics for a rocker-bogie drive robot
     // wheelVelocities: [front left, front right, middle left, middle right, rear left, rear right]
     // wheelSteeringAngles: [front left, front right, rear left, rear right]
-    for (const auto& k : ROCKER_BOGIE_WHEEL_NAMES) {
-      if (wheelVelocities.find(k) == wheelVelocities.end()) {
-        throw std::invalid_argument(std::string("Missing wheel velocity key for ROCKER_BOGIE: ") + k);
-      }
-      if (wheelSteeringAngles.find(k) == wheelSteeringAngles.end()) {
-        throw std::invalid_argument(std::string("Missing wheel steering key for ROCKER_BOGIE: ") + k);
-      }
-    }
 
     // Initialize Jacobian matrices
     Eigen::Matrix<double, 12, 3> A = Eigen::Matrix<double, 12, 3>::Zero();
     Eigen::Matrix<double, 12, 1> B = Eigen::Matrix<double, 12, 1>::Zero();
     // Initialize row index and body velocity
     unsigned int row = 0;
-    // Iterate over wheel names
-    for (const auto& wheelName : ROCKER_BOGIE_WHEEL_NAMES) {
+    // Iterate over wheels
+    for (size_t i = 0; i < 6; ++i) {
       // Get the wheel position, velocity, and steering angles
-      const Eigen::Vector2d& wheelPos = this->robotConstants.wheelLocations.at(wheelName);
-      const double wheelVel = wheelVelocities.at(wheelName);
-      const double wheelSteer = wheelSteeringAngles.at(wheelName);
+      const Eigen::Vector2d& wheelPos = this->robotConstants.wheelLocations[i];
+      const double wheelVel = wheelVelocities[i];
+      const double wheelSteer = wheelSteeringAngles[i];
 
       // Populate A matrix for current wheel
       // v_ix = v_bx - omega_b * y_i
@@ -458,11 +401,11 @@ private:
 
   RobotState predictDiffDriveKinematicModel(const double leftVelocity, const double rightVelocity, const rclcpp::Time timestamp);
 
-  RobotState predictMecanumKinematicModel(const std::unordered_map<std::string, double>& wheelVelocities, const rclcpp::Time timestamp);
+  RobotState predictMecanumKinematicModel(const std::array<double, 4>& wheelVelocities, const rclcpp::Time timestamp);
 
   RobotState predictRockerBogieKinematicModel(
-    const std::unordered_map<std::string, double>& wheelVelocities,
-    const std::unordered_map<std::string, double>& wheelSteeringAngles,
+    const std::array<double, 6>& wheelVelocities,
+    const std::array<double, 6>& wheelSteeringAngles,
     const rclcpp::Time timestamp);
 };
 
