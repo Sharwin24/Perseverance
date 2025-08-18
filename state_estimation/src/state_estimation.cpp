@@ -26,7 +26,7 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   RCLCPP_INFO(this->get_logger(), "State Estimator Node has been initialized.");
 
   // Declare parameters
-  double timer_freq = this->declare_parameter("timer_frequency", 100.0); // [Hz]
+  double timer_freq = this->declare_parameter("timer_frequency", 10.0); // [Hz]
   double initial_x = this->declare_parameter("initial_x", 0.0); // [m]
   double initial_y = this->declare_parameter("initial_y", 0.0); // [m]
   double initial_theta = this->declare_parameter("initial_theta", 0.0); // [rad]
@@ -75,7 +75,7 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   cov.setOdomMeasurementNoiseCovariance(1.0, 1.0, 0.05);
   cov.setImuMeasurementNoiseCovariance(0.0075);
 
-  RCLCPP_INFO(this->get_logger(), "State Covariance (P): diag[%f, %f, %f, %f, %f, %f]",
+  RCLCPP_INFO(this->get_logger(), "State Covariance (P): diag[x=%f, y=%f, theta=%f, vx=%f, vy=%f, omega=%f]",
     cov.stateCovariance(0, 0), cov.stateCovariance(1, 1),
     cov.stateCovariance(2, 2), cov.stateCovariance(3, 3),
     cov.stateCovariance(4, 4), cov.stateCovariance(5, 5)
@@ -87,13 +87,13 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
     cov.processNoiseCovariance(4, 4), cov.processNoiseCovariance(5, 5)
   );
 
-  RCLCPP_INFO(this->get_logger(), "Odom Measurement Noise Covariance (R_odom): diag[%f, %f, %f]",
+  RCLCPP_INFO(this->get_logger(), "Odom Measurement Noise Covariance (R_odom): diag[x=%f, y=%f, theta=%f]",
     cov.odomMeasurementNoiseCovariance(0, 0),
     cov.odomMeasurementNoiseCovariance(1, 1),
     cov.odomMeasurementNoiseCovariance(2, 2)
   );
 
-  RCLCPP_INFO(this->get_logger(), "IMU Measurement Noise Covariance (R_imu): diag[%f]",
+  RCLCPP_INFO(this->get_logger(), "IMU Measurement Noise Covariance (R_imu): diag[omega=%f]",
     cov.imuMeasurementNoiseCovariance(0, 0)
   );
 
@@ -103,7 +103,7 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   // Setup Kalman Filter
   this->kalmanFilter = KalmanFilter(
     robotConstants,
-    PredictionModel::DYNAMIC, KinematicModel::ROCKER_BOGIE,
+    PredictionModel::DYNAMIC, KinematicModel::DIFF_DRIVE,
     cov, initialState
   );
 
