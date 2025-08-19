@@ -11,3 +11,6 @@ imu_sensor:
     imu_filter_orient_beta: 0.01 # Beta value for orientation data
     mag_filter_alpha: 0.8 # Alpha value for magnetic field data
     mag_filter_beta: 0.01 # Beta value for magnetic field data
+simulated_imu:
+  ros__parameters:
+    sensor_frequency: 100.0 # [Hz]

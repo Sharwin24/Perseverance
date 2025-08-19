@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <string>
 #include <rclcpp/time.hpp>
+#include <rclcpp/clock.hpp>
 
 struct RobotState {
   double x = 0.0; // X Position [m]
@@ -279,10 +280,11 @@ struct RobotConstants {
 };
 class KalmanFilter {
 public:
-  KalmanFilter() = default;
-  KalmanFilter(RobotConstants robotConstants, PredictionModel predModel, KinematicModel kinematicModel, Covariance cov, RobotState initialState)
+  KalmanFilter() = delete;
+  KalmanFilter(rclcpp::Clock::SharedPtr clock, RobotConstants robotConstants, PredictionModel predModel, KinematicModel kinematicModel, Covariance cov, RobotState initialState)
     : robotConstants(robotConstants), predictionModel(predModel), kinematicModel(kinematicModel),
-    systemModel(SystemModel(predModel, kinematicModel)), covariance(cov), currentState(initialState) {
+    systemModel(SystemModel(predModel, kinematicModel)), covariance(cov), currentState(initialState), clock(clock) {
+    this->previousPredictionTimeStamp = this->clock->now();
     if (kinematicModel == KinematicModel::MECANUM) {
       // Calculate the forward kinematics matrix for a mecanum drive robot
       const double R = this->robotConstants.wheelRadius;
@@ -295,6 +297,7 @@ public:
       };
     }
   }
+  ~KalmanFilter() = default;
 
   RobotState predictDynamicModel(const sensor_msgs::msg::Imu& imu);
   RobotState predictKinematicModel(const KinematicModelInput& kinematicParams);
@@ -327,8 +330,10 @@ private:
   Covariance covariance;
   // The current robot's state estimation
   RobotState currentState;
+  // The clock to use for timing
+  rclcpp::Clock::SharedPtr clock;
   // The timestamp of the previous prediction [s]
-  rclcpp::Time previousPredictionTimeStamp = rclcpp::Time(0);
+  rclcpp::Time previousPredictionTimeStamp;
 
   double computeDeltaTime(const rclcpp::Time currentTime) const {
     const double dtSeconds = (currentTime - this->previousPredictionTimeStamp).seconds();

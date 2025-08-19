@@ -21,6 +21,7 @@ find_package(nav_msgs REQUIRED)
 # Other Dependencies
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(sensors REQUIRED)
 find_package(Doxygen)
 
 include_directories(

@@ -33,8 +33,13 @@ include_directories(
 add_executable(BNO055_Sensor src/bno055_node.cpp src/bno055.cpp)
 ament_target_dependencies(BNO055_Sensor rclcpp sensor_msgs)
 
+# Simulated IMU Node
+add_executable(simulated_imu src/simulated_imu.cpp)
+ament_target_dependencies(simulated_imu rclcpp sensor_msgs)
+
 install(TARGETS
   BNO055_Sensor
+  simulated_imu
   DESTINATION lib/${PROJECT_NAME}
 )
 
