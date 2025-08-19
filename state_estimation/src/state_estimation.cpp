@@ -3,6 +3,15 @@
 ///
 /// PARAMETERS:
 ///   timer_frequency (float64) : Frequency of the timer for updating the state estimate [Hz]
+///   initial_x       (float64) : Initial X position [m]
+///   initial_y       (float64) : Initial Y position [m]
+///   initial_theta   (float64) : Initial yaw/orientation [rad]
+///   initial_vx      (float64) : Initial X velocity [m/s]
+///   initial_vy      (float64) : Initial Y velocity [m/s]
+///   initial_omega   (float64) : Initial angular velocity (yaw rate) [rad/s]
+///   wheel_base      (float64) : Wheel-to-wheel distance along the robot Y-axis [m]
+///   wheel_radius    (float64) : Wheel radius [m]
+///   track_width     (float64) : Back-to-front wheel distance along the robot X-axis [m]
 ///
 /// PUBLISHERS:
 ///   /sensors/filtered/imu (sensor_msgs::msg::Imu): Filtered IMU data

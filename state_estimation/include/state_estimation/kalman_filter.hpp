@@ -283,15 +283,17 @@ public:
   KalmanFilter(RobotConstants robotConstants, PredictionModel predModel, KinematicModel kinematicModel, Covariance cov, RobotState initialState)
     : robotConstants(robotConstants), predictionModel(predModel), kinematicModel(kinematicModel),
     systemModel(SystemModel(predModel, kinematicModel)), covariance(cov), currentState(initialState) {
-    // Calculate the forward kinematics matrix for a mecanum drive robot
-    const double R = this->robotConstants.wheelRadius;
-    const double L = this->robotConstants.trackWidth / 2.0;
-    const double W = this->robotConstants.wheelBase / 2.0;
-    this->mecanumForwardKinematicsMatrix = (R / 4) * Eigen::Matrix<double, 3, 4>{
-      {-1 / (L + W), 1 / (L + W), 1 / (L + W), -1 / (L + W)},
-      {1, 1, 1, 1},
-      {-1, 1, -1, 1}
-    };
+    if (kinematicModel == KinematicModel::MECANUM) {
+      // Calculate the forward kinematics matrix for a mecanum drive robot
+      const double R = this->robotConstants.wheelRadius;
+      const double L = this->robotConstants.trackWidth / 2.0;
+      const double W = this->robotConstants.wheelBase / 2.0;
+      this->mecanumForwardKinematicsMatrix = (R / 4) * Eigen::Matrix<double, 3, 4>{
+        {-1 / (L + W), 1 / (L + W), 1 / (L + W), -1 / (L + W)},
+        {1, 1, 1, 1},
+        {-1, 1, -1, 1}
+      };
+    }
   }
 
   RobotState predictDynamicModel(const sensor_msgs::msg::Imu& imu);
