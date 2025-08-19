@@ -137,7 +137,7 @@ void StateEstimator::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
   // Calculate the innovation
   const auto Y = Z - (H * X);
   // Calculate the Kalman Gain [K] using the innovation covariance [S]
-  const auto& P = this->kalmanFilter->getProcessNoiseCovariance();
+  const auto& P = this->kalmanFilter->getStateCovariance();
   const auto& R_imu = this->kalmanFilter->getIMUMeasurementNoiseCovariance();
   const auto S = H * P * H.transpose() + R_imu;
   const auto K = P * H.transpose() * S.inverse();
@@ -145,7 +145,7 @@ void StateEstimator::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
   const auto X_new = X + K * Y;
   const auto P_new = (Eigen::Matrix<double, 6, 6>::Identity() - K * H) * P;
   this->kalmanFilter->updateState(X_new);
-  this->kalmanFilter->updateProcessNoiseCovariance(P_new);
+  this->kalmanFilter->updateStateCovariance(P_new);
 }
 
 void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -160,7 +160,7 @@ void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) 
   // Calculate the innovation
   const auto Y = Z - H * X;
   // Calculate the Kalman Gain [k] using the innovation covariance [S]
-  const auto P = this->kalmanFilter->getProcessNoiseCovariance();
+  const auto P = this->kalmanFilter->getStateCovariance();
   const auto R_odom = this->kalmanFilter->getOdometryMeasurementNoiseCovariance();
   const auto S = H * P * H.transpose() + R_odom;
   const auto K = P * H.transpose() * S.inverse();
@@ -168,11 +168,12 @@ void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) 
   const auto X_new = X + K * Y;
   const auto P_new = (Eigen::Matrix<double, 6, 6>::Identity() - K * H) * P;
   this->kalmanFilter->updateState(X_new);
-  this->kalmanFilter->updateProcessNoiseCovariance(P_new);
+  this->kalmanFilter->updateStateCovariance(P_new);
 }
 
 void StateEstimator::timerCallback() {
   // Run prediction model to update the current state estimate
+  RobotState predictedState;
   switch (this->kalmanFilter->getPredictionModel()) {
   case PredictionModel::DYNAMIC: {
     // Predict using the dynamic model
@@ -182,32 +183,34 @@ void StateEstimator::timerCallback() {
       imu = this->lastImuMsg;
     }
     if (imu) {
-      this->kalmanFilter->predictDynamicModel(*imu);
+      predictedState = this->kalmanFilter->predictDynamicModel(*imu);
     }
     break;
   }
   case PredictionModel::KINEMATIC: {
     // Predict using the kinematic model
     const auto kinematicParams = KinematicModelInput(); // TODO: Get actual kinematic parameters
-    this->kalmanFilter->predictKinematicModel(kinematicParams);
+    predictedState = this->kalmanFilter->predictKinematicModel(kinematicParams);
     break;
   }
   }
 
+  // Update the new state
+  this->updateState(predictedState);
+
   // Display the current Robot State Vector
-  const auto& state = this->kalmanFilter->getStateVector();
   RCLCPP_INFO(this->get_logger(),
     "Current State Estimate: [x=%.3f [m], y=%.3f [m], theta=%.3f [rad], vx=%.3f [m/s], vy=%.3f [m/s], omega=%.3f [rad/s]]",
-    state(0), state(1), state(2), state(3), state(4), state(5)
+    predictedState.x, predictedState.y, predictedState.theta, predictedState.vx, predictedState.vy, predictedState.omega
   );
   // Create an Odom message to publish the current state
   nav_msgs::msg::Odometry odomMsg;
   odomMsg.header.frame_id = "odom";
   odomMsg.child_frame_id = "base_link";
   odomMsg.header.stamp = this->now();
-  odomMsg.pose.pose.position.x = state(0);
-  odomMsg.pose.pose.position.y = state(1);
-  odomMsg.pose.pose.orientation = this->yaw2Quaternion(state(2));
+  odomMsg.pose.pose.position.x = predictedState.x;
+  odomMsg.pose.pose.position.y = predictedState.y;
+  odomMsg.pose.pose.orientation = this->yaw2Quaternion(predictedState.theta);
   auto create_odom_cov_array = [&](const Eigen::Matrix<double, 6, 6>& P) {
     // Only copy x, y, theta covariance to the pose covariance array
     std::array<double, 36> arr{};
@@ -224,11 +227,11 @@ void StateEstimator::timerCallback() {
     arr[35] = P(5, 5);    // omega (yaw rate)
     return arr;
   };
-  odomMsg.pose.covariance = create_odom_cov_array(this->kalmanFilter->getProcessNoiseCovariance());
-  odomMsg.twist.twist.linear.x = state(3);
-  odomMsg.twist.twist.linear.y = state(4);
-  odomMsg.twist.twist.angular.z = state(5);
-  odomMsg.twist.covariance = create_twist_cov_array(this->kalmanFilter->getProcessNoiseCovariance());
+  odomMsg.pose.covariance = create_odom_cov_array(this->kalmanFilter->getStateCovariance());
+  odomMsg.twist.twist.linear.x = predictedState.vx;
+  odomMsg.twist.twist.linear.y = predictedState.vy;
+  odomMsg.twist.twist.angular.z = predictedState.omega;
+  odomMsg.twist.covariance = create_twist_cov_array(this->kalmanFilter->getStateCovariance());
   this->odomPublisher->publish(odomMsg);
 }
 

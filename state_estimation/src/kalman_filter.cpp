@@ -180,3 +180,4 @@ RobotState KalmanFilter::predictRockerBogieKinematicModel(
   // Return the predicted state
   return predictedState;
 }
+

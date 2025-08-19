@@ -20,6 +20,8 @@ private:
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void timerCallback();
 
+  void updateState(RobotState newState) const { this->kalmanFilter->updateState(newState.vec()); }
+
   geometry_msgs::msg::Quaternion yaw2Quaternion(const double yaw);
 
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odomPublisher;

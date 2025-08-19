@@ -59,7 +59,7 @@ struct Covariance {
   Covariance() = default;
 
   /**
-   * @brief Set the uncertainties for the state covariance matrix.
+   * @brief Set the uncertainties for the state covariance matrix P.
    *
    * @param xUncertainty The uncertainty for the X position [m^2]
    * @param yUncertainty The uncertainty for the Y position [m^2]
@@ -78,8 +78,12 @@ struct Covariance {
     stateCovariance(5, 5) = omegaUncertainty; // Angular Velocity
   }
 
+  void setStateCovariance(const Eigen::Matrix<double, 6, 6>& P) {
+    stateCovariance = P;
+  }
+
   /**
-   * @brief Set the process noise covariance matrix.
+   * @brief Set the process noise covariance matrix Q.
    *
    * @param xNoise The process noise for the X position [m^2]
    * @param yNoise The process noise for the Y position [m^2]
@@ -98,8 +102,8 @@ struct Covariance {
     processNoiseCovariance(5, 5) = omegaNoise; // Angular Velocity
   }
 
-  void setProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& P) {
-    processNoiseCovariance = P;
+  void setProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& Q) {
+    processNoiseCovariance = Q;
   }
 
   /**
@@ -308,12 +312,14 @@ public:
   Eigen::Vector<double, 6> getStateVector() const { return this->currentState.vec(); }
   Eigen::Matrix<double, 1, 6> getIMUMeasurementModel() const { return this->measurementModel.imu; }
   Eigen::Matrix<double, 3, 6> getOdometryMeasurementModel() const { return this->measurementModel.odom; }
+  Eigen::Matrix<double, 6, 6> getStateCovariance() const { return this->covariance.stateCovariance; }
   Eigen::Matrix<double, 6, 6> getProcessNoiseCovariance() const { return this->covariance.processNoiseCovariance; }
   Eigen::Matrix<double, 1, 1> getIMUMeasurementNoiseCovariance() const { return this->covariance.imuMeasurementNoiseCovariance; }
   Eigen::Matrix<double, 3, 3> getOdometryMeasurementNoiseCovariance() const { return this->covariance.odomMeasurementNoiseCovariance; }
 
   void updateState(const Eigen::Vector<double, 6>& X) { this->currentState = RobotState(X); }
-  void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& P) { this->covariance.setProcessNoiseCovariance(P); }
+  void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& Q) { this->covariance.setProcessNoiseCovariance(Q); }
+  void updateStateCovariance(const Eigen::Matrix<double, 6, 6>& P) { this->covariance.setStateCovariance(P); }
 
 private:
   // Robot constants (e.g., wheel base, wheel radius, track width)

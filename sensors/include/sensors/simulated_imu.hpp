@@ -25,8 +25,8 @@ private:
     msg.header.stamp = this->now();
     msg.header.frame_id = "imu_link";
     // Simulate some motion: e.g., sinusoidal angular velocity and acceleration
-    msg.linear_acceleration.x = 0.5 * std::sin(t_);
-    msg.linear_acceleration.y = 0.5 * std::cos(t_);
+    msg.linear_acceleration.x = 2.0 * std::sin(t_);
+    msg.linear_acceleration.y = 0.1 * std::cos(t_);
     msg.linear_acceleration.z = -9.81; // gravity
     msg.angular_velocity.z = 0.05 * std::sin(0.5 * t_);
     // Optionally fill orientation (quaternion)
