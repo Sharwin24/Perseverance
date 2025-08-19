@@ -1,0 +1,5 @@
+imu_sensor:
+  ros__parameters:
+    sensor_frequency: 100.0 # [Hz]
+    temp_filter_alpha: 0.8 # Alpha value for temperature data
+    temp_filter_beta: 0.01 # Beta value for temperature data

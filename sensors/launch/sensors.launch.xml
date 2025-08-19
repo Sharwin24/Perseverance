@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="sensors" exec="BNO055_Sensor" name="imu_sensor" output="screen">
+    <param from="$(find-pkg-share sensors)/config/sensors_config.yaml"/>
+  </node>
+</launch>
