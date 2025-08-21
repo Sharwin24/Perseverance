@@ -5,6 +5,7 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include <tf2_ros/static_transform_broadcaster.h>
 #include "tf2/LinearMath/Quaternion.h"
 
 #include <vector>
@@ -28,6 +29,8 @@ private:
 
   // TF2 broadcaster to publish the robot's pose.
   std::unique_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> staticTfBroadcaster;
+
 
   // Timer to drive the main simulation loop.
   rclcpp::TimerBase::SharedPtr simulationTimer;

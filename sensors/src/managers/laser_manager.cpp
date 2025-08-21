@@ -37,7 +37,7 @@ LaserManager::LaserManager() : Node("laser_manager") {
   );
 
   // Setup a QoS profile suitable for publishing OccupancyGrid messages
-  auto mapQoS = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
+  auto mapQoS = rclcpp::QoS(rclcpp::KeepLast(10)).reliable();
   // Setup map publisher
   this->mapPublisher = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map", mapQoS);
 

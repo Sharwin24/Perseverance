@@ -3,41 +3,22 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <chrono>
 #include <cmath>
 
 class SimulatedIMU : public rclcpp::Node {
 public:
-  SimulatedIMU() : Node("simulated_imu") {
-    pub_ = this->create_publisher<sensor_msgs::msg::Imu>("sensors/raw/imu", 10);
-    double freq = this->declare_parameter<double>("sensor_frequency", 100.0);
-    freq = this->get_parameter("sensor_frequency", freq);
-    this->period_ = 1.0 / freq;
-    timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(static_cast<int>(1000 / freq)),
-      std::bind(&SimulatedIMU::publish_imu, this));
-    t_ = 0.0;
-  }
+  SimulatedIMU();
 
 private:
-  void publish_imu() {
-    sensor_msgs::msg::Imu msg;
-    msg.header.stamp = this->now();
-    msg.header.frame_id = "imu_link";
-    // Simulate some motion: e.g., sinusoidal angular velocity and acceleration
-    msg.linear_acceleration.x = 2.0 * std::sin(t_);
-    msg.linear_acceleration.y = 0.1 * std::cos(t_);
-    msg.linear_acceleration.z = -9.81; // gravity
-    msg.angular_velocity.z = 0.05 * std::sin(0.5 * t_);
-    // Optionally fill orientation (quaternion)
-    msg.orientation.w = 1.0; msg.orientation.x = 0.0; msg.orientation.y = 0.0; msg.orientation.z = 0.0;
-    pub_->publish(msg);
-    t_ += this->period_;
-  }
-  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr pub_;
-  rclcpp::TimerBase::SharedPtr timer_;
-  double t_;
-  double period_;
+  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imuPub;
+  rclcpp::TimerBase::SharedPtr timer;
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> staticTfBroadcaster;
+
+  double timestep;
+  double period;
 };
 
 #endif // SENSORS_SIM_IMU_HPP

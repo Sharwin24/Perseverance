@@ -118,6 +118,22 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
     cov, initialState
   );
 
+  // Initialize static TF broadcaster and publish map -> odom using initial state
+  this->staticTfBroadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
+  {
+    geometry_msgs::msg::TransformStamped mapToOdom;
+    mapToOdom.header.stamp = this->now();
+    mapToOdom.header.frame_id = "map";
+    mapToOdom.child_frame_id = "odom";
+    // Place odom in the map frame at the initial robot pose (x,y,theta)
+    mapToOdom.transform.translation.x = initial_x;
+    mapToOdom.transform.translation.y = initial_y;
+    mapToOdom.transform.translation.z = 0.0;
+    const auto q = this->yaw2Quaternion(initial_theta);
+    mapToOdom.transform.rotation = q;
+    this->staticTfBroadcaster->sendTransform(mapToOdom);
+  }
+
   this->timer = this->create_wall_timer(
     std::chrono::duration<double>(1.0 / timer_freq),
     std::bind(&StateEstimator::timerCallback, this)

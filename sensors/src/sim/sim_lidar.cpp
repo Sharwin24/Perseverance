@@ -18,6 +18,24 @@ SimulatedLidar::SimulatedLidar() : Node("simulated_lidar") {
   scanPublishRate = this->get_parameter("scan_publish_rate").as_double();
   scanNumPoints = this->get_parameter("scan_num_points").as_int();
 
+  // Initialize the static transform broadcaster
+  this->staticTfBroadcaster = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
+  {
+    // Publish the transform from the base_link to the sensor link
+    geometry_msgs::msg::TransformStamped transformStamped;
+    transformStamped.header.stamp = this->now();
+    transformStamped.header.frame_id = "base_link";
+    transformStamped.child_frame_id = "lidar_link";
+    transformStamped.transform.translation.x = 0.0;
+    transformStamped.transform.translation.y = 0.0;
+    transformStamped.transform.translation.z = 0.3;
+    transformStamped.transform.rotation.w = 1.0;
+    transformStamped.transform.rotation.x = 0.0;
+    transformStamped.transform.rotation.y = 0.0;
+    transformStamped.transform.rotation.z = 0.0;
+    this->staticTfBroadcaster->sendTransform(transformStamped);
+  }
+
   // Initialize robot state
   robotX = 0.0;
   robotY = 0.0;
@@ -80,7 +98,7 @@ void SimulatedLidar::publishRobotTransform() {
 sensor_msgs::msg::LaserScan SimulatedLidar::generateLaserScan() {
   sensor_msgs::msg::LaserScan scan_msg;
   scan_msg.header.stamp = this->now();
-  scan_msg.header.frame_id = "base_link"; // Scan is relative to the robot's frame
+  scan_msg.header.frame_id = "lidar_link"; // Scan is relative to the lidar frame
 
   scan_msg.angle_min = -M_PI;
   scan_msg.angle_max = M_PI;

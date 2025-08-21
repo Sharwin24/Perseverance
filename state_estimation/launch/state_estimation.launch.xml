@@ -4,12 +4,19 @@
   <arg name="sensor_namespace" default="" description="Namespace for sensor topics"/>
   <arg name="log_level" default="info" description="Logging level for all nodes"/>
   <arg name="use_sim_sensors" default="true" description="Use simulated or real sensors [true, false]"/>
+  <arg name="launch_rviz" default="true" description="Launch RViz2 [true, false]"/>
 
   <node pkg="state_estimation" exec="state_estimator" name="state_estimator" output="screen"
         args="--ros-args --log-level $(var log_level)">
     <param from="$(find-pkg-share state_estimation)/config/state_estimation_config.yaml"/>
     <param name="use_sim_time" value="false"/>
   </node>
+
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
+    args="--ros-args --log-level $(var log_level)" if="$(var launch_rviz)">
+    <param from="$(find-pkg-share state_estimation)/config/rviz_config.rviz"/>
+  </node>
+
 <include file="$(find-pkg-share sensors)/launch/sensors.launch.xml">
   <arg name="namespace" value="$(var sensor_namespace)"/>
   <arg name="log_level" value="$(var log_level)"/>
