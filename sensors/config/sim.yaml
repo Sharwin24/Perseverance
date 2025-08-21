@@ -1,0 +1,4 @@
+# Parameters for simulated sensor publishers
+simulated_imu:
+  ros__parameters:
+    sensor_frequency: 100.0  # [Hz]

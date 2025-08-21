@@ -17,7 +17,7 @@ constexpr const char* TEMP_FILTERED_TOPIC = "sensors/filtered/temp";
 
 BNO055Node::BNO055Node() : Node("BNO055_Sensor") {
   // Declare parameters
-  double sensorPollFreq = this->declare_parameter("sensorPollFreq", 100.0); // [Hz]
+  double sensorPollFreq = this->declare_parameter("sensor_poll_freq", 100.0); // [Hz]
   double temp_filter_alpha = this->declare_parameter("temp_filter_alpha", 0.8);
   double temp_filter_beta = this->declare_parameter("temp_filter_beta", 0.01);
   double imu_filter_lin_accel_alpha = this->declare_parameter("imu_filter_lin_accel_alpha", 0.8);
@@ -29,7 +29,7 @@ BNO055Node::BNO055Node() : Node("BNO055_Sensor") {
   double mag_filter_alpha = this->declare_parameter("mag_filter_alpha", 0.8);
   double mag_filter_beta = this->declare_parameter("mag_filter_beta", 0.01);
   // Get parameter from yaml file
-  sensorPollFreq = this->get_parameter("sensorPollFreq").as_double();
+  sensorPollFreq = this->get_parameter("sensor_poll_freq").as_double();
   temp_filter_alpha = this->get_parameter("temp_filter_alpha").as_double();
   temp_filter_beta = this->get_parameter("temp_filter_beta").as_double();
   imu_filter_lin_accel_alpha = this->get_parameter("imu_filter_lin_accel_alpha").as_double();

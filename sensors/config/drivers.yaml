@@ -1,0 +1,24 @@
+# Parameters for real hardware drivers (e.g., IMU)
+bno055:
+  ros__parameters:
+    sensor_poll_freq: 100.0        # [Hz]
+
+    # Temperature α-β filter
+    temp_filter_alpha: 0.8
+    temp_filter_beta: 0.01
+
+    # Linear acceleration α-β filter
+    imu_filter_lin_accel_alpha: 0.85
+    imu_filter_lin_accel_beta: 0.02
+
+    # Angular velocity α-β filter
+    imu_filter_ang_vel_alpha: 0.85
+    imu_filter_ang_vel_beta: 0.02
+
+    # Orientation α-β filter
+    imu_filter_orient_alpha: 0.9
+    imu_filter_orient_beta: 0.01
+
+    # Magnetometer α-β filter
+    mag_filter_alpha: 0.8
+    mag_filter_beta: 0.01

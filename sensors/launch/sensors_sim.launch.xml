@@ -1,0 +1,20 @@
+<launch>
+  <!-- Args -->
+  <arg name="namespace" default=""/>
+  <arg name="param_file" default="$(find-pkg-share sensors)/config/sim.yaml"/>
+  <arg name="log_level"  default="info"/>
+
+  <!-- Enable/disable individual simulated drivers -->
+  <arg name="simulated_imu_enable" default="true"/>
+
+  <!-- Simulated IMU -->
+  <node pkg="sensors" exec="simulated_imu_node" name="simulated_imu" ns="$(var namespace)"
+        output="screen" if="$(var simulated_imu_enable)"
+        args="--ros-args --log-level $(var log_level)">
+    <param from="$(var param_file)"/>
+    <!-- Example remaps -->
+    <!-- <remap from="imu/data" to="imu/sim"/> -->
+  </node>
+
+  <!-- Add more simulated sensors here -->
+</launch>
