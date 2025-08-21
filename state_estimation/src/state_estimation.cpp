@@ -37,7 +37,7 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   RCLCPP_INFO(this->get_logger(), "State Estimator Node has been initialized.");
 
   // Declare parameters
-  double timer_freq = this->declare_parameter("timer_frequency", 10.0); // [Hz]
+  double timer_freq = this->declare_parameter("timer_frequency", 1.0); // [Hz]
   double initial_x = this->declare_parameter("initial_x", 0.0); // [m]
   double initial_y = this->declare_parameter("initial_y", 0.0); // [m]
   double initial_theta = this->declare_parameter("initial_theta", 0.0); // [rad]
@@ -60,14 +60,15 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   track_width = this->get_parameter("track_width").as_double();
 
   // Sensor Data QoS (Subscribers)
-  const auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort().durability_volatile();
+  const auto sensorDataQoS = rclcpp::QoS(rclcpp::SensorDataQoS());
   // Initialize subscriptions
   this->imuSubscription = this->create_subscription<sensor_msgs::msg::Imu>(
-    IMUTopic, qos, std::bind(&StateEstimator::imuCallback, this, std::placeholders::_1));
+    IMUTopic, sensorDataQoS, std::bind(&StateEstimator::imuCallback, this, std::placeholders::_1));
   this->odomSubscription = this->create_subscription<nav_msgs::msg::Odometry>(
-    ODOMTopic, qos, std::bind(&StateEstimator::odomCallback, this, std::placeholders::_1));
+    ODOMTopic, sensorDataQoS, std::bind(&StateEstimator::odomCallback, this, std::placeholders::_1));
   // Initialize Odom (RobotState) Publisher
-  this->odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>(RobotStateTopic, qos);
+  const auto stateQoS = rclcpp::QoS(rclcpp::KeepLast(10)).reliable();
+  this->odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>(RobotStateTopic, stateQoS);
 
   RobotState initialState(
     initial_x, initial_y, initial_theta,

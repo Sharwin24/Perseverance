@@ -34,7 +34,6 @@ private:
 
   // Timer to drive the main simulation loop.
   rclcpp::TimerBase::SharedPtr simulationTimer;
-
   double roomWidth;          // Width of the simulated room in meters.
   double roomHeight;         // Height of the simulated room in meters.
   double robotSpeed;         // Linear speed of the robot in m/s.

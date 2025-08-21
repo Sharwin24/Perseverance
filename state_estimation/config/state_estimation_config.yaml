@@ -1,6 +1,6 @@
 state_estimator:
   ros__parameters:
-    timer_frequency: 10.0 # [Hz]
+    timer_frequency: 1.0 # [Hz]
     initial_x: 0.0 # Initial x position [m]
     initial_y: 0.0 # Initial y position [m]
     initial_theta: 0.0 # Initial orientation [rad]

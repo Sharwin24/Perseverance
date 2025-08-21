@@ -26,14 +26,14 @@ SimulatedIMU::SimulatedIMU() : Node("simulated_imu") {
   }
 
   timer = this->create_wall_timer(
-    std::chrono::milliseconds(static_cast<int>(1000 / freq)),
+    std::chrono::duration<double>(this->period),
     [this]() {
     sensor_msgs::msg::Imu msg;
     msg.header.stamp = this->now();
     msg.header.frame_id = "imu_link";
     // Simulate some motion: e.g., sinusoidal angular velocity and acceleration
-    msg.linear_acceleration.x = 2.0 * std::sin(timestep);
-    msg.linear_acceleration.y = 0.1 * std::cos(timestep);
+    msg.linear_acceleration.x = 0.7 * std::sin(timestep);
+    msg.linear_acceleration.y = 0.01 * std::cos(timestep);
     msg.linear_acceleration.z = -9.81; // gravity
     msg.angular_velocity.z = 0.05 * std::sin(0.5 * timestep);
     msg.orientation.w = 1.0;

@@ -114,9 +114,9 @@ void LaserManager::updateMap(
 }
 
 bool LaserManager::worldToMap(double worldX, double worldY, int& mapX, int& mapY) {
-  // Convert world coordinates to map coordinates
-  mapX = static_cast<int>(worldX / mapResolution);
-  mapY = static_cast<int>(worldY / mapResolution);
+  // Convert world coordinates to map coordinates and account for the map's origin
+  mapX = static_cast<int>((worldX - currentMap.info.origin.position.x) / mapResolution);
+  mapY = static_cast<int>((worldY - currentMap.info.origin.position.y) / mapResolution);
   return (mapX >= 0 && mapX < mapWidth && mapY >= 0 && mapY < mapHeight);
 }
 

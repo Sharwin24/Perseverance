@@ -13,9 +13,8 @@
   </node>
 
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
-    args="--ros-args --log-level $(var log_level)" if="$(var launch_rviz)">
-    <param from="$(find-pkg-share state_estimation)/config/rviz_config.rviz"/>
-  </node>
+    args="-d $(find-pkg-share state_estimation)/config/rover.rviz --ros-args --log-level $(var log_level)" if="$(var launch_rviz)">
+</node>
 
 <include file="$(find-pkg-share sensors)/launch/sensors.launch.xml">
   <arg name="namespace" value="$(var sensor_namespace)"/>

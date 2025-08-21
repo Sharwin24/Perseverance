@@ -177,7 +177,7 @@ Visualization Manager:
         Color: 255; 25; 0
         Head Length: 0.30000001192092896
         Head Radius: 0.10000000149011612
-        Shaft Length: 2
+        Shaft Length: 1
         Shaft Radius: 0.05000000074505806
         Value: Arrow
       Topic:
@@ -234,7 +234,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 11.998647689819336
+      Distance: 6.159489631652832
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
