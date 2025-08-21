@@ -4,7 +4,7 @@
   <arg name="log_level" default="info" description="Logging level for all nodes"/>
 
   <!-- Select real or simulated sensors -->
-  <arg name="use_sim" default="true" description="Use simulated or real sensors [true, false]"/>
+  <arg name="use_sim_sensors" default="true" description="Use simulated or real sensors [true, false]"/>
 
   <!-- Toggle managers explicitly (usually you want them) -->
   <arg name="start_managers" default="true" description="Start sensor managers that process sensor data"/>
@@ -19,14 +19,14 @@
   <arg name="map_topic"  default="map"/>
 
   <!-- Real hardware drivers (only when not sim) -->
-  <include file="$(find-pkg-share sensors)/launch/sensors_drivers.launch.xml" unless="$(var use_sim)">
+  <include file="$(find-pkg-share sensors)/launch/sensors_drivers.launch.xml" unless="$(var use_sim_sensors)">
     <arg name="namespace"  value="$(var namespace)"/>
     <arg name="param_file" value="$(var drivers_param_file)"/>
     <arg name="log_level"  value="$(var log_level)"/>
   </include>
 
   <!-- Simulated drivers (only when sim) -->
-  <include file="$(find-pkg-share sensors)/launch/sensors_sim.launch.xml" if ="$(var use_sim)">
+  <include file="$(find-pkg-share sensors)/launch/sensors_sim.launch.xml" if ="$(var use_sim_sensors)">
     <arg name="namespace"  value="$(var namespace)"/>
     <arg name="param_file" value="$(var sim_param_file)"/>
     <arg name="log_level"  value="$(var log_level)"/>

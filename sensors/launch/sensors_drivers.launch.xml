@@ -9,7 +9,7 @@
   <arg name="bno055_enable" default="true"/>
 
   <!-- BNO055 IMU -->
-  <node pkg="sensors" exec="bno055_node" name="bno055" ns="$(var namespace)"
+  <node pkg="sensors" exec="bno055_node" name="bno055" namespace="$(var namespace)"
         output="screen" if="$(var bno055_enable)"
         args="--ros-args --log-level $(var log_level)">
     <param from="$(var param_file)"/>

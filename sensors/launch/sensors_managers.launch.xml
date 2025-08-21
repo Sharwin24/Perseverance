@@ -9,7 +9,7 @@
   <arg name="map_topic"  default="map"/>
 
   <!-- Laser manager (LaserScan -> OccupancyGrid) -->
-  <node pkg="sensors" exec="laser_manager_node" name="laser_manager" ns="$(var namespace)"
+  <node pkg="sensors" exec="laser_manager_node" name="laser_manager" namespace="$(var namespace)"
         output="screen" args="--ros-args --log-level $(var log_level)">
     <param from="$(var param_file)"/>
 
