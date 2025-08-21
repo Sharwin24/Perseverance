@@ -11,9 +11,9 @@
  */
 
 
-#include "bno055.hpp"
-#include "bno055_registers.hpp"
-#include "smbus_functions.h"
+#include "drivers/bno055.hpp"
+#include "drivers/bno055_registers.hpp"
+#include "drivers/smbus_functions.h"
 
 bool BNO055::reset() {
   _i2c_smbus_write_byte_data(this->file, BNO055_OPR_MODE_ADDR, BNO055_OPERATION_MODE_CONFIG);

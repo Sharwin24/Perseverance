@@ -14,8 +14,8 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/magnetic_field.hpp"
 #include "sensor_msgs/msg/temperature.hpp"
-#include "bno055.hpp"
-#include "alpha_beta_filter.hpp"
+#include "drivers/bno055.hpp"
+#include "filters/alpha_beta_filter.hpp"
 
  /**
   * @class BNO055Node

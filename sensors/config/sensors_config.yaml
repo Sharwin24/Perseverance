@@ -14,3 +14,12 @@ imu_sensor:
 simulated_imu:
   ros__parameters:
     sensor_frequency: 100.0 # [Hz]
+laser_manager:
+  ros__parameters:
+    map_update_frequency: 10.0 # [Hz]
+    map_resolution: 0.05 # Meters per pixel
+    map_width: 1024 # Pixels
+    map_height: 1024 # Pixels
+    map_frame_id: "map"
+    odom_frame_id: "odom"
+    base_frame_id: "base_link"

@@ -1,5 +1,5 @@
-#include "bno055_node.hpp"
-#include "bno055.hpp"
+#include "nodes/bno055_node.hpp"
+#include "drivers/bno055.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/imu.hpp"
