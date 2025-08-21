@@ -52,17 +52,16 @@ target_include_directories(laser_manager_lib PUBLIC
 ament_target_dependencies(laser_manager_lib rclcpp sensor_msgs nav_msgs geometry_msgs tf2_ros tf2_geometry_msgs)
 
 # --- Simulated Sensors ---
-add_library(simulated_imu_lib
-  src/sim/simulated_imu.cpp
+add_library(sim_sensors_lib
+  src/sim/sim_imu.cpp
+  src/sim/sim_lidar.cpp
 )
-target_include_directories(simulated_imu_lib PUBLIC
+target_include_directories(sim_sensors_lib PUBLIC
   $<BUILD_INTERFACE:${SENSORS_INCLUDE_DIR}>
   $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(simulated_imu_lib rclcpp sensor_msgs)
+ament_target_dependencies(sim_sensors_lib rclcpp sensor_msgs geometry_msgs tf2_ros)
 
-# BN0055 Node
-# add_executable(BNO055_Sensor src/bno055_node.cpp src/bno055.cpp)
-# ament_target_dependencies(BNO055_Sensor rclcpp sensor_msgs)
+# BNO055 Node
 add_executable(bno055_node src/nodes/bno055_node.cpp)
 target_include_directories(bno055_node PUBLIC
   $<BUILD_INTERFACE:${SENSORS_INCLUDE_DIR}>
@@ -71,14 +70,20 @@ target_link_libraries(bno055_node bno055_driver)
 ament_target_dependencies(bno055_node rclcpp sensor_msgs)
 
 # Simulated IMU Node
-# add_executable(simulated_imu src/simulated_imu.cpp)
-# ament_target_dependencies(simulated_imu rclcpp sensor_msgs)
-add_executable(simulated_imu src/sim/simulated_imu.cpp)
+add_executable(simulated_imu src/sim/sim_imu.cpp)
 target_include_directories(simulated_imu PUBLIC
   $<BUILD_INTERFACE:${SENSORS_INCLUDE_DIR}>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(simulated_imu simulated_imu_lib)
+target_link_libraries(simulated_imu sim_sensors_lib)
 ament_target_dependencies(simulated_imu rclcpp sensor_msgs)
+
+# Simulated LiDaR Node
+add_executable(simulated_lidar src/sim/sim_lidar.cpp)
+target_include_directories(simulated_lidar PUBLIC
+  $<BUILD_INTERFACE:${SENSORS_INCLUDE_DIR}>
+  $<INSTALL_INTERFACE:include>)
+target_link_libraries(simulated_lidar sim_sensors_lib)
+ament_target_dependencies(simulated_lidar rclcpp sensor_msgs geometry_msgs tf2_ros)
 
 # Laser Manager
 add_executable(laser_manager_node src/managers/laser_manager.cpp)
@@ -90,10 +95,11 @@ ament_target_dependencies(laser_manager_node rclcpp sensor_msgs nav_msgs geometr
 
 install(TARGETS
   bno055_driver
-  simulated_imu_lib
+  sim_sensors_lib
   laser_manager_lib
   bno055_node
   simulated_imu
+  simulated_lidar
   laser_manager_node
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib

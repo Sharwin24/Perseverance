@@ -1,4 +1,4 @@
-#include "sim/simulated_imu.hpp"
+#include "sim/sim_imu.hpp"
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);

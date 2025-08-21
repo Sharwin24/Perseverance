@@ -1,5 +1,5 @@
-#ifndef SENSORS_SIMULATED_IMU_HPP
-#define SENSORS_SIMULATED_IMU_HPP
+#ifndef SENSORS_SIM_IMU_HPP
+#define SENSORS_SIM_IMU_HPP
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -40,4 +40,4 @@ private:
   double period_;
 };
 
-#endif // SENSORS_SIMULATED_IMU_HPP
+#endif // SENSORS_SIM_IMU_HPP
