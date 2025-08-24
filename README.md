@@ -1,7 +1,10 @@
 # Perseverance
 Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch and open-source including mechanical design, electronics, and software. The end goal of this project is to gain experience with mobile robotics concepts including SLAM, state estimation, and dynamic environment navigation.
 
+
 ## Work In Progress
+[![wakatime](https://wakatime.com/badge/user/b25c3469-3f3c-4aff-90ef-5723a788454c/project/5c2a6026-001a-4a48-9ca0-751737dcbed2.svg)](https://wakatime.com/badge/user/b25c3469-3f3c-4aff-90ef-5723a788454c/project/5c2a6026-001a-4a48-9ca0-751737dcbed2)
+
 This project is currently in progress and I'm currently focusing on the drive-base with the following tasks:
 
 - Building a Kalman Filter focusing on the kinematic model of a 6-wheel Mars Rover
