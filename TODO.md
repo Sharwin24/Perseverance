@@ -15,9 +15,10 @@
 - Figure out how to convert OnShape CAD model to URDF for visualization
 
 ## Electronics
-- Figure out sensor selection
+- Figure out sensor/motors selection
   - Wheel Encoders: ...
   - IMU: BNO055
   - Lidar: RPLIDAR A1
   - Camera: ...
+  - Wheel Motors: ...
 - Figure out (closed loop) motors and motor controller that can easily talk to RPI5
