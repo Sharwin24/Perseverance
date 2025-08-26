@@ -11,8 +11,9 @@
 - Once robot is done, setup Gazebo and replace simulated Lidar with Gazebo Lidar
 
 ## Rover Design
-- Finish Rocker-Bogie Suspension design with simple wheels (no steering)
 - Figure out how to convert OnShape CAD model to URDF for visualization
+- Finalize rover dimensions
+- PCB for motor drivers and Teensy 4.0
 
 ## Electronics
 - Figure out sensor/motors selection
