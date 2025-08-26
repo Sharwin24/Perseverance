@@ -16,7 +16,12 @@ This project is currently in progress and I'm currently focusing on the drive-ba
 
 ---
 
-<div style="display: flex; justify-content: center; align-items: center; width: 100%;">
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 16px;">
+  <img src="cad_images/Isometric.png" alt="Isometric CAD View" style="width: 49%; border-radius: 12px;">
+  <img src="cad_images/TopDown.png" alt="Top Down CAD View" style="width: 49%; border-radius: 12px;">
+</div>
+
+<div style="display: flex; justify-content: center; align-items: center; width: 80%;">
   <img src="prototyping/rocker_bogie_diagram.png" alt="alt text" style="border-radius: 12px;">
 </div>
 
