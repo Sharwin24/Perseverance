@@ -3,33 +3,18 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.transforms as mtransforms
+from rover_constants import (
+    WHEEL_BASE,              # Longitudinal front↔rear
+    WHEEL_RADIUS,
+    TRACK_WIDTH_MIDDLE,      # Lateral middle spacing
+    # Lateral steering spacing (used in wheel locations but not directly annotated here)
+    TRACK_WIDTH_STEERING,
+    ROVER_BODY_LENGTH,
+    ROVER_BODY_WIDTH,
+    WHEEL_LOCATIONS,
+)
 
-# ------ RBM Inputs ------
-WHEEL_RADIUS = 25  # The wheel radius [mm]
-# Middle Wheel to Wheel distance along the Robot Y-axis [mm]
-WHEEL_BASE = 294.5
-# Front Wheel to Wheel distance along the Robot Y-axis [mm]
-FRONT_WHEEL_BASE = 255.5
-# Rear Wheel to Wheel distance along the Robot Y-axis [mm]
-REAR_WHEEL_BASE = 256
-# The back to front wheel distance along the Robot X-axis [mm]
-TRACK_WIDTH = 250
 IMAGE_FILE = "rocker_bogie_diagram.png"
-ROVER_BODY_WIDTH = 150  # Width of rover's body that houses electronics [mm]
-ROVER_BODY_LENGTH = 240  # Length of the rover's body [mm]
-# ------------------------
-
-# Wheel locations for top-down view: WHEEL_BASE is Y-axis (left-right), TRACK_WIDTH is X-axis (front-back)
-FRONT_TO_MIDDLE_RATIO = 0.533416  # Ratio to the Track Width
-REAR_TO_MIDDLE_RATIO = 0.478844  # Ratio to the Track Width
-WHEEL_LOCATIONS = {
-    "front_left": (FRONT_TO_MIDDLE_RATIO * TRACK_WIDTH, FRONT_WHEEL_BASE / 2),
-    "middle_left": (0, WHEEL_BASE / 2),
-    "rear_left": (-REAR_TO_MIDDLE_RATIO * TRACK_WIDTH, REAR_WHEEL_BASE / 2),
-    "front_right": (FRONT_TO_MIDDLE_RATIO * TRACK_WIDTH, -FRONT_WHEEL_BASE / 2),
-    "middle_right": (0, -WHEEL_BASE / 2),
-    "rear_right": (-REAR_TO_MIDDLE_RATIO * TRACK_WIDTH, -REAR_WHEEL_BASE / 2)
-}
 
 
 ROBOT_DIAGRAM = r"""
@@ -60,7 +45,7 @@ BN is the RBM height
 BN = sqrt(BC^2 - NC^2)
 """
 
-NC = TRACK_WIDTH / 2  # [mm]
+NC = WHEEL_BASE / 2  # Half the longitudinal wheelbase (A↔C / 2) [mm]
 BC = sqrt(2) * NC  # [mm]
 BM = sqrt(0.5) * NC  # [mm]
 AM = BM  # [mm]
@@ -71,7 +56,7 @@ CENTER_TO_GROUND = WHEEL_RADIUS + BN  # [mm]
 print(
     f'Rover Rocker Bogie Mechanism (RBM) parameters:\n'
     f'----Robot Inputs----\n'
-    f'- Robot Length: {TRACK_WIDTH} [mm]\n'
+    f'- Wheelbase (front↔rear A→C): {WHEEL_BASE} [mm]\n'
     f'- Wheel Diameter: {WHEEL_RADIUS * 2} [mm]\n'
     f'--------------------\n'
     f'- Center to Front Wheel (B to C): {BC:.3f} [mm]\n'
@@ -86,8 +71,8 @@ print(
 
 # Print the equations from the inputs: Robot Length, Wheel Diameter
 print(
-    f'Equations with Inputs [Robot Length, Wheel Diameter] = [{TRACK_WIDTH}, {WHEEL_RADIUS * 2}] mm:\n'
-    f'- Wheel Base (A to C) = RobotLength - 2 * WheelRadius\n'
+    f'Equations with Inputs [Wheelbase, Wheel Diameter] = [{WHEEL_BASE}, {WHEEL_RADIUS * 2}] mm:\n'
+    f'- Wheelbase (A to C) = UserMeasured (WHEEL_BASE)\n'
     f'- Center to Front Wheel (B to C) = sqrt(2) * NC\n'
     f'- Center to Back Pivot (B to M) = sqrt(0.5) * NC\n'
     f'- Height of RBM (B to N) = sqrt(BC^2 - NC^2)\n'
@@ -179,23 +164,23 @@ def draw_robot_diagram():
     ax.text(20, 20, 'Robot Center\n(0, 0)', fontsize=10, weight='bold')
 
     # Add dimension annotations
-    # TRACK_WIDTH annotation (X-axis: front to back)
-    ax.annotate('', xy=(-TRACK_WIDTH/2, -ROVER_BODY_WIDTH/2 - 90), xytext=(TRACK_WIDTH/2, -ROVER_BODY_WIDTH/2 - 90),
+    # WHEEL_BASE annotation (X-axis: front↔rear)
+    ax.annotate('', xy=(-WHEEL_BASE/2, -ROVER_BODY_WIDTH/2 - 90), xytext=(WHEEL_BASE/2, -ROVER_BODY_WIDTH/2 - 90),
                 arrowprops=dict(arrowstyle='<->', color='purple', lw=2))
-    ax.text(0, -ROVER_BODY_WIDTH/2 - 150, f'TRACK_WIDTH = {TRACK_WIDTH} mm\n(Front to Back)',
+    ax.text(0, -ROVER_BODY_WIDTH/2 - 150, f'WHEEL_BASE = {WHEEL_BASE} mm\n(Front ↔ Rear)',
             ha='center', fontsize=11, color='purple', weight='bold')
 
-    # WHEEL_BASE annotation (Y-axis: left to right) - placed on the left side
-    ax.annotate('', xy=(-ROVER_BODY_LENGTH/2 - 80, -WHEEL_BASE/2), xytext=(-ROVER_BODY_LENGTH/2 - 80, WHEEL_BASE/2),
+    # TRACK_WIDTH_MIDDLE annotation (Y-axis: left↔right) - placed on the left side
+    ax.annotate('', xy=(-ROVER_BODY_LENGTH/2 - 80, -TRACK_WIDTH_MIDDLE/2), xytext=(-ROVER_BODY_LENGTH/2 - 80, TRACK_WIDTH_MIDDLE/2),
                 arrowprops=dict(arrowstyle='<->', color='orange', lw=2))
-    ax.text(-ROVER_BODY_LENGTH/2 - 120, 0, f'WHEEL_BASE = {WHEEL_BASE} mm\n(Left to Right)',
+    ax.text(-ROVER_BODY_LENGTH/2 - 120, 0, f'TRACK_WIDTH_MIDDLE = {TRACK_WIDTH_MIDDLE} mm',
             rotation=90, ha='center', va='center', fontsize=11, color='orange', weight='bold')
 
     # Set equal aspect ratio and limits
     ax.set_aspect('equal')
     margin = 300
-    ax.set_xlim(-TRACK_WIDTH/2 - margin, TRACK_WIDTH/2 + margin)
-    ax.set_ylim(-WHEEL_BASE/2 - margin, WHEEL_BASE/2 + margin)
+    ax.set_xlim(-WHEEL_BASE/2 - margin, WHEEL_BASE/2 + margin)
+    ax.set_ylim(-TRACK_WIDTH_MIDDLE/2 - margin, TRACK_WIDTH_MIDDLE/2 + margin)
 
     # Grid and labels
     ax.grid(True, alpha=0.3)
@@ -297,7 +282,7 @@ def draw_robot_diagram():
     # Add dimension annotations
     ax.annotate('', xy=(A_x, A_y + wheel_radius_plot + 80), xytext=(C_x, C_y + wheel_radius_plot + 80),
                 arrowprops=dict(arrowstyle='<->', color='green', lw=2))
-    ax.text((A_x + C_x)/2, A_y + wheel_radius_plot + 100, f'Track Width = {TRACK_WIDTH:.1f} mm',
+    ax.text((A_x + C_x)/2, A_y + wheel_radius_plot + 100, f'Wheelbase = {WHEEL_BASE:.1f} mm',
             ha='center', fontsize=11, color='green', weight='bold')
 
     # Height (BN)

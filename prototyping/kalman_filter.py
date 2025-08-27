@@ -1,3 +1,21 @@
+from rover_constants import (
+    WHEEL_RADIUS,
+    WHEEL_BASE,            # Longitudinal front↔rear distance (A↔C)
+    TRACK_WIDTH_MIDDLE,    # Lateral middle wheel spacing
+    TRACK_WIDTH_STEERING,  # Lateral steering wheel spacing
+    WHEEL_LOCATIONS,
+)
+"""Kalman filter prototype for rover state estimation.
+
+Geometry Naming (migrated from legacy inversion):
+    WHEEL_BASE: longitudinal front↔rear (previously named TRACK_WIDTH).
+    TRACK_WIDTH_MIDDLE: lateral middle pair spacing (previously WHEEL_BASE).
+    TRACK_WIDTH_STEERING: lateral steering pair spacing (previously STEERING_WHEEL_BASE).
+
+Mecanum Kinematics Note:
+    Typical formulation uses half-length L = WHEEL_BASE / 2 and half-width W = TRACK_WIDTH_MIDDLE / 2.
+    Legacy code previously swapped these; updated here.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -7,22 +25,6 @@ from draw_rocker_bogie import draw_rocker_bogie_at_state
 PLOTS_DIR = "plots"
 if not os.path.exists(PLOTS_DIR):
     os.makedirs(PLOTS_DIR)
-
-# Constants
-WHEEL_RADIUS = 50  # The wheel radius [mm]
-WHEEL_BASE = 1000  # Wheel to Wheel distance along the Robot Y-axis [mm]
-# The back to front wheel distance along the Robot X-axis [mm]
-TRACK_WIDTH = 600
-
-# Wheel locations: WHEEL_BASE is Y-axis (left-right), TRACK_WIDTH is X-axis (front-back)
-WHEEL_LOCATIONS = {
-    "front_left": (TRACK_WIDTH / 2, WHEEL_BASE / 2),      # Front left
-    "middle_left": (0, WHEEL_BASE / 2),                   # Middle left
-    "rear_left": (-TRACK_WIDTH / 2, WHEEL_BASE / 2),      # Rear left
-    "front_right": (TRACK_WIDTH / 2, -WHEEL_BASE / 2),    # Front right
-    "middle_right": (0, -WHEEL_BASE / 2),                 # Middle right
-    "rear_right": (-TRACK_WIDTH / 2, -WHEEL_BASE / 2)     # Rear right
-}
 
 
 class RobotState:
@@ -143,8 +145,8 @@ class KalmanFilter:
     def mecanum_forward_kinematics(self) -> np.array:
         """F = pinv(H0)"""
         R = WHEEL_RADIUS
-        L = TRACK_WIDTH / 2.0
-        W = WHEEL_BASE / 2.0
+        L = WHEEL_BASE / 2.0          # Half-length
+        W = TRACK_WIDTH_MIDDLE / 2.0  # Half-width
         return (R / 4) * np.array([
             [-1 / (L + W), 1/(L + W), 1/(L + W), -1/(L + W)],
             [1, 1, 1, 1],
@@ -156,8 +158,8 @@ class KalmanFilter:
         Returns: [w_fl, w_fr, w_rl, w_rr] (front left, front right, rear left, rear right)
         """
         R = WHEEL_RADIUS
-        L = TRACK_WIDTH / 2.0
-        W = WHEEL_BASE / 2.0
+        L = WHEEL_BASE / 2.0          # Half-length
+        W = TRACK_WIDTH_MIDDLE / 2.0  # Half-width
         return (1 / R) * np.array([
             (-L - W) * vx + vy + (-1) * omega,  # Front left wheel
             (L + W) * vx + vy + (1) * omega,    # Front right wheel
@@ -559,8 +561,9 @@ if __name__ == "__main__":
             np.cos(last_theta) + true_vy_new * np.sin(last_theta)
         turn_radius = np.inf if abs(
             true_omega) < 1e-6 else body_vx / true_omega
+        # Ackermann-like approximation: tan(delta) ≈ wheelbase / turn_radius
         steer_angle = 0 if not np.isfinite(turn_radius) else np.arctan(
-            TRACK_WIDTH / (2 * turn_radius))
+            WHEEL_BASE / (2 * turn_radius))
 
         drive_speed = body_vx
         wheel_drive_speeds = {

@@ -125,7 +125,7 @@ if __name__ == '__main__':
     expected_x_vel = 10.0  # All wheels drive forward at 10 mm/s
     assert np.allclose(body_vel_straight, [
                        expected_x_vel, 0.0, 0.0], atol=1e-6), f"Expected [10.0, 0.0, 0.0], got {body_vel_straight}"
-    print("✓ Test passed: Expected [10.0, 0.0, 0.0]\n")
+    print("Test passed: Expected [10.0, 0.0, 0.0]\n")
 
     print("--- Scenario 2: Point Turn (Spinning in Place) ---")
     # Left wheels drive backward, right wheels drive forward.
@@ -145,4 +145,4 @@ if __name__ == '__main__':
     assert np.allclose(body_vel_turn[:2], [
                        0.0, 0.0], atol=1e-6), f"Expected translation [0.0, 0.0], got {body_vel_turn[:2]}"
     assert body_vel_turn[2] > 0, f"Expected positive angular velocity, got {body_vel_turn[2]}"
-    print("✓ Test passed: Expected [0.0, 0.0, positive_value]\n")
+    print("Test passed: Expected [0.0, 0.0, positive_value]\n")
