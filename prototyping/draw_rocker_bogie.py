@@ -5,21 +5,30 @@ import numpy as np
 import matplotlib.transforms as mtransforms
 
 # ------ RBM Inputs ------
-WHEEL_RADIUS = 50  # The wheel radius [mm]
-WHEEL_BASE = 250  # Wheel to Wheel distance along the Robot Y-axis [mm]
+WHEEL_RADIUS = 25  # The wheel radius [mm]
+# Middle Wheel to Wheel distance along the Robot Y-axis [mm]
+WHEEL_BASE = 294.5
+# Front Wheel to Wheel distance along the Robot Y-axis [mm]
+FRONT_WHEEL_BASE = 255.5
+# Rear Wheel to Wheel distance along the Robot Y-axis [mm]
+REAR_WHEEL_BASE = 256
 # The back to front wheel distance along the Robot X-axis [mm]
-TRACK_WIDTH = 350
+TRACK_WIDTH = 250
 IMAGE_FILE = "rocker_bogie_diagram.png"
+ROVER_BODY_WIDTH = 150  # Width of rover's body that houses electronics [mm]
+ROVER_BODY_LENGTH = 240  # Length of the rover's body [mm]
 # ------------------------
 
 # Wheel locations for top-down view: WHEEL_BASE is Y-axis (left-right), TRACK_WIDTH is X-axis (front-back)
+FRONT_TO_MIDDLE_RATIO = 0.533416  # Ratio to the Track Width
+REAR_TO_MIDDLE_RATIO = 0.478844  # Ratio to the Track Width
 WHEEL_LOCATIONS = {
-    "front_left": (TRACK_WIDTH / 2, WHEEL_BASE / 2),      # Front left
-    "middle_left": (0, WHEEL_BASE / 2),                   # Middle left
-    "rear_left": (-TRACK_WIDTH / 2, WHEEL_BASE / 2),      # Rear left
-    "front_right": (TRACK_WIDTH / 2, -WHEEL_BASE / 2),    # Front right
-    "middle_right": (0, -WHEEL_BASE / 2),                 # Middle right
-    "rear_right": (-TRACK_WIDTH / 2, -WHEEL_BASE / 2)     # Rear right
+    "front_left": (FRONT_TO_MIDDLE_RATIO * TRACK_WIDTH, FRONT_WHEEL_BASE / 2),
+    "middle_left": (0, WHEEL_BASE / 2),
+    "rear_left": (-REAR_TO_MIDDLE_RATIO * TRACK_WIDTH, REAR_WHEEL_BASE / 2),
+    "front_right": (FRONT_TO_MIDDLE_RATIO * TRACK_WIDTH, -FRONT_WHEEL_BASE / 2),
+    "middle_right": (0, -WHEEL_BASE / 2),
+    "rear_right": (-REAR_TO_MIDDLE_RATIO * TRACK_WIDTH, -REAR_WHEEL_BASE / 2)
 }
 
 
@@ -51,8 +60,7 @@ BN is the RBM height
 BN = sqrt(BC^2 - NC^2)
 """
 
-WHEEL_BASE = TRACK_WIDTH - WHEEL_RADIUS * 2  # [mm]
-NC = WHEEL_BASE / 2  # [mm]
+NC = TRACK_WIDTH / 2  # [mm]
 BC = sqrt(2) * NC  # [mm]
 BM = sqrt(0.5) * NC  # [mm]
 AM = BM  # [mm]
@@ -66,7 +74,6 @@ print(
     f'- Robot Length: {TRACK_WIDTH} [mm]\n'
     f'- Wheel Diameter: {WHEEL_RADIUS * 2} [mm]\n'
     f'--------------------\n'
-    f'- Wheel Base (A to C): {WHEEL_BASE:.3f} [mm]\n'
     f'- Center to Front Wheel (B to C): {BC:.3f} [mm]\n'
     f'- Center to Back Pivot (B to M): {BM:.3f} [mm]\n'
     f'- Back Pivot to Middle Wheel (M to N): {MN:.3f} [mm]\n'
@@ -119,15 +126,13 @@ def draw_robot_diagram():
     ax.text(-80, 220, 'Y (left)', fontsize=12, color='green', weight='bold')
 
     # Draw robot body outline (simplified rectangular body)
-    body_width = WHEEL_BASE + 100  # Add some margin for visual clarity
-    body_length = TRACK_WIDTH + 100
-    body_rect = plt.Rectangle((-body_length/2, -body_width/2), body_length, body_width,
+    body_rect = plt.Rectangle((-ROVER_BODY_LENGTH/2, -ROVER_BODY_WIDTH/2), ROVER_BODY_LENGTH, ROVER_BODY_WIDTH,
                               fill=False, edgecolor='black', linewidth=2, linestyle='--', alpha=0.5)
     ax.add_patch(body_rect)
 
     # Draw wheels at their positions (as rectangles aligned with X-axis)
     wheel_width = 20   # Wheel width (along Y-axis)
-    wheel_length = 60  # Wheel length (along X-axis)
+    wheel_length = WHEEL_RADIUS * 2  # Wheel length (along X-axis)
     # Different colors for left/right sides
     left_colors = ['blue', 'blue', 'blue']   # All left wheels blue
     right_colors = ['red', 'red', 'red']     # All right wheels red
@@ -175,15 +180,15 @@ def draw_robot_diagram():
 
     # Add dimension annotations
     # TRACK_WIDTH annotation (X-axis: front to back)
-    ax.annotate('', xy=(-TRACK_WIDTH/2, -body_width/2 - 80), xytext=(TRACK_WIDTH/2, -body_width/2 - 80),
+    ax.annotate('', xy=(-TRACK_WIDTH/2, -ROVER_BODY_WIDTH/2 - 90), xytext=(TRACK_WIDTH/2, -ROVER_BODY_WIDTH/2 - 90),
                 arrowprops=dict(arrowstyle='<->', color='purple', lw=2))
-    ax.text(0, -body_width/2 - 125, f'TRACK_WIDTH = {TRACK_WIDTH} mm\n(Front to Back)',
+    ax.text(0, -ROVER_BODY_WIDTH/2 - 150, f'TRACK_WIDTH = {TRACK_WIDTH} mm\n(Front to Back)',
             ha='center', fontsize=11, color='purple', weight='bold')
 
     # WHEEL_BASE annotation (Y-axis: left to right) - placed on the left side
-    ax.annotate('', xy=(-body_length/2 - 80, -WHEEL_BASE/2), xytext=(-body_length/2 - 80, WHEEL_BASE/2),
+    ax.annotate('', xy=(-ROVER_BODY_LENGTH/2 - 80, -WHEEL_BASE/2), xytext=(-ROVER_BODY_LENGTH/2 - 80, WHEEL_BASE/2),
                 arrowprops=dict(arrowstyle='<->', color='orange', lw=2))
-    ax.text(-body_length/2 - 120, 0, f'WHEEL_BASE = {WHEEL_BASE} mm\n(Left to Right)',
+    ax.text(-ROVER_BODY_LENGTH/2 - 120, 0, f'WHEEL_BASE = {WHEEL_BASE} mm\n(Left to Right)',
             rotation=90, ha='center', va='center', fontsize=11, color='orange', weight='bold')
 
     # Set equal aspect ratio and limits
@@ -334,11 +339,9 @@ def draw_robot_diagram():
 
 def draw_rocker_bogie_at_state(ax, show_text: bool, x, y, theta, vx, vy, omega):
     # Draw the robot chassis as a grey rectangle
-    CHASSIS_LENGTH = TRACK_WIDTH * 1.5  # Length of the chassis
-    CHASSIS_WIDTH = WHEEL_BASE * 0.7  # Width of the chassis
     chassis = plt.Rectangle(
-        (x - CHASSIS_LENGTH / 2, y - CHASSIS_WIDTH / 2),
-        CHASSIS_LENGTH, CHASSIS_WIDTH,
+        (x - ROVER_BODY_LENGTH / 2, y - ROVER_BODY_WIDTH / 2),
+        ROVER_BODY_LENGTH, ROVER_BODY_WIDTH,
         angle=0, color='lightgrey', alpha=0.8, ec='black', linewidth=2
     )
     t = ax.transData
@@ -363,8 +366,8 @@ def draw_rocker_bogie_at_state(ax, show_text: bool, x, y, theta, vx, vy, omega):
         ax.add_patch(wheel)
 
     # Draw the heading of the robot as a larger triangle at the front
-    front_x = x + (CHASSIS_LENGTH / 2) * np.cos(theta)
-    front_y = y + (CHASSIS_LENGTH / 2) * np.sin(theta)
+    front_x = x + (ROVER_BODY_LENGTH / 2) * np.cos(theta)
+    front_y = y + (ROVER_BODY_LENGTH / 2) * np.sin(theta)
     HEADING_TRIANGLE_SIZE = 40  # Size of the heading triangle
     heading_triangle = plt.Polygon(
         [
@@ -390,7 +393,7 @@ def draw_rocker_bogie_at_state(ax, show_text: bool, x, y, theta, vx, vy, omega):
     # Calculate magnitude and scale the arrow length
     magnitude = np.sqrt(world_vx**2 + world_vy**2)
     if magnitude > 1e-6:  # Avoid division by zero
-        ARROW_LENGTH = (CHASSIS_LENGTH / 2) - (HEADING_TRIANGLE_SIZE * 1.2)
+        ARROW_LENGTH = (ROVER_BODY_LENGTH / 2) - (HEADING_TRIANGLE_SIZE * 1.2)
 
         # Calculate the final arrow components for plotting
         arrow_dx = (world_vx / magnitude) * ARROW_LENGTH
@@ -407,7 +410,7 @@ def draw_rocker_bogie_at_state(ax, show_text: bool, x, y, theta, vx, vy, omega):
     # Add a small label for the robot state above the chassis center
     if show_text:
         ax.text(
-            x, y + (CHASSIS_LENGTH / 4),
+            x, y + (ROVER_BODY_LENGTH / 4),
             f'X=[x={x:.0f} mm, y={y:.0f} mm, θ={np.degrees(theta):.1f}°]\n'
             f'V=[vx={vx:.1f} mm/s, vy={vy:.1f} mm/s, ω={omega:.1f} rad/s]',
             fontsize=8, ha='center', va='bottom', color='black', weight='bold',
@@ -440,3 +443,4 @@ if __name__ == "__main__":
         plt.gca().set_aspect('equal', adjustable='box')
     plt.savefig(f"top_down_rover.png",
                 dpi=300, bbox_inches='tight')
+    plt.show()

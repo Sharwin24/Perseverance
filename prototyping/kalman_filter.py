@@ -751,8 +751,34 @@ if __name__ == "__main__":
         PLOTS_DIR, 'robot_trajectory_rocker_bogie_kinematic.png'), dpi=300)
     plt.close()
 
+    # Plot 5: Model Comparisons
+    plt.figure(figsize=(12, 10))
+    plt.plot(true_states[:, 0], true_states[:, 1], 'g-',
+             linewidth=6, alpha=0.8, label='True Path')
+    plt.plot(estimated_states_dynamic[:, 0], estimated_states_dynamic[:, 1],
+             'b-', linewidth=2, alpha=0.6, label='Dynamic Model EKF')
+    plt.plot(estimated_states_kinematic[:, 0], estimated_states_kinematic[:, 1],
+             'r-', linewidth=2, alpha=0.6, label='Diff-Drive Kinematic Model EKF')
+    plt.plot(estimated_states_mecanum[:, 0], estimated_states_mecanum[:, 1],
+             'm-', linewidth=2, alpha=0.6, label='Mecanum Model EKF')
+    plt.plot(estimated_states_rocker_bogie[:, 0], estimated_states_rocker_bogie[:, 1],
+             'y-', linewidth=2, alpha=0.6, label='Rocker-Bogie Model EKF')
+    plt.scatter(odom_readings_rocker_bogie[:, 0], odom_readings_rocker_bogie[:, 1],
+                c='orange', marker='x', s=60, alpha=0.8, label='Noisy Odometry')
+    plt.xlabel('x [mm]')
+    plt.ylabel('y [mm]')
+    plt.title('Robot Trajectory Estimation: Model Comparisons')
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.axis('equal')
+    plt.tight_layout()
+    plt.savefig(os.path.join(
+        PLOTS_DIR, 'robot_trajectory_comparison.png'), dpi=300)
+    plt.close()
+
     print(f"\nFigures saved successfully to '{PLOTS_DIR}/' directory:")
     print("- robot_trajectory_dynamic_model.png")
     print("- robot_trajectory_diff_drive_kinematic.png")
     print("- robot_trajectory_mecanum_kinematic.png")
     print("- robot_trajectory_rocker_bogie_kinematic.png")
+    print("- robot_trajectory_comparison.png")

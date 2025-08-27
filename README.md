@@ -35,26 +35,10 @@ This project is currently in progress and I'm currently focusing on the drive-ba
 Approximating the robot as a diff-drive robot makes it easier to compute the state transition matrix and derive the system dynamics/kinematics. A kinematic model for a mecanum wheeled drive was also implemented.
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-  <img src="prototyping/plots/robot_trajectory_comparison.png" alt="Robot Trajectory Comparison" style="width: 100%; min-width: 200px;">
+  <img src="prototyping/plots/robot_trajectory_rocker_bogie_kinematic.png" alt="Robot Trajectory Comparison" style="width: 100%; min-width: 200px;">
   <img src="prototyping/plots/kalman_filter_states_comparison.png" alt="Kalman Filter States Comparison" style="width: 49%; min-width: 200px;">
   <img src="prototyping/plots/kalman_filter_errors_comparison.png" alt="Kalman Filter Errors Comparison" style="width: 49%; min-width: 200px;">
 </div>
-
-```txt
-===========================================================================
-KALMAN FILTER PERFORMANCE COMPARISON
-===========================================================================
-State           Dynamic RMSE    Kinematic RMSE  Mecanum RMSE    Best Model
----------------------------------------------------------------------------
-x [mm]          28.050          1.892           1.800           Mecanum
-y [mm]          25.124          2.715           1.608           Mecanum
-theta [rad]     0.098           0.067           0.075           Kinematic
-vx [mm/s]       65.037          13.935          20.095          Kinematic
-vy [mm/s]       47.156          10.845          12.080          Kinematic
-omega [rad/s]   0.304           0.035           0.046           Kinematic
----------------------------------------------------------------------------
-Overall         27.628          4.915           5.951           Kinematic
-```
 
 ## Robot State & Dynamics
 The goal of the prediction step in a Kalman filter is to model how the robot's state evolves over a time step $\Delta t$. This model is based on control inputs, which are the commands we send to the robot. For a differential drive robot, these inputs are the left and right wheel velocities. The robot's state vector $X$ and control vector $U$ can be expressed as:
