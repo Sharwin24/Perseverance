@@ -88,9 +88,9 @@ class KalmanFilter:
         self.Q[5, 5] = 0.005    # Angular velocity noise [rad^2/s^2]
         # [x, y, theta] Odometry measurement noise covariance
         self.R_odom = np.eye(3)
-        self.R_odom[0, 0] = 5.0  # Position uncertainty in x [mm^2]
-        self.R_odom[1, 1] = 5.0  # Position uncertainty in y [mm^2]
-        self.R_odom[2, 2] = 0.1  # Orientation uncertainty [rad^2]
+        self.R_odom[0, 0] = 10.0  # Position uncertainty in x [mm^2]
+        self.R_odom[1, 1] = 10.0  # Position uncertainty in y [mm^2]
+        self.R_odom[2, 2] = 0.2  # Orientation uncertainty [rad^2]
         # [omega] IMU measurement noise covariance
         self.R_imu = np.array([[0.0075]])  # Yaw rate noise [rad^2/s^2]
         self.last_timestamp = initial_timestamp  # [seconds]
