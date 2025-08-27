@@ -35,7 +35,8 @@ Migration Guidance:
 """
 
 # ---------------- Core Dimensions ----------------
-WHEEL_RADIUS = 25              # Wheel radius [mm]
+WHEEL_DIAMETER = 70  # Wheel diameter [mm]
+WHEEL_RADIUS = WHEEL_DIAMETER / 2  # Wheel radius [mm]
 # Longitudinal wheelbase (front↔rear A to C) [mm]  (was TRACK_WIDTH)
 WHEEL_BASE = 250
 # Lateral middle wheel spacing (was WHEEL_BASE) [mm]
