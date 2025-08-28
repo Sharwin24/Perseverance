@@ -287,7 +287,6 @@ Q = np.eye(6) * 1e-3 # Process Noise Covariance Matrix
 while True:
   # 2. Prediction Step
   # 2.1 Predict the next state using the process model
-  # Remember the process model describes the new state using the old state and the time difference between the 2 states
   X_new = process_model(X, dt)
 
   # 2.2 Calculate the Jacobian F
