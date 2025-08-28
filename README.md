@@ -281,10 +281,16 @@ Now that we're equipped with jargon and the individual components of the EKF, we
 X = np.zeros((6, 1)) # [x, y, theta, v_x, v_y, omega]
 P = np.eye(6) * 1e-3 # State Covariance Matrix
 Q = np.eye(6) * 1e-3 # Process Noise Covariance Matrix
+prev_estimate_time = 0 # Timestamp for the previous update
 
 # Loop through prediction and update step
 # This typically happens at a fixed time interval e.g. every 100ms or 10Hz
 while True:
+  # Calculate timestep between estimations
+  current_time = now()
+  dt = current_time - prev_estimate_time
+  if (dt <= 0) continue;
+
   # 2. Prediction Step
   # 2.1 Predict the next state using the process model
   X_new = process_model(X, dt)
@@ -315,6 +321,9 @@ while True:
 
     # 3.5 Update the state covariance
     P = (np.eye(6) - K @ H) @ P
+
+  # Update estimate timestamp before next loop execution
+  prev_estimate_timestamp = current_time
 ```
 
 # References
