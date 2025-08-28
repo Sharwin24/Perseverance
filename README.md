@@ -96,8 +96,7 @@ and treating wheel speeds as control inputs, the (non-linear) discrete process m
 
 $$\begin{bmatrix} x_{k+1} \\ y_{k+1} \\ \theta_{k+1} \\ v_{x,k+1} \\ v_{y,k+1} \\ \omega_{k+1} \end{bmatrix} = \begin{bmatrix}
  x_k + (v_{x,k}\cos\theta_k - v_{y,k}\sin\theta_k)\Delta t \\
- y_k + (v_{x,k}\sin\theta_k + v_{y,k}\cos\theta_k)\Delta t \\
-\theta_k + \omega_k \Delta t \\
+ y_k + (v_{x,k}\sin\theta_k + v_{y,k}\cos\theta_k)\Delta t \\ \theta_k + \omega_k \Delta t \\
  f_{v_x}(U_k) \\
  f_{v_y}(U_k) \\
  f_{\omega}(U_k)
