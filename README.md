@@ -285,37 +285,37 @@ Q = np.eye(6) * 1e-3 # Process Noise Covariance Matrix
 # Loop through prediction and update step
 # This typically happens at a fixed time interval e.g. every 100ms or 10Hz
 while True:
-# 2. Prediction Step
-# 2.1 Predict the next state using the process model
-# Remember the process model describes the new state using the old state and the time difference between the 2 states
-X_new = process_model(X, dt)
+  # 2. Prediction Step
+  # 2.1 Predict the next state using the process model
+  # Remember the process model describes the new state using the old state and the time difference between the 2 states
+  X_new = process_model(X, dt)
 
-# 2.2 Calculate the Jacobian F
-F = calculate_jacobian(X, dt)
+  # 2.2 Calculate the Jacobian F
+  F = calculate_jacobian(X, dt)
 
-# 2.3. Update the state covariance
-P = F @ P @ F.T + Q
+  # 2.3. Update the state covariance
+  P = F @ P @ F.T + Q
 
-# 3. Update Step
-for [z, H, R] in sensor_readings:
-  # z is the measurement vector from the sensor
-  # H is the measurement model matrix for the sensor
-  # R is the measurement noise covariance for this sensor
+  # 3. Update Step
+  for [z, H, R] in sensor_readings:
+    # z is the measurement vector from the sensor
+    # H is the measurement model matrix for the sensor
+    # R is the measurement noise covariance for this sensor
 
-  # 3.1 Calculate the innovation
-  y = z - H @ X_new
+    # 3.1 Calculate the innovation
+    y = z - H @ X_new
 
-  # 3.2 Calculate the innovation covariance [S]
-  S = H @ P @ H.T + R
+    # 3.2 Calculate the innovation covariance [S]
+    S = H @ P @ H.T + R
 
-  # 3.3 Calculate the kalman gain [K]
-  K = P @ H.T @ np.linalg.inv(S)
+    # 3.3 Calculate the kalman gain [K]
+    K = P @ H.T @ np.linalg.inv(S)
 
-  # 3.4 Update the state estimate
-  X_new = X_new + K @ y
+    # 3.4 Update the state estimate
+    X_new = X_new + K @ y
 
-  # 3.5 Update the state covariance
-  P = (np.eye(6) - K @ H) @ P
+    # 3.5 Update the state covariance
+    P = (np.eye(6) - K @ H) @ P
 ```
 
 # References
