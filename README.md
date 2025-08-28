@@ -146,7 +146,7 @@ Discrete process model with state $X = [x, y, \theta, v_x, v_y, \omega]^T$ (usin
 $$\begin{bmatrix} x_{k+1} \\ y_{k+1} \\ \theta_{k+1} \\ v_{x,k+1} \\ v_{y,k+1} \\ \omega_{k+1} \end{bmatrix} = \begin{bmatrix}
  x_k + v_{x,k}\Delta t \\
  y_k + v_{y,k}\Delta t \\
- 	heta_k + \omega_k \Delta t \\
+ \theta_k + \omega_k \Delta t \\
  v_{x}^{(b)\to g}(U_k) \\
  v_{y}^{(b)\to g}(U_k) \\
  \omega_b(U_k)
