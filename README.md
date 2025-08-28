@@ -64,8 +64,6 @@ The function that describes the state's evolution is the **process model:** $f\l
   <img src="equations/process_model.svg" alt="Process Model Equation" style="width: 50%;">
 </div>
 
-Notice that the new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
-
 ### Tuning the Process Noise Covariance $(Q)$
 $Q$ represents how much confidence we have in our prediction model. Typically kinematic models for diff-drive robots are pretty robust, but can accumulate some inaccuracy for skid-steering and mecanum wheeled drive bases. Smaller values trust the prediction model more, while larger values alot more trust to the sensor measurements that are used to correct the robot's state. This should be tuned last after tuning the initial covariance $P$, and the measurement covariances $R$.
 
@@ -80,7 +78,7 @@ $$ -->
   <img src="equations/state_transition_matrix.svg" alt="State Transition Matrix" style="width: 100%;">
 </div>
 
-Note that the new velocities and angular rate do not depend on the previous velocities or angular rate, making their corresponding derivatives zero.
+Note that the new velocities and angular rate do not depend on the previous velocities or angular rate, making their corresponding derivatives zero. The new velocities, $(v_x, v_y)$ are determined by the control input $V$ and the *new* orientation $\theta_{new}$. This is a *non-linear* process model because of the use of trigonometric functions on the state variable $\theta$.
 
 ## Sensor Updates
 The correction step of the filter uses sensor measurements to refine the predicted state. For each sensor, we need a measurement model $H(X)$ that computes the expected measurement from a given state vector.
