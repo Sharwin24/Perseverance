@@ -289,7 +289,8 @@ while True:
   # Calculate timestep between estimations
   current_time = now()
   dt = current_time - prev_estimate_time
-  if (dt <= 0) continue;
+  if (dt <= 0):
+    continue;
 
   # 2. Prediction Step
   # 2.1 Predict the next state using the process model
