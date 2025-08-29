@@ -1,6 +1,4 @@
-# TODO
-
-## ROS
+# ROS
 - Add simulated Wheel Odometry
 - Publish robot twist along with odometry from state estimation
 - Use robot twist for simulated Lidar and IMU
@@ -10,12 +8,12 @@
 - Start designing a controller for trajectory tracking (PIC, MPC, LQR, MPPI)
 - Once robot is done, setup Gazebo and replace simulated Lidar with Gazebo Lidar
 
-## Rover Design
+# Rover Design
 - Figure out how to convert OnShape CAD model to URDF for visualization
 - Finalize rover dimensions
 - PCB for motor drivers and Teensy 4.0
 
-## Electronics
+# Electronics
 - Figure out sensor/motors selection
   - Wheel Encoders: ...
   - IMU: BNO055
