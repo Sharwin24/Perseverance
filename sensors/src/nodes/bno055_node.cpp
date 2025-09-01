@@ -77,7 +77,7 @@ BNO055Node::BNO055Node() : Node("BNO055_Sensor") {
 
   // Create a timer to read the sensor and publish the data
   this->timer = this->create_wall_timer(
-    std::chrono::milliseconds(static_cast<int>(1000.0 / sensorPollFreq)),
+    std::chrono::duration<double>(1.0 / sensorPollFreq),
     [this, sensor_frame_id]() -> void {
     IMURecord record = this->sensor.read();
 
