@@ -17,6 +17,7 @@ constexpr const char* TEMP_FILTERED_TOPIC = "sensors/filtered/temp";
 
 BNO055Node::BNO055Node() : Node("BNO055_Sensor") {
   // Declare parameters
+  std::string sensor_frame_id = this->declare_parameter("sensor_frame_id", "imu_link");
   double sensorPollFreq = this->declare_parameter("sensor_poll_freq", 100.0); // [Hz]
   double temp_filter_alpha = this->declare_parameter("temp_filter_alpha", 0.8);
   double temp_filter_beta = this->declare_parameter("temp_filter_beta", 0.01);
@@ -29,6 +30,7 @@ BNO055Node::BNO055Node() : Node("BNO055_Sensor") {
   double mag_filter_alpha = this->declare_parameter("mag_filter_alpha", 0.8);
   double mag_filter_beta = this->declare_parameter("mag_filter_beta", 0.01);
   // Get parameter from yaml file
+  sensor_frame_id = this->get_parameter("sensor_frame_id").as_string();
   sensorPollFreq = this->get_parameter("sensor_poll_freq").as_double();
   temp_filter_alpha = this->get_parameter("temp_filter_alpha").as_double();
   temp_filter_beta = this->get_parameter("temp_filter_beta").as_double();
@@ -78,7 +80,6 @@ BNO055Node::BNO055Node() : Node("BNO055_Sensor") {
     std::chrono::milliseconds(static_cast<int>(1000.0 / sensorPollFreq)),
     [this]() -> void {
     IMURecord record = this->sensor.read();
-    const std::string sensor_frame_id = "BNO055_frame";
 
     // IMU data
     sensor_msgs::msg::Imu imu_msg;

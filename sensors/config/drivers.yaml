@@ -1,6 +1,7 @@
 # Parameters for real hardware drivers (e.g., IMU)
 bno055:
   ros__parameters:
+    sensor_frame_id: "imu_link"
     sensor_poll_freq: 100.0        # [Hz]
 
     # Temperature α-β filter

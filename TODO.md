@@ -11,13 +11,9 @@
 # Rover Design
 - Figure out how to convert OnShape CAD model to URDF for visualization
 - Finalize rover dimensions
-- PCB for motor drivers and Teensy 4.0
 
 # Electronics
-- Figure out sensor/motors selection
-  - Wheel Encoders: ...
-  - IMU: BNO055
-  - Lidar: RPLIDAR A1
-  - Camera: ...
-  - Wheel Motors: ...
-- Figure out (closed loop) motors and motor controller that can easily talk to RPI5
+- Teensy 4.0 Development
+  - Handle motor control for both drive and steering motors
+  - Define interface between Teensy 4.0 and Raspberry Pi 5 (over SPI/UART/CAN)
+- PCB for motor drivers and Teensy 4.0
