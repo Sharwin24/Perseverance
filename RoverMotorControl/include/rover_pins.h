@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ROVER_PINS_H_
+#define ROVER_PINS_H_
 
 // Teensy 4.1 Pin Map for Rover Control
 // Rationale:
@@ -9,7 +10,7 @@
 //  - Use bottom pads (34-37) for Rear Right to keep top-side routing cleaner
 //  - All chosen encoder pins support interrupts on Teensy 4.1
 
-#define ENCODER_USE_INTERRUPTS
+// #define ENCODER_USE_INTERRUPTS
 // #define ENCODER_OPTIMIZE_INTERRUPTS
 
 // Onboard Orange LED
@@ -66,3 +67,5 @@
 
 // Sanity compile-time checks (optional - enable if desired)
 // static_assert(DEBUG_LED != FR_STEERING_SERVO_PIN, "LED and FR servo share a pin");
+
+#endif // !ROVER_PINS_H_
