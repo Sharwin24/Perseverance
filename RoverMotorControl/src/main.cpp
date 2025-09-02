@@ -268,7 +268,10 @@ void motor_control_task_entry(void) {
     // Compute new motor outputs
     pid_fl.Compute();
     pid_fr.Compute();
-    // ... and so on for all 6 motors
+    pid_ml.Compute();
+    pid_mr.Compute();
+    pid_rl.Compute();
+    pid_rr.Compute();
 
     // Update motor PWM and direction based on PID output
     for (int i = 0; i < 6; i++) {
