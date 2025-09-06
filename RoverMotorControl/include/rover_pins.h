@@ -1,5 +1,4 @@
-#ifndef ROVER_PINS_H_
-#define ROVER_PINS_H_
+#pragma once
 
 // Teensy 4.1 Pin Map for Rover Control
 // Rationale:
@@ -58,8 +57,16 @@
 
 // SPI (Raspberry Pi 5 master -> Teensy 4.1 slave, default SPI bus)
 // Wiring: Pi SCLK -> Teensy 13, Pi MOSI -> Teensy 11, Pi MISO <- Teensy 12, Pi CE0 -> Teensy 10 (CS0)
-// Leave MOSI/MISO/SCK at defaults; only define CS for clarity. Configure pin 10 as INPUT (no pullup if Pi drives it) before SPI slave init.
 #define SPI_CS_PIN 10   // Hardware CS0 (input when Teensy is slave)
+#define SPI_MOSI_PIN 11
+#define SPI_MISO_PIN 12
+#define SPI_SCK_PIN 13
+
+// RPI5 Pins
+// MOSI = GPIO10(phys 19) → Teensy MISO
+// MISO = GPIO9(phys 21) → Teensy MOSI
+// SCLK = GPIO11(phys 23) → Teensy SCK
+// CE0 = GPIO8(phys 24) → Teensy CS(any CS - capable pin on Teensy SPI bus)
 
 // I2C (primary Wire bus)
 #define I2C_SDA_PIN 18
@@ -67,5 +74,3 @@
 
 // Sanity compile-time checks (optional - enable if desired)
 // static_assert(DEBUG_LED != FR_STEERING_SERVO_PIN, "LED and FR servo share a pin");
-
-#endif // !ROVER_PINS_H_
