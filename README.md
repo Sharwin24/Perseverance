@@ -319,7 +319,7 @@ while True:
     K = P @ H.T @ np.linalg.inv(S)
 
     # 3.4 Update the state estimate
-    X_new = X_new + K @ y
+    X = X_new + K @ y
 
     # 3.5 Update the state covariance
     P = (np.eye(6) - K @ H) @ P
