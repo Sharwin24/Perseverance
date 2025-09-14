@@ -22,12 +22,13 @@ This board needs to interact with the following hardware:
 
 
 ## Using Adafruit motor drivers
-The [Adafruit FeatherWing](https://www.adafruit.com/product/2927) can control up to 4 DC motors and can be communicated with over I2C to set the PWM for each motor. 
+The [Adafruit FeatherWing](https://www.adafruit.com/product/2927) can control up to 4 DC motors and can be communicated with over I2C to set the PWM for each motor. The [Adafruit Feather RP2040](https://www.adafruit.com/product/4884) is a good choice for the microcontroller running the Arduino code interfacing with the FeatherWings.
 
-Convert these modules from Adafruit/Arduino I2C to Linux I2C:
+Arduino Dependencies:
 - [`Adafruit_MotorShield`](https://github.com/adafruit/Adafruit_Motor_Shield_V2_Library/blob/master/Adafruit_MotorShield.h)
 - [`Adafruit_MS_PWMServoDriver`](https://github.com/adafruit/Adafruit_Motor_Shield_V2_Library/blob/master/utility/Adafruit_MS_PWMServoDriver.h)
 - [`Adafruit_I2CDevice`](https://github.com/adafruit/Adafruit_BusIO/blob/master/Adafruit_I2CDevice.h)
+- [`Protothreads`](https://gitlab.com/airbornemint/arduino-protothreads)
 
 Then the MotorShield class can be used along with the `Adafruit_DCMotor` class to set the PWM values for the motor, controlling the speed. For the rover, we need a single class that interacts with the motors and is able to set the PWM speeds for all 6 motors and convert RPM or rad/s (or any angular velocity) into PWM values: `RoverMotorInterface` (RMI)
 
