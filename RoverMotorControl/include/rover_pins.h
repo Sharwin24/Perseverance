@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ROVER_PINS_H
+#define ROVER_PINS_H
 
 // Pin Map for Rover Control
 // Rationale:
@@ -6,9 +7,6 @@
 //  - Reserve pin 13 for onboard LED only
 //  - Use primary I2C bus SDA=18, SCL=19
 //  - Group each wheel's encoder pins adjacently where possible
-
-#define ENCODER_USE_INTERRUPTS
-// #define ENCODER_OPTIMIZE_INTERRUPTS
 
 // Onboard Orange LED
 #define DEBUG_LED 13
@@ -53,18 +51,17 @@
 #define RR_ENCODER_B_PIN 36
 #define RR_STEERING_SERVO_PIN 37
 
-// SPI (Raspberry Pi 5 master -> Teensy 4.1 slave, default SPI bus)
-// Wiring: Pi SCLK -> Teensy 13, Pi MOSI -> Teensy 11, Pi MISO <- Teensy 12, Pi CE0 -> Teensy 10 (CS0)
-#define SPI_CS_PIN 10   // Hardware CS0 (input when Teensy is slave)
+// SPI Pins
+#define SPI_CS_PIN 10
 #define SPI_MOSI_PIN 11
 #define SPI_MISO_PIN 12
 #define SPI_SCK_PIN 13
 
 // RPI5 Pins
-// MOSI = GPIO10(phys 19) → Teensy MISO
-// MISO = GPIO9(phys 21) → Teensy MOSI
-// SCLK = GPIO11(phys 23) → Teensy SCK
-// CE0 = GPIO8(phys 24) → Teensy CS(any CS - capable pin on Teensy SPI bus)
+// MOSI = GPIO10(phys 19)
+// MISO = GPIO9(phys 21)
+// SCLK = GPIO11(phys 23)
+// CE0 = GPIO8(phys 24)
 
 // I2C (primary Wire bus)
 #define I2C_SDA_PIN 18
@@ -72,3 +69,5 @@
 
 // Sanity compile-time checks (optional - enable if desired)
 // static_assert(DEBUG_LED != FR_STEERING_SERVO_PIN, "LED and FR servo share a pin");
+
+#endif // !ROVER_PINS_H

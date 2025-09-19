@@ -39,3 +39,6 @@ Then the MotorShield class can be used along with the `Adafruit_DCMotor` class t
 4. Run a process that reads a target PWM for all 6 motors and sets the PWM accordingly
 
 A PID loop to control the target velocity will need to be implemented within the process, so the target velocity and the velocity error will need to be passed in. The velocity error will need to be derived from the encoder process running separately and then passed into the RMI's process.
+
+
+[*Adafruit Feather M4 Express*](https://www.adafruit.com/product/3857) might be a better option due to better PlatformIO support and faster clock speed and better floating point performance.

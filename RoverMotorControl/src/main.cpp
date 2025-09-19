@@ -1,13 +1,12 @@
 /**
  * @file main.cpp
  * @author Sharwin Patil (sharwinpatil@u.northwestern.edu)
- * @brief Main control code for the Perseverance Rover's motor and servo control using Feather RP2040
+ * @brief Rover's motor firmware using an Adafruit Feather M4 Express
  * @date 2024-09-016
  * @version 2.0
  *
  * This board needs to interact with the following hardware:
- * 1. Control 6 BLDC motors (6 PWM pins, 6 GPIO direction pins)
- * 2. Control 4 servo motors (4 PWM pins)
+ * 1. 2 MotorShield Featherwings to control 6 DC motors (3 per shield) over I2C
  * 3. Read from 6 encoders (12 GPIO pins)
  * 4. Communicate with Raspberry Pi 5 over SPI
  *
@@ -120,8 +119,7 @@ const uint8_t servo_pins[4] = {
     RR_STEERING_SERVO_PIN,
 };
 
-// --- Task Functions ---
-
+// ---------- Task Functions ----------
 
 /**
  * @brief Encoder task running at 1kHz
