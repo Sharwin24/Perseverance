@@ -1,15 +1,13 @@
 #pragma once
 
-// Teensy 4.1 Pin Map for Rover Control
+// Pin Map for Rover Control
 // Rationale:
 //  - Keep default SPI (MOSI=11, MISO=12, SCK=13) free; only CS defined explicitly
 //  - Reserve pin 13 for onboard LED only
 //  - Use primary I2C bus SDA=18, SCL=19
 //  - Group each wheel's encoder pins adjacently where possible
-//  - Use bottom pads (34-37) for Rear Right to keep top-side routing cleaner
-//  - All chosen encoder pins support interrupts on Teensy 4.1
 
-// #define ENCODER_USE_INTERRUPTS
+#define ENCODER_USE_INTERRUPTS
 // #define ENCODER_OPTIMIZE_INTERRUPTS
 
 // Onboard Orange LED

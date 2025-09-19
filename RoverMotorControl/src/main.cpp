@@ -1,19 +1,20 @@
 /**
  * @file main.cpp
  * @author Sharwin Patil (sharwinpatil@u.northwestern.edu)
- * @brief Main control code for the Perseverance Rover's motor and servo control using Teensy 4.1
- * @version 1.0
+ * @brief Main control code for the Perseverance Rover's motor and servo control using Feather RP2040
+ * @date 2024-09-016
+ * @version 2.0
  *
- * This board (Teensy 4.1) needs to interact with the following hardware:
+ * This board needs to interact with the following hardware:
  * 1. Control 6 BLDC motors (6 PWM pins, 6 GPIO direction pins)
  * 2. Control 4 servo motors (4 PWM pins)
  * 3. Read from 6 encoders (12 GPIO pins)
  * 4. Communicate with Raspberry Pi 5 over SPI
  *
- * RPI5 -> Teensy (SPI):
+ * RPI5 -> MCU (SPI):
  * - 6 motor speeds
  * - 4 servo positions (steering angles)
- * Teensy -> RPI5 (SPI):
+ * MCU -> RPI5 (SPI):
  * - 6 encoder positions (for wheel odometry)
  *
  * 1. Encoder Task: Reading Encoders and saving encoder count (1kHz)
@@ -28,8 +29,9 @@
 #include <Servo.h>
 #include <PID_v1.h>
 #include <Encoder.h>
-#include <TeensyThreads.h>
-#include <SPISlave_T4.h>
+#include <Thread.h>
+#include <Adafruit_MotorShield.h>
+#include <Adafruit_SPIDevice.h>
 
 #include "rover_pins.h"
 
@@ -39,36 +41,51 @@
  // --- Task Frequencies ---
 #define MOTOR_TASK_FREQ 200 // [Hz]
 #define MOTOR_TASK_PERIOD_MS (1000 / MOTOR_TASK_FREQ)
+#define ENCODER_TASK_FREQ 1000 // [Hz]
+#define ENCODER_TASK_PERIOD_MS (1000 / ENCODER_TASK_FREQ)
 #define COMM_TASK_FREQ 100 // [Hz]
 #define COMM_TASK_PERIOD_MS (1000 / COMM_TASK_FREQ)
 #define STEER_TASK_FREQ 100 // [Hz]
 #define STEER_TASK_PERIOD_MS (1000 / STEER_TASK_FREQ)
+#define HEARTBEAT_TASK_FREQ 1 // [Hz]
+#define HEARTBEAT_TASK_PERIOD_MS (1000 / HEARTBEAT_TASK_FREQ)
+
+// Motor Shield with I2C addresses 0x60 and 0x61 hosting the left and right 3 drive motors respectively
+Adafruit_MotorShield AFMSLeft = Adafruit_MotorShield(0x60);
+Adafruit_MotorShield AFMSRight = Adafruit_MotorShield(0x61);
+
+// Create motor objects
+Adafruit_DCMotor* FLMotor = AFMSLeft.getMotor(1);
+Adafruit_DCMotor* MLMotor = AFMSLeft.getMotor(2);
+Adafruit_DCMotor* RLMotor = AFMSLeft.getMotor(3);
+Adafruit_DCMotor* FRMotor = AFMSRight.getMotor(1);
+Adafruit_DCMotor* MRMotor = AFMSRight.getMotor(2);
+Adafruit_DCMotor* RRMotor = AFMSRight.getMotor(3);
+
+// Array of pointers to each motor that aligns with command and encoder arrays
+Adafruit_DCMotor* motors[6] = {FLMotor, FRMotor, MLMotor, MRMotor, RLMotor, RRMotor};
+
+
+// Threads
+Thread motorThread = Thread();
+Thread encoderThread = Thread();
+Thread steeringThread = Thread();
+Thread commsThread = Thread();
+Thread heartbeatThread = Thread();
 
 // --- Shared Data and Mutexes ---
 // Use volatile for variables shared between threads
-volatile float motor_speed_commands[6] = {0, 0, 0, 0, 0, 0};
-volatile float servo_angle_commands[4] = {0, 0, 0, 0};
-volatile long encoder_counts[6] = {0, 0, 0, 0, 0, 0};
-Threads::Mutex comms_mutex;
+volatile float motorSpeedCommands[6] = {0, 0, 0, 0, 0, 0}; // {FL, FR, ML, MR, RL, RR} [rad/s]
+volatile float servoAngleCommands[4] = {0, 0, 0, 0}; // {FL, FR, RL, RR} [radians]
+volatile long encoderCounts[6] = {0, 0, 0, 0, 0, 0}; // {FL, FR, ML, MR, RL, RR} [ticks]
+bool resetEncoders = false; // Flag to reset encoders
 
-// SPISlave instance
-SPISlave_T4<> spiSlave;    // default LPSPI bus (pins: CS=10, SCK=13, MISO=12, MOSI=11)
+// Global timing variables for tasks
+unsigned long prevMotorUpdate = 0;
+long prevEncoderCounts[6] = {0, 0, 0, 0, 0, 0};
 
-
-// A simple structure to hold the pin information for each wheel
-struct WheelPins {
-  uint8_t pwm_pin;
-  uint8_t dir_pin;
-};
-
-const WheelPins wheels[6] = {
-    {FL_MOTOR_PWM_PIN, FL_MOTOR_DIR_PIN}, // FL
-    {FR_MOTOR_PWM_PIN, FR_MOTOR_DIR_PIN}, // FR
-    {ML_MOTOR_PWM_PIN, ML_MOTOR_DIR_PIN}, // ML
-    {MR_MOTOR_PWM_PIN, MR_MOTOR_DIR_PIN}, // MR
-    {RL_MOTOR_PWM_PIN, RL_MOTOR_DIR_PIN}, // RL
-    {RR_MOTOR_PWM_PIN, RR_MOTOR_DIR_PIN}  // RR
-};
+// SPI Device for communication with RPI5
+Adafruit_SPIDevice spiDevice(SPI_CS_PIN, SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN);
 
 // --- Peripherals and Controllers ---
 // PID control instances
@@ -105,161 +122,190 @@ const uint8_t servo_pins[4] = {
 
 // --- Task Functions ---
 
-// Encoder Task: Reads and updates encoder counts at 1kHz
+
+/**
+ * @brief Encoder task running at 1kHz
+ *
+ * @note Stores latest encoder values from hardware encoders (ISR driven)
+ * into shared encoderCounts array which will be communicated to RPI5
+ * and used for PID feedback
+ *
+ */
 void encoderTask() {
-  elapsedMicros us = 0;
-  for (;;) {
-    if (us >= 1000) {      // 1000 us = 1 kHz
-      us -= 1000;
-      for (uint8_t i = 0; i < 6; ++i) encoder_counts[i] = encoders[i].read();
+  for (uint8_t i = 0; i < 6; ++i) {
+    if (resetEncoders) {
+      encoderCounts[i] = encoders[i].readAndReset();
+      resetEncoders = false;
     }
-    threads.yield();
+    else {
+      encoderCounts[i] = encoders[i].read();
+    }
   }
 }
 
-// Motor Control Task: PID control loop for drive motors (200Hz)
+/**
+ * @brief Motor control task running at 200Hz
+ *
+ * @note Implements a PID control loop for each drive motor
+ * using the encoder feedback to calculate motor velocities
+ *
+ */
 void motorTask() {
-  unsigned long last = millis();
-  static long prev_counts[6] = {};
-  while (true) {
-    unsigned long now = millis();
-    if (now - last >= MOTOR_TASK_PERIOD_MS) {
-      double dt = (now - last) / 1000.0; last = now;
+  unsigned long now = millis();
+  // Calculate delta time between calculations [sec]
+  double dt = (now - prevMotorUpdate) / 1000.0;
+  prevMotorUpdate = now;
 
-      double local_motor_cmd[6];
-      {
-        Threads::Scope lock(comms_mutex);
-        for (int i = 0; i < 6; ++i) local_motor_cmd[i] = motor_speed_commands[i];
-      }
+  // Save a local copy of the motor speed commands to minimize time spent
+  // accessing the shared volatile array
+  double local_motor_cmd[6];
+  for (uint8_t i = 0; i < 6; ++i) {
+    local_motor_cmd[i] = motorSpeedCommands[i];
+  }
 
-      for (int i = 0; i < 6; ++i) {
-        long c = encoder_counts[i];
-        double vel = (double)(c - prev_counts[i]) / dt; // ticks/s
-        prev_counts[i] = c;
+  for (uint8_t i = 0; i < 6; ++i) {
+    long c = encoderCounts[i];
+    double vel = (double)(c - prevEncoderCounts[i]) / dt; // ticks/s
+    prevEncoderCounts[i] = c;
 
-        pid_inputs[i] = vel;
-        pid_targets[i] = local_motor_cmd[i];
-        pid_controllers[i].Compute();
-
-        int pwm = constrain((int)fabs(pid_outputs[i]), 0, 255);
-        digitalWrite(wheels[i].dir_pin, (pid_outputs[i] >= 0) ? HIGH : LOW);
-        analogWrite(wheels[i].pwm_pin, pwm);
-      }
-    }
-    threads.yield();
+    pid_inputs[i] = vel;
+    pid_targets[i] = local_motor_cmd[i];
+    pid_controllers[i].Compute();
+    double output = pid_outputs[i];
+    uint16_t pwm = static_cast<uint16_t>(fabs(output));
+    motors[i]->setSpeedFine(pwm);
+    motors[i]->run((output >= 0) ? FORWARD : BACKWARD);
   }
 }
 
 
-// Steering Task: Control steering servos (100Hz)
+/**
+ * @brief Steering task running at 100Hz
+ *
+ * @note Accesses shared servoAngleCommands array to set servo positions
+ *
+ */
 void steeringTask() {
-  unsigned long lastTime = millis();
-  while (true) {
-    unsigned long now = millis();
-    if (now - lastTime >= STEER_TASK_PERIOD_MS) {
-      lastTime = now;
-      for (int i = 0; i < 4; i++) {
-        // Convert radians to degrees for Servo library
-        float degrees = servo_angle_commands[i] * 57.2958;
-        servos[i].write(map(degrees, -90, 90, 0, 180));
-      }
-    }
-    threads.yield();
-  }
-}
-
-// Communication Task: Handle SPI communication with RPi5 (100Hz)
-void commsTask() {
-  // Simple fixed-size frame: master clocks N 32-bit words every 10ms
-  // You preload the response words with pushr() BEFORE the master clocks them out.
-
-  while (true) {
-    // Prepare the next response (e.g., 6 encoder counts) as 32-bit words:
-    uint32_t txWords[8] = {0};
-    {
-      Threads::Scope lock = Threads::Scope(comms_mutex);
-      for (int i = 0; i < 6; ++i) {
-        txWords[i] = (uint32_t)encoder_counts[i];  // or pack however you like
-      }
-      // last words could be status, checksum, etc.
-    }
-    // Preload TX FIFO with a few words; the slave must have something ready:
-    for (int i = 0; i < 8; ++i) spiSlave.pushr(txWords[i]);
-
-    // Now consume the master's request frame as it arrives:
-    // Example: master sends 10 words: 6 motor speeds + 4 servo angles
-    uint32_t rxWords[10];
-    int got = 0;
-    while (got < 10) {
-      if (spiSlave.available()) {           // a 32-bit word is ready
-        rxWords[got++] = spiSlave.popr();   // read it, clears the WCF flag
-      }
-      else {
-        threads.yield();
-      }
-    }
-
-    // Unpack into your shared command arrays
-    {
-      Threads::Scope lock = Threads::Scope(comms_mutex);
-      // Example: interpret all as float (word-aligned, SPI_32_BITS)
-      for (int i = 0; i < 6; ++i) {
-        union { uint32_t u; float f; } u32f; u32f.u = rxWords[i];
-        motor_speed_commands[i] = u32f.f;
-      }
-      for (int i = 0; i < 4; ++i) {
-        union { uint32_t u; float f; } u32f; u32f.u = rxWords[6 + i];
-        servo_angle_commands[i] = u32f.f;
-      }
-    }
-
-    threads.sleep(COMM_TASK_PERIOD_MS);
-  }
-}
-
-
-// --- Arduino Sketch Functions ---
-void setup() {
-  Serial.begin(SERIAL_BAUD);
-
-  // Initialize motor direction pins
-  for (uint8_t i = 0; i < 6; i++) {
-    pinMode(wheels[i].dir_pin, OUTPUT);
-    digitalWrite(wheels[i].dir_pin, LOW);
-    pinMode(wheels[i].pwm_pin, OUTPUT);
-    analogWriteFrequency(wheels[i].pwm_pin, PWM_FREQ);
-    analogWriteResolution(8); // 8-bit resolution (0-255) for simplicity
-  }
-
-  // Attach servo motors
   for (uint8_t i = 0; i < 4; i++) {
-    servos[i].attach(servo_pins[i]);
+    // Convert radians to degrees for Servo library
+    float degrees = degrees(servoAngleCommands[i]);
+    servos[i].write(map(degrees, -90, 90, 0, 180));
   }
-
-  // Set up PID controllers
-  for (int i = 0; i < 6; ++i) {
-    pid_controllers[i].SetMode(AUTOMATIC);
-    pid_controllers[i].SetOutputLimits(-255, 255);
-    pid_controllers[i].SetSampleTime(MOTOR_TASK_PERIOD_MS); // = 5 ms for 200 Hz
-  }
-
-  // Initialize SPI
-  spiSlave.begin();
-
-  // Create and start the tasks with priorities
-  threads.addThread(encoderTask, 0, 1024); // Highest priority
-  threads.addThread(motorTask, 1, 1024);
-  threads.addThread(steeringTask, 2, 1024);
-  threads.addThread(commsTask, 3, 1024);
-
-  // Keep the main loop simple
-  pinMode(DEBUG_LED, OUTPUT);
 }
 
-void loop() {
-  // A simple heartbeat to show the board is alive
+/**
+ * @brief Communication task running at 100Hz
+ *
+ * @note Handles SPI communication with RPI5 and accesses shared command arrays
+ *
+ */
+void commsTask() {
+  // Prepare transmission buffer with encoder counts (6 x 4 bytes = 24 bytes)
+  uint8_t txBuffer[24];
+  uint8_t rxBuffer[40]; // Receive buffer for motor commands (6x4) + servo commands (4x4) = 40 bytes
+
+  // Pack encoder counts into transmission buffer as little-endian 32-bit values
+  for (uint8_t i = 0; i < 6; ++i) {
+    uint32_t count = (uint32_t)encoderCounts[i];
+    txBuffer[i * 4 + 0] = (count >> 0) & 0xFF;
+    txBuffer[i * 4 + 1] = (count >> 8) & 0xFF;
+    txBuffer[i * 4 + 2] = (count >> 16) & 0xFF;
+    txBuffer[i * 4 + 3] = (count >> 24) & 0xFF;
+  }
+
+  // Perform SPI transaction: send encoder data and receive commands
+  if (spiDevice.write_then_read(txBuffer, sizeof(txBuffer), rxBuffer, sizeof(rxBuffer))) {
+
+    // Unpack received motor speed commands (6 floats)
+    for (int i = 0; i < 6; ++i) {
+      union { uint32_t u; float f; } u32f;
+      u32f.u = ((uint32_t)rxBuffer[i * 4 + 0] << 0) |
+        ((uint32_t)rxBuffer[i * 4 + 1] << 8) |
+        ((uint32_t)rxBuffer[i * 4 + 2] << 16) |
+        ((uint32_t)rxBuffer[i * 4 + 3] << 24);
+      motorSpeedCommands[i] = u32f.f;
+    }
+
+    // Unpack received servo angle commands (4 floats)
+    for (int i = 0; i < 4; ++i) {
+      union { uint32_t u; float f; } u32f;
+      uint8_t* ptr = &rxBuffer[24 + i * 4]; // Start after motor commands (6*4=24 bytes)
+      u32f.u = ((uint32_t)ptr[0] << 0) |
+        ((uint32_t)ptr[1] << 8) |
+        ((uint32_t)ptr[2] << 16) |
+        ((uint32_t)ptr[3] << 24);
+      servoAngleCommands[i] = u32f.f;
+    }
+  }
+  // If SPI transaction fails, commands remain at their previous values
+}
+
+/**
+ * @brief Heartbeat task running at 1Hz
+ *
+ * @note Indicates system is running
+ *
+ */
+void heartbeatTask() {
   digitalWrite(DEBUG_LED, HIGH);
   delay(100);
   digitalWrite(DEBUG_LED, LOW);
   delay(900);
+}
+
+
+void setup() {
+  // Initialize Serial port
+  Serial.begin(SERIAL_BAUD);
+  pinMode(DEBUG_LED, OUTPUT);
+
+  // Attach servo motors
+  for (uint8_t i = 0; i < 4; i++) {
+    pinMode(servo_pins[i], OUTPUT);
+    servos[i].attach(servo_pins[i]);
+  }
+
+  // Set up PID controllers
+  for (uint8_t i = 0; i < 6; ++i) {
+    pid_controllers[i].SetMode(AUTOMATIC);
+    pid_controllers[i].SetOutputLimits(-4095, 4085); // Use 12-bit PWM
+    pid_controllers[i].SetSampleTime(MOTOR_TASK_PERIOD_MS); // = 5 ms for 200 Hz
+  }
+
+  // Initialize Motor Shields
+  AFMSLeft.begin();
+  AFMSRight.begin();
+
+  // Enable motors
+  for (uint8_t i = 0; i < 6; i++) {
+    motors[i]->setSpeed(0);
+    motors[i]->run(RELEASE);
+  }
+
+  // Reset encoders on startup
+  resetEncoders = true;
+
+  // Initialize SPI
+  spiDevice.begin();
+
+  // Attach callbacks and set intervals for each thread
+  motorThread.onRun(motorTask);
+  encoderThread.onRun(encoderTask);
+  steeringThread.onRun(steeringTask);
+  commsThread.onRun(commsTask);
+  heartbeatThread.onRun(heartbeatTask);
+  motorThread.setInterval(MOTOR_TASK_PERIOD_MS);
+  encoderThread.setInterval(ENCODER_TASK_PERIOD_MS);
+  steeringThread.setInterval(STEER_TASK_PERIOD_MS);
+  commsThread.setInterval(COMM_TASK_PERIOD_MS);
+  heartbeatThread.setInterval(HEARTBEAT_TASK_PERIOD_MS);
+}
+
+void loop() {
+  // Run each thread at the appropriate interval
+  if (motorThread.shouldRun()) { motorThread.run(); }
+  if (encoderThread.shouldRun()) { encoderThread.run(); }
+  if (steeringThread.shouldRun()) { steeringThread.run(); }
+  if (commsThread.shouldRun()) { commsThread.run(); }
+  if (heartbeatThread.shouldRun()) { heartbeatThread.run(); }
 }
