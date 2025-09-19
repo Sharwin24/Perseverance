@@ -11,8 +11,9 @@ This project is currently in progress and I'm currently focusing on the drive-ba
   - I have also implemented kinematic models for diff-drive, mecanum, and skid-steering for the educational value.
 - Creating a data-driven layout for the physical robot, focusing on the important features such as: rocker-bogie assembly, rocker-bogie differential system, and the 4 independently steered wheels.
 - Architecting the ROS2 package to easily fit sensors and modularize the filter.
-- Creating a PPO RL training pipeline for a simplified mobile robot and goal pose navigation
+- ~~Creating a PPO RL training pipeline for a simplified mobile robot and goal pose navigation~~
 - Implementing simulated sensors (IMU, Lidar) for testing state estimation
+- Working on firmware for motor board (RoverMotorControl)
 
 ---
 
@@ -318,7 +319,7 @@ while True:
     K = P @ H.T @ np.linalg.inv(S)
 
     # 3.4 Update the state estimate
-    X_new = X_new + K @ y
+    X = X_new + K @ y
 
     # 3.5 Update the state covariance
     P = (np.eye(6) - K @ H) @ P
