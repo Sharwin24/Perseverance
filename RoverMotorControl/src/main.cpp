@@ -38,7 +38,7 @@
 #define PWM_FREQ 20000 // 20 kHz PWM frequency for motor control
 
  // --- Task Frequencies ---
-#define MOTOR_TASK_FREQ 200 // [Hz]
+#define MOTOR_TASK_FREQ 100 // [Hz]
 #define MOTOR_TASK_PERIOD_MS (1000 / MOTOR_TASK_FREQ)
 #define ENCODER_TASK_FREQ 1000 // [Hz]
 #define ENCODER_TASK_PERIOD_MS (1000 / ENCODER_TASK_FREQ)
@@ -80,7 +80,7 @@ volatile long encoderCounts[6] = {0, 0, 0, 0, 0, 0}; // {FL, FR, ML, MR, RL, RR}
 bool resetEncoders = false; // Flag to reset encoders
 
 // Global timing variables for tasks
-unsigned long prevMotorUpdate = 0;
+uint32_t prevMotorUpdateUs = 0;
 long prevEncoderCounts[6] = {0, 0, 0, 0, 0, 0};
 
 // SPI Device for communication with RPI5
@@ -149,10 +149,12 @@ void encoderTask() {
  *
  */
 void motorTask() {
-  unsigned long now = millis();
-  // Calculate delta time between calculations [sec]
-  double dt = (now - prevMotorUpdate) / 1000.0;
-  prevMotorUpdate = now;
+  // Use microsecond timer for better dt precision
+  uint32_t nowUs = micros();
+  uint32_t dt_us = nowUs - prevMotorUpdateUs; // handles wrap-around for uint32_t
+  prevMotorUpdateUs = nowUs;
+  // Convert to seconds
+  double dt = dt_us * 1e-6;
 
   // Save a local copy of the motor speed commands to minimize time spent
   // accessing the shared volatile array
@@ -286,6 +288,9 @@ void setup() {
   // Initialize SPI
   spiDevice.begin();
 
+  // Initialize timing baseline for motor task
+  prevMotorUpdateUs = micros();
+
   // Attach callbacks and set intervals for each thread
   motorThread.onRun(motorTask);
   encoderThread.onRun(encoderTask);
@@ -301,8 +306,8 @@ void setup() {
 
 void loop() {
   // Run each thread at the appropriate interval
-  if (motorThread.shouldRun()) { motorThread.run(); }
   if (encoderThread.shouldRun()) { encoderThread.run(); }
+  if (motorThread.shouldRun()) { motorThread.run(); }
   if (steeringThread.shouldRun()) { steeringThread.run(); }
   if (commsThread.shouldRun()) { commsThread.run(); }
   if (heartbeatThread.shouldRun()) { heartbeatThread.run(); }
