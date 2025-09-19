@@ -77,7 +77,6 @@ Thread heartbeatThread = Thread();
 volatile float motorSpeedCommands[6] = {0, 0, 0, 0, 0, 0}; // {FL, FR, ML, MR, RL, RR} [rad/s]
 volatile float servoAngleCommands[4] = {0, 0, 0, 0}; // {FL, FR, RL, RR} [radians]
 volatile long encoderCounts[6] = {0, 0, 0, 0, 0, 0}; // {FL, FR, ML, MR, RL, RR} [ticks]
-bool resetEncoders = false; // Flag to reset encoders
 
 // Global timing variables for tasks
 uint32_t prevMotorUpdateUs = 0;
@@ -131,13 +130,7 @@ const uint8_t servo_pins[4] = {
  */
 void encoderTask() {
   for (uint8_t i = 0; i < 6; ++i) {
-    if (resetEncoders) {
-      encoderCounts[i] = encoders[i].readAndReset();
-      resetEncoders = false;
-    }
-    else {
-      encoderCounts[i] = encoders[i].read();
-    }
+    encoderCounts[i] = encoders[i].read();
   }
 }
 
@@ -281,9 +274,6 @@ void setup() {
     motors[i]->setSpeed(0);
     motors[i]->run(RELEASE);
   }
-
-  // Reset encoders on startup
-  resetEncoders = true;
 
   // Initialize SPI
   spiDevice.begin();
