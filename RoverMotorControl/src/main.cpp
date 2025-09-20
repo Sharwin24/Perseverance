@@ -31,6 +31,7 @@
 #include <Thread.h>
 #include <Adafruit_MotorShield.h>
 #include <Adafruit_SPIDevice.h>
+#include <Adafruit_MAX1704X.h>
 
 #include "rover_pins.h"
 
@@ -46,8 +47,10 @@
 #define COMM_TASK_PERIOD_MS (1000 / COMM_TASK_FREQ)
 #define STEER_TASK_FREQ 100 // [Hz]
 #define STEER_TASK_PERIOD_MS (1000 / STEER_TASK_FREQ)
-#define HEARTBEAT_TASK_FREQ 1 // [Hz]
+#define HEARTBEAT_TASK_FREQ 0.25 // [Hz]
 #define HEARTBEAT_TASK_PERIOD_MS (1000 / HEARTBEAT_TASK_FREQ)
+#define BATTERY_MONITOR_TASK_FREQ 0.5 // [Hz]
+#define BATTERY_MONITOR_TASK_PERIOD_MS (1000 / BATTERY_MONITOR_TASK_FREQ)
 
 // Motor Shield with I2C addresses 0x60 and 0x61 hosting the left and right 3 drive motors respectively
 Adafruit_MotorShield AFMSLeft = Adafruit_MotorShield(0x60);
@@ -64,13 +67,13 @@ Adafruit_DCMotor* RRMotor = AFMSRight.getMotor(3);
 // Array of pointers to each motor that aligns with command and encoder arrays
 Adafruit_DCMotor* motors[6] = {FLMotor, FRMotor, MLMotor, MRMotor, RLMotor, RRMotor};
 
-
 // Threads
 Thread motorThread = Thread();
 Thread encoderThread = Thread();
 Thread steeringThread = Thread();
 Thread commsThread = Thread();
 Thread heartbeatThread = Thread();
+Thread batteryMonitorThread = Thread();
 
 // --- Shared Data and Mutexes ---
 // Use volatile for variables shared between threads
@@ -117,6 +120,15 @@ const uint8_t servo_pins[4] = {
     RL_STEERING_SERVO_PIN,
     RR_STEERING_SERVO_PIN,
 };
+
+// The voltage threshold below which the battery is considered low
+// and the charging circuit should be enabled
+#define BATTERY_LOW_VOLTAGE_THRESHOLD 3.3 // [V]
+#define BATTERY_FULL_VOLTAGE 4.2 // [V]
+#define BATTERY_HYSTERESIS 0.05 // [V] to prevent rapid toggling
+
+// Create battery monitor instance
+Adafruit_MAX17048 batteryMonitor;
 
 // ---------- Task Functions ----------
 
@@ -240,17 +252,46 @@ void commsTask() {
  *
  */
 void heartbeatTask() {
-  digitalWrite(DEBUG_LED, HIGH);
+  digitalWrite(LED_BUILTIN, HIGH);
   delay(100);
-  digitalWrite(DEBUG_LED, LOW);
+  digitalWrite(LED_BUILTIN, LOW);
   delay(900);
+}
+
+void batteryMonitorTask() {
+  if (batteryMonitor.isActiveAlert()) {
+    uint8_t alertStatus = batteryMonitor.getAlertStatus();
+    if (alertStatus & MAX1704X_ALERTFLAG_SOC_CHANGE) {
+      batteryMonitor.clearAlertFlag(MAX1704X_ALERTFLAG_SOC_CHANGE);
+    }
+    if (alertStatus & MAX1704X_ALERTFLAG_SOC_LOW) {
+      batteryMonitor.clearAlertFlag(MAX1704X_ALERTFLAG_SOC_LOW);
+    }
+    if (alertStatus & MAX1704X_ALERTFLAG_VOLTAGE_RESET) {
+      batteryMonitor.clearAlertFlag(MAX1704X_ALERTFLAG_VOLTAGE_RESET);
+    }
+    if (alertStatus & MAX1704X_ALERTFLAG_VOLTAGE_LOW) {
+      digitalWrite(BATTERY_CHARGE_ENABLE_PIN, HIGH); // Enable charging circuit
+      batteryMonitor.clearAlertFlag(MAX1704X_ALERTFLAG_VOLTAGE_LOW);
+    }
+    if (alertStatus & MAX1704X_ALERTFLAG_VOLTAGE_HIGH) {
+      digitalWrite(BATTERY_CHARGE_ENABLE_PIN, LOW); // Disable charging circuit
+      batteryMonitor.clearAlertFlag(MAX1704X_ALERTFLAG_VOLTAGE_HIGH);
+    }
+    if (alertStatus & MAX1704X_ALERTFLAG_RESET_INDICATOR) {
+      batteryMonitor.clearAlertFlag(MAX1704X_ALERTFLAG_RESET_INDICATOR);
+    }
+  }
 }
 
 
 void setup() {
   // Initialize Serial port
   Serial.begin(SERIAL_BAUD);
-  pinMode(DEBUG_LED, OUTPUT);
+
+  // Initialize output pins
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(BATTERY_CHARGE_ENABLE_PIN, OUTPUT);
 
   // Attach servo motors
   for (uint8_t i = 0; i < 4; i++) {
@@ -278,6 +319,13 @@ void setup() {
   // Initialize SPI
   spiDevice.begin();
 
+  // Initialize battery monitor
+  batteryMonitor.begin();
+  batteryMonitor.setAlertVoltages(
+    BATTERY_LOW_VOLTAGE_THRESHOLD - BATTERY_HYSTERESIS,
+    BATTERY_FULL_VOLTAGE + BATTERY_HYSTERESIS
+  );
+
   // Initialize timing baseline for motor task
   prevMotorUpdateUs = micros();
 
@@ -287,18 +335,21 @@ void setup() {
   steeringThread.onRun(steeringTask);
   commsThread.onRun(commsTask);
   heartbeatThread.onRun(heartbeatTask);
+  batteryMonitorThread.onRun(batteryMonitorTask);
   motorThread.setInterval(MOTOR_TASK_PERIOD_MS);
   encoderThread.setInterval(ENCODER_TASK_PERIOD_MS);
   steeringThread.setInterval(STEER_TASK_PERIOD_MS);
   commsThread.setInterval(COMM_TASK_PERIOD_MS);
   heartbeatThread.setInterval(HEARTBEAT_TASK_PERIOD_MS);
+  batteryMonitorThread.setInterval(BATTERY_MONITOR_TASK_PERIOD_MS);
 }
 
 void loop() {
-  // Run each thread at the appropriate interval
+  // Check each thread in order of priority
   if (encoderThread.shouldRun()) { encoderThread.run(); }
   if (motorThread.shouldRun()) { motorThread.run(); }
   if (steeringThread.shouldRun()) { steeringThread.run(); }
   if (commsThread.shouldRun()) { commsThread.run(); }
+  if (batteryMonitorThread.shouldRun()) { batteryMonitorThread.run(); }
   if (heartbeatThread.shouldRun()) { heartbeatThread.run(); }
 }
