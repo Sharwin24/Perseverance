@@ -41,7 +41,7 @@
 #define PWM_FREQ 20000 // 20 kHz PWM frequency for motor control
 
  // --- Task Frequencies ---
-#define MOTOR_TASK_FREQ 200 // [Hz]
+#define MOTOR_TASK_FREQ 100 // [Hz]
 #define MOTOR_TASK_PERIOD_MS (1000 / MOTOR_TASK_FREQ)
 #define ENCODER_TASK_FREQ 1000 // [Hz]
 #define ENCODER_TASK_PERIOD_MS (1000 / ENCODER_TASK_FREQ)
@@ -79,7 +79,7 @@ volatile long encoderCounts[6] = {0, 0, 0, 0, 0, 0}; // {FL, FR, ML, MR, RL, RR}
 SemaphoreHandle_t mutexSPI; // Mutex to protect shared data access
 
 // Global timing variables for tasks
-unsigned long prevMotorUpdate = 0;
+uint32_t prevMotorUpdateUs = 0;
 long prevEncoderCounts[6] = {0, 0, 0, 0, 0, 0};
 
 // --- Peripherals and Controllers ---
@@ -125,7 +125,6 @@ const uint8_t servo_pins[4] = {
  * and used for PID feedback
  *
  */
-void EncoderTask(void* pvParameters) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
   while (true) {
     for (uint8_t i = 0; i < 6; ++i) {

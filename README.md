@@ -12,8 +12,8 @@ This project is currently in progress and I'm currently focusing on the drive-ba
 - Creating a data-driven layout for the physical robot, focusing on the important features such as: rocker-bogie assembly, rocker-bogie differential system, and the 4 independently steered wheels.
 - Architecting the ROS2 package to easily fit sensors and modularize the filter.
 - ~~Creating a PPO RL training pipeline for a simplified mobile robot and goal pose navigation~~
-- Implementing simulated sensors (IMU, Lidar) for testing state estimation
 - Working on firmware for motor board (RoverMotorControl)
+- Designing Battery Management System (BMS) and working on firmware required for battery monitoring
 
 ---
 
@@ -29,6 +29,12 @@ This project is currently in progress and I'm currently focusing on the drive-ba
 *This plot was generated with `draw_rocker_bogie.py`*
 
 *A lot of the math expressions aren't rendering correctly and can best be visualized by viewing the markdown render locally in an IDE (VS Code). It's a work in progress to create SVG images for each equation and display them once they are finalized...*
+
+<div style="display: flex; justify-content: center; align-items: center; width: 80%;">
+  <img src="images/RoverTeleop.gif" alt="RoverTeleop" style="border-radius: 12px;">
+</div>
+
+*Simulated Teleoperation in pygame with ackerman steering, try it out by running `prototyping/rover_teleop.py`!*
 
 ---
 
