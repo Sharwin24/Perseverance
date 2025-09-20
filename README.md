@@ -34,7 +34,7 @@ This project is currently in progress and I'm currently focusing on the drive-ba
   <img src="images/RoverTeleop.gif" alt="RoverTeleop" style="border-radius: 12px;">
 </div>
 
-*Simulated Teleoperation in pygame with ackerman steering*
+*Simulated Teleoperation in pygame with ackerman steering, try it out by running `prototyping/rover_teleop.py`!*
 
 ---
 
