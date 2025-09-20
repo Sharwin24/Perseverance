@@ -30,7 +30,7 @@ This project is currently in progress and I'm currently focusing on the drive-ba
 
 *A lot of the math expressions aren't rendering correctly and can best be visualized by viewing the markdown render locally in an IDE (VS Code). It's a work in progress to create SVG images for each equation and display them once they are finalized...*
 
-<div style="display: flex; justify-content: center; align-items: center; width: 80%;">
+<div style="display: flex; justify-content: center; align-items: center; width: 70%;">
   <img src="images/RoverTeleop.gif" alt="RoverTeleop" style="border-radius: 12px;">
 </div>
 
