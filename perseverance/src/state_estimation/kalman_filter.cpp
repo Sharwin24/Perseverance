@@ -1,6 +1,8 @@
 #include "state_estimation/kalman_filter.hpp"
-#include <rclcpp/rclcpp.hpp>
+
 #include <array>
+
+#include "rclcpp/rclcpp.hpp"
 
 RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu& imu) {
   const double dt = this->computeDeltaTime(imu.header.stamp);
@@ -43,7 +45,10 @@ RobotState KalmanFilter::predictDynamicModel(const sensor_msgs::msg::Imu& imu) {
 RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinematicParams) {
   switch (this->kinematicModel) {
   case KinematicModel::DIFF_DRIVE: {
-    return this->predictDiffDriveKinematicModel(kinematicParams.leftVelocity, kinematicParams.rightVelocity, kinematicParams.timestamp);
+    return this->predictDiffDriveKinematicModel(
+      kinematicParams.leftVelocity, kinematicParams.rightVelocity,
+      kinematicParams.timestamp
+    );
   }
   case KinematicModel::MECANUM: {
     const std::array<double, 4> mecanumWheelVelocities = {
@@ -55,7 +60,10 @@ RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinema
     return this->predictMecanumKinematicModel(mecanumWheelVelocities, kinematicParams.timestamp);
   }
   case KinematicModel::ROCKER_BOGIE: {
-    return this->predictRockerBogieKinematicModel(kinematicParams.wheelVelocities, kinematicParams.wheelSteeringAngles, kinematicParams.timestamp);
+    return this->predictRockerBogieKinematicModel(
+      kinematicParams.wheelVelocities, kinematicParams.wheelSteeringAngles,
+      kinematicParams.timestamp
+    );
   }
   default: {
     throw std::runtime_error("Unknown kinematic model type.");
@@ -64,10 +72,15 @@ RobotState KalmanFilter::predictKinematicModel(const KinematicModelInput& kinema
 }
 
 
-RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocity, const double rightVelocity, const rclcpp::Time timestamp) {
+RobotState KalmanFilter::predictDiffDriveKinematicModel(
+  const double leftVelocity, const double rightVelocity,
+  const rclcpp::Time timestamp) {
   const double dt = this->computeDeltaTime(timestamp);
   if (dt <= 0) {
-    RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "Kinematic model prediction has non-positive timestamp difference. Skipping prediction");
+    RCLCPP_WARN(
+      rclcpp::get_logger("state_estimator"),
+      "Kinematic model prediction has non-positive timestamp difference. Skipping prediction"
+    );
     return this->currentState; // No update if the timestamp is not valid
   }
 
@@ -104,10 +117,15 @@ RobotState KalmanFilter::predictDiffDriveKinematicModel(const double leftVelocit
   return predictedState;
 }
 
-RobotState KalmanFilter::predictMecanumKinematicModel(const std::array<double, 4>& wheelVelocities, const rclcpp::Time timestamp) {
+RobotState KalmanFilter::predictMecanumKinematicModel(
+  const std::array<double, 4>& wheelVelocities,
+  const rclcpp::Time timestamp) {
   const double dt = this->computeDeltaTime(timestamp);
   if (dt <= 0) {
-    RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "Kinematic model prediction has non-positive timestamp difference. Skipping prediction");
+    RCLCPP_WARN(
+      rclcpp::get_logger("state_estimator"),
+      "Kinematic model prediction has non-positive timestamp difference. Skipping prediction"
+    );
     return this->currentState; // No update if the timestamp is not valid
   }
 
@@ -147,7 +165,10 @@ RobotState KalmanFilter::predictRockerBogieKinematicModel(
   const rclcpp::Time timestamp) {
   const double dt = this->computeDeltaTime(timestamp);
   if (dt <= 0) {
-    RCLCPP_WARN(rclcpp::get_logger("state_estimator"), "Kinematic model prediction has non-positive timestamp difference. Skipping prediction");
+    RCLCPP_WARN(
+      rclcpp::get_logger("state_estimator"),
+      "Kinematic model prediction has non-positive timestamp difference. Skipping prediction"
+    );
     return this->currentState; // No update if the timestamp is not valid
   }
 
@@ -180,4 +201,3 @@ RobotState KalmanFilter::predictRockerBogieKinematicModel(
   // Return the predicted state
   return predictedState;
 }
-

@@ -2,11 +2,13 @@
 #define KALMAN_FILTER_HPP
 
 #include <eigen3/Eigen/Dense>
-#include <sensor_msgs/msg/imu.hpp>
-#include <unordered_map>
+
 #include <string>
-#include <rclcpp/time.hpp>
-#include <rclcpp/clock.hpp>
+#include <unordered_map>
+
+#include "rclcpp/clock.hpp"
+#include "rclcpp/time.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 
 struct RobotState {
   double x = 0.0; // X Position [m]
@@ -21,7 +23,7 @@ struct RobotState {
     : x(x), y(y), theta(theta), vx(vx), vy(vy), omega(omega) {
     this->normalizeTheta();
   }
-  RobotState(const Eigen::Vector<double, 6>& vec)
+  explicit RobotState(const Eigen::Vector<double, 6>& vec)
     : x(vec(0)), y(vec(1)), theta(vec(2)), vx(vec(3)), vy(vec(4)), omega(vec(5)) {
     this->normalizeTheta();
   }
@@ -285,7 +287,10 @@ struct RobotConstants {
 class KalmanFilter {
 public:
   KalmanFilter() = delete;
-  KalmanFilter(rclcpp::Clock::SharedPtr clock, RobotConstants robotConstants, PredictionModel predModel, KinematicModel kinematicModel, Covariance cov, RobotState initialState)
+  KalmanFilter(
+    rclcpp::Clock::SharedPtr clock, RobotConstants robotConstants,
+    PredictionModel predModel, KinematicModel kinematicModel,
+    Covariance cov, RobotState initialState)
     : robotConstants(robotConstants), predictionModel(predModel), kinematicModel(kinematicModel),
     systemModel(SystemModel(predModel, kinematicModel)), covariance(cov), currentState(initialState), clock(clock) {
     this->previousPredictionTimeStamp = this->clock->now();
@@ -311,11 +316,13 @@ public:
 
   Eigen::Vector<double, 6> getStateVector() const { return this->currentState.vec(); }
   Eigen::Matrix<double, 1, 6> getIMUMeasurementModel() const { return this->measurementModel.imu; }
-  Eigen::Matrix<double, 3, 6> getOdometryMeasurementModel() const { return this->measurementModel.odom; }
+  Eigen::Matrix<double, 3, 6> getOdomMeasurementModel() const { return this->measurementModel.odom; }
   Eigen::Matrix<double, 6, 6> getStateCovariance() const { return this->covariance.stateCovariance; }
   Eigen::Matrix<double, 6, 6> getProcessNoiseCovariance() const { return this->covariance.processNoiseCovariance; }
   Eigen::Matrix<double, 1, 1> getIMUMeasurementNoiseCovariance() const { return this->covariance.imuMeasurementNoiseCovariance; }
-  Eigen::Matrix<double, 3, 3> getOdometryMeasurementNoiseCovariance() const { return this->covariance.odomMeasurementNoiseCovariance; }
+  Eigen::Matrix<double, 3, 3> getOdomMeasurementNoiseCovariance() const {
+    return this->covariance.odomMeasurementNoiseCovariance;
+  }
 
   void updateState(const Eigen::Vector<double, 6>& X) { this->currentState = RobotState(X); }
   void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& Q) { this->covariance.setProcessNoiseCovariance(Q); }

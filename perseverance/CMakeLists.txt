@@ -136,15 +136,34 @@ install(DIRECTORY
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
+  # find_package(ament_lint_auto REQUIRED)
+  # # the following line skips the linter which checks for copyrights
+  # # comment the line when a copyright and license is added to all source files
+  # set(ament_cmake_copyright_FOUND TRUE)
+  # # the following line skips cpplint (only works in a git repo)
+  # # comment the line when this package is in a git repo and when
+  # # a copyright and license is added to all source files
+  # set(ament_cmake_cpplint_FOUND TRUE)
+  # ament_lint_auto_find_test_dependencies()
+
+  # find_package(ament_cmake_uncrustify REQUIRED)
+
+  # # Run uncrustify with your custom config
+  # ament_uncrustify(
+  #   CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/uncrustify.cfg
+  #   # Optionally restrict to certain languages
+  #   LANGUAGE C CXX
+  #   # Optionally exclude vendored/3rd-party files
+  #   EXCLUDE
+  #   include/perseverance/rover_sensors/drivers/smbus_functions.h
+  # )
+
+  find_package(ament_cmake_cpplint REQUIRED)
+  # Runs cpplint over your C/C++ sources as a CTest
+  ament_cpplint(
+    EXCLUDE
+    include/perseverance/rover_sensors/drivers/smbus_functions.h
+  )
 endif()
 
 # Building documentation should be optional.

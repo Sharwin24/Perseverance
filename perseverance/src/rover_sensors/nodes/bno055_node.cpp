@@ -122,7 +122,6 @@ BNO055Node::BNO055Node() : Node("BNO055_Sensor") {
     this->temp_filtered_pub->publish(filteredTempMsg);
     this->imu_filtered_pub->publish(filteredImuMsg);
     this->mag_filtered_pub->publish(filteredMagMsg);
-
   });
 }
 

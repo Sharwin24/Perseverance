@@ -75,10 +75,14 @@ IMURecord BNO055::read() {
   IMURecord record;
   // can only read a length of 0x20 at a time, so do it in 2 reads
   // BNO055_LINEAR_ACCEL_DATA_X_LSB_ADDR is the start of the data block that aligns with the IMURecord struct
-  if (_i2c_smbus_read_i2c_block_data(this->file, BNO055_ACCEL_DATA_X_LSB_ADDR, 0x20, (uint8_t*)&record) != 0x20) {
+  if (_i2c_smbus_read_i2c_block_data(
+    this->file, BNO055_ACCEL_DATA_X_LSB_ADDR, 0x20,
+    reinterpret_cast<uint8_t*>(&record)) != 0x20) {
     throw std::runtime_error("read error");
   }
-  if (_i2c_smbus_read_i2c_block_data(this->file, BNO055_ACCEL_DATA_X_LSB_ADDR + 0x20, 0x13, (uint8_t*)&record + 0x20) != 0x13) {
+  if (_i2c_smbus_read_i2c_block_data(
+    this->file, BNO055_ACCEL_DATA_X_LSB_ADDR + 0x20, 0x13,
+    reinterpret_cast<uint8_t*>(&record) + 0x20) != 0x13) {
     throw std::runtime_error("read error");
   }
 

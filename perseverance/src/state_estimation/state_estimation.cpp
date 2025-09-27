@@ -29,9 +29,9 @@
 #include "state_estimation/kalman_filter.hpp"
 
 
-const std::string IMUTopic = "/sensors/raw/imu";
-const std::string ODOMTopic = "/sensors/raw/odom";
-const std::string RobotStateTopic = "/state_estimation/odom";
+const char IMUTopic[] = "/sensors/raw/imu";
+const char ODOMTopic[] = "/sensors/raw/odom";
+const char RobotStateTopic[] = "/state_estimation/odom";
 
 StateEstimator::StateEstimator() : Node("state_estimator") {
   RCLCPP_INFO(this->get_logger(), "State Estimator Node has been initialized.");
@@ -172,13 +172,13 @@ void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) 
   const Eigen::Quaterniond orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
   const double yaw = orientation.toRotationMatrix().eulerAngles(0, 1, 2).z();
   const auto Z = Eigen::Vector<double, 3>({odom.x, odom.y, yaw});
-  const auto H = this->kalmanFilter->getOdometryMeasurementModel();
+  const auto H = this->kalmanFilter->getOdomMeasurementModel();
   const auto X = this->kalmanFilter->getStateVector();
   // Calculate the innovation
   const auto Y = Z - H * X;
   // Calculate the Kalman Gain [k] using the innovation covariance [S]
   const auto P = this->kalmanFilter->getStateCovariance();
-  const auto R_odom = this->kalmanFilter->getOdometryMeasurementNoiseCovariance();
+  const auto R_odom = this->kalmanFilter->getOdomMeasurementNoiseCovariance();
   const auto S = H * P * H.transpose() + R_odom;
   const auto K = P * H.transpose() * S.inverse();
   // Update the state estimate and covariance
@@ -206,7 +206,8 @@ void StateEstimator::timerCallback() {
   }
   case PredictionModel::KINEMATIC: {
     // Predict using the kinematic model
-    const auto kinematicParams = KinematicModelInput(); // TODO: Get actual kinematic parameters
+    // TODO(spatil): Get actual kinematic parameters
+    const auto kinematicParams = KinematicModelInput();
     predictedState = this->kalmanFilter->predictKinematicModel(kinematicParams);
     break;
   }

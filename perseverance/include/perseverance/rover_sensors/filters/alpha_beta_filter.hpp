@@ -14,7 +14,6 @@
  * which is used to filter sensor data and for this struct specifically, a floating point value.
  */
 struct AlphaBetaFilter {
-
   /**
    * @brief Alpha value for filter
    *
@@ -35,7 +34,7 @@ struct AlphaBetaFilter {
   double previousRateEstimate = 0; // Previous rate estimate
   rclcpp::Time prevMeasureTime = rclcpp::Time(0); // Time of the previous measurement
 
-  AlphaBetaFilter(double alpha = 0.5, double beta = 0.1)
+  explicit AlphaBetaFilter(double alpha = 0.5, double beta = 0.1)
     : alpha(alpha), beta(beta), estimate(0), rateEstimate(0) {}
 
   /**
@@ -124,7 +123,7 @@ struct MagABFilter {
   AlphaBetaFilter magnetic_field_y;
   AlphaBetaFilter magnetic_field_z;
 
-  MagABFilter(double magFieldAlpha = 0.5, double magFieldBeta = 0.1)
+  explicit MagABFilter(double magFieldAlpha = 0.5, double magFieldBeta = 0.1)
     : magnetic_field_x(magFieldAlpha, magFieldBeta),
     magnetic_field_y(magFieldAlpha, magFieldBeta),
     magnetic_field_z(magFieldAlpha, magFieldBeta) {}
@@ -144,7 +143,7 @@ struct MagABFilter {
 struct TempABFilter {
   AlphaBetaFilter temperature;
 
-  TempABFilter(double tempAlpha = 0.5, double tempBeta = 0.1)
+  explicit TempABFilter(double tempAlpha = 0.5, double tempBeta = 0.1)
     : temperature(tempAlpha, tempBeta) {}
 
   sensor_msgs::msg::Temperature update(const sensor_msgs::msg::Temperature& temp_msg) {

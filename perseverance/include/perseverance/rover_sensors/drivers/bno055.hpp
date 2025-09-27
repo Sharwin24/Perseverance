@@ -10,16 +10,18 @@
 #ifndef _BNO055_HPP_
 #define _BNO055_HPP_
 
-#include <cstdlib>
-#include <cerrno>
-#include <cstring>
-#include <stdexcept>
-#include <sys/ioctl.h>
 #include <fcntl.h>
-#include <iostream>
-#include <chrono>
-#include <thread>
 #include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+#include <chrono>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <thread>
+
 #include "smbus_functions.h"
 
 #include "bno055_registers.hpp"

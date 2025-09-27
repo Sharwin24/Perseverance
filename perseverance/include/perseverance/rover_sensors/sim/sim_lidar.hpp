@@ -1,15 +1,16 @@
 #ifndef SIM_LIDAR_HPP_
 #define SIM_LIDAR_HPP_
 
+#include <cmath>
+#include <memory>
+#include <vector>
+
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "tf2_ros/transform_broadcaster.h"
-#include <tf2_ros/static_transform_broadcaster.h>
 #include "tf2/LinearMath/Quaternion.h"
-
-#include <vector>
-#include <cmath>
+#include "tf2_ros/static_transform_broadcaster.h"
+#include "tf2_ros/transform_broadcaster.h"
 
 // This node simulates a LiDAR sensor moving within a predefined square room.
 // It performs two key functions:
@@ -23,7 +24,6 @@ public:
   ~SimulatedLidar() = default;
 
 private:
-
   // Publisher for the LaserScan messages.
   rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr scanPublisher;
 
