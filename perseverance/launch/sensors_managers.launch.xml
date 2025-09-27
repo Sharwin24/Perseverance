@@ -1,0 +1,22 @@
+<launch>
+  <!-- Args -->
+  <arg name="namespace" default=""/>
+  <arg name="param_file" default="$(find-pkg-share perseverance)/config/managers.yaml"/>
+  <arg name="log_level"  default="info"/>
+
+  <!-- Topics this manager listens/publishes to -->
+  <arg name="scan_topic" default="scan"/>
+  <arg name="map_topic"  default="map"/>
+
+  <!-- Laser manager (LaserScan -> OccupancyGrid) -->
+  <node pkg="perseverance" exec="laser_manager_node" name="laser_manager" namespace="$(var namespace)"
+        output="screen" args="--ros-args --log-level $(var log_level)">
+    <param from="$(var param_file)"/>
+
+    <!-- Remaps; keep these relative so namespace applies cleanly -->
+    <remap from="scan" to="$(var scan_topic)"/>
+    <remap from="map"  to="$(var map_topic)"/>
+  </node>
+
+  <!-- Add more managers here -->
+</launch>
