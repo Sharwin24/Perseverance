@@ -1,0 +1,12 @@
+# Parameters for simulated sensor publishers
+simulated_imu:
+  ros__parameters:
+    sensor_frequency: 100.0  # [Hz]
+simulated_lidar:
+  ros__parameters:
+    room_width: 10.0  # meters
+    room_height: 10.0 # meters
+    robot_speed: 0.3  # meters per second
+    robot_angular_speed: 0.3  # radians per second
+    scan_publish_rate: 10.0  # Hz
+    scan_num_points: 360  # Number of points in the LiDAR scan

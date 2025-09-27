@@ -1,0 +1,12 @@
+state_estimator:
+  ros__parameters:
+    timer_frequency: 1.0 # [Hz]
+    initial_x: 0.0 # Initial x position [m]
+    initial_y: 0.0 # Initial y position [m]
+    initial_theta: 0.0 # Initial orientation [rad]
+    initial_vx: 0.0 # Initial x velocity [m/s]
+    initial_vy: 0.0 # Initial y velocity [m/s]
+    initial_omega: 0.0 # Initial angular velocity [rad/s]
+    wheel_radius: 0.035 # Wheel radius [m]
+    wheel_base: 0.25 # Middle Wheel to Wheel distance along the Robot Y-axis [m]
+    track_width: 0.2945 # The back to front wheel distance along the Robot X-axis [m]

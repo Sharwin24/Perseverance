@@ -1,0 +1,10 @@
+# Parameters for managers that consume sensor topics and publish processed data
+laser_manager:
+  ros__parameters:
+    map_update_frequency: 10.0   # [Hz]
+    map_resolution: 0.05         # meters per cell
+    map_width: 1024              # cells
+    map_height: 1024             # cells
+    map_frame_id: "map"
+    odom_frame_id: "odom"
+    base_frame_id: "base_link"
