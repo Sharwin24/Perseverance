@@ -1,4 +1,4 @@
-name: Auto-format C++ code, Build, and Test ROS Package
+name: ROS Package Build, Lint, & Test
 
 on:
   push:
