@@ -151,7 +151,7 @@ struct SystemModel {
   Eigen::Matrix<double, 6, 6> stateTransitionMatrix = Eigen::Matrix<double, 6, 6>::Zero();
   Eigen::Matrix<double, 6, 2> controlInputModel = Eigen::Matrix<double, 6, 2>::Zero();
   PredictionModel predModel = PredictionModel::DYNAMIC;
-  KinematicModel kinematicModel = KinematicModel::DIFF_DRIVE;
+  KinematicModel kinematicModel = KinematicModel::ROCKER_BOGIE;
 
   SystemModel() = default;
   SystemModel(PredictionModel predModel, KinematicModel kinematicModel) : predModel(predModel), kinematicModel(kinematicModel) {}

@@ -11,6 +11,7 @@
 
   <!-- CPP Dependencies -->
   <depend>Eigen3</depend>
+  <depend>Doxygen</depend>
 
   <!-- ROS Dependencies -->
   <depend>geometry_msgs</depend>

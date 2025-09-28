@@ -1,0 +1,5 @@
+wheel_data_spi_node:
+  ros__parameters:
+    spi_dev: "/dev/spidev0.0" # SPI device name on RPI5 [/dev/spidevX.Y]
+    spi_speed: 8000000 # [Hz]
+    spi_mode: 0 # SPI mode (0-3), see `man spidev`

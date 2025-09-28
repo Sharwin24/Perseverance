@@ -1,0 +1,12 @@
+<launch>
+
+  <!-- Arguments -->
+  <arg name="log_level" default="info" description="Logging level for all nodes"/>
+
+  <node pkg="perseverance" exec="wheel_data_spi_node" name="wheel_data_spi_node" output="screen"
+        args="--ros-args --log-level $(var log_level)">
+    <param from="$(find-pkg-share perseverance)/config/communications.yaml"/>
+    <param name="use_sim_time" value="false"/>
+  </node>
+
+</launch>

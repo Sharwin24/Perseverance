@@ -1,9 +1,7 @@
 <launch>
 
   <!-- Arguments -->
-  <arg name="sensor_namespace" default="" description="Namespace for sensor topics"/>
   <arg name="log_level" default="info" description="Logging level for all nodes"/>
-  <arg name="use_sim_sensors" default="true" description="Use simulated or real sensors [true, false]"/>
   <arg name="launch_rviz" default="true" description="Launch RViz2 [true, false]"/>
 
   <node pkg="perseverance" exec="state_estimator" name="state_estimator" output="screen"
@@ -14,19 +12,6 @@
 
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"
     args="-d $(find-pkg-share perseverance)/config/rover.rviz --ros-args --log-level $(var log_level)" if="$(var launch_rviz)">
-</node>
-
-<include file="$(find-pkg-share perseverance)/launch/sensors.launch.xml">
-  <arg name="namespace" value="$(var sensor_namespace)"/>
-  <arg name="log_level" value="$(var log_level)"/>
-  <arg name="use_sim_sensors" value="$(var use_sim_sensors)"/>
-  <!-- Optional: disable managers, or override param files / topics -->
-  <!-- <arg name="start_managers" value="false"/> -->
-  <!-- <arg name="drivers_param_file" value="$(find-pkg-share perseverance)/config/drivers.yaml"/> -->
-  <!-- <arg name="sim_param_file" value="$(find-pkg-share perseverance)/config/sim.yaml"/> -->
-  <!-- <arg name="managers_param_file" value="$(find-pkg-share perseverance)/config/managers.yaml"/> -->
-  <!-- <arg name="scan_topic" value="scan"/> -->
-  <!-- <arg name="map_topic"  value="map"/> -->
-</include>
+  </node>
 
 </launch>
