@@ -67,13 +67,8 @@ WHEEL_LOCATIONS = {
 }
 STEERABLE = {"front_left", "front_right", "rear_left", "rear_right"}
 # ---------------------------------------------------------------------------
-PLOT_SCALE = 1000  # Scale down for plotting
-WHEEL_LOCATIONS_PLOT = {
-    name: np.array(loc) / PLOT_SCALE for name, loc in WHEEL_LOCATIONS.items()
-}
-# Change to raw dictionary again for easier import without numpy dependency
-WHEEL_LOCATIONS_SCALED = {name: (
-    loc[0] / PLOT_SCALE, loc[1] / PLOT_SCALE) for name, loc in WHEEL_LOCATIONS.items()}
-print(f"WHEEL_LOCATIONS: {WHEEL_LOCATIONS}")
-print(f"WHEEL_LOCATIONS_PLOT: {WHEEL_LOCATIONS_PLOT}")
-print(f"WHEEL_LOCATIONS_SCALED: {WHEEL_LOCATIONS_SCALED}")
+
+
+def WHEEL_LOCATIONS_SCALED(scale: float = 0.001) -> dict[str, tuple[float, float]]:
+    """Return wheel locations scaled by the given factor. Useful for plotting"""
+    return {name: (loc[0] * scale, loc[1] * scale) for name, loc in WHEEL_LOCATIONS.items()}
