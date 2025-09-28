@@ -16,7 +16,7 @@ class RoverLimits:
 
     def linear_speed_max(self) -> float:
         """Uses the max rotational speed to convert to linear speed [m/s]"""
-        return ((WHEEL_DIAMETER/1000) * math.pi / 60) * self.wheel_speed_max
+        return (self.wheel_diameter * math.pi / 60) * self.wheel_speed_max
 
 
 class AckermannPlanner:
@@ -396,7 +396,7 @@ class AckermannPlanner:
 if __name__ == "__main__":
     from rover_constants import WHEEL_LOCATIONS, STEERABLE_WHEELS
     limits = RoverLimits(
-        wheel_diameter=0.15,
+        wheel_diameter=WHEEL_DIAMETER / 1000,  # Convert mm to m
         wheel_speed_max=60,            # [rpm]
         steer_angle_max=math.radians(30.0),  # [rad]
         accel_max=0.8,                  # [m/s^2]

@@ -6,7 +6,7 @@ import numpy as np
 from dataclasses import asdict
 
 from steering_planner import AckermannPlanner, RoverLimits
-from rover_constants import WHEEL_LOCATIONS, STEERABLE_WHEELS
+from rover_constants import WHEEL_LOCATIONS, STEERABLE_WHEELS, WHEEL_DIAMETER
 
 # --- Constants ---
 SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 800
@@ -84,7 +84,7 @@ class InteractivePlannerApp:
 
         # --- Planner and State ---
         self.limits = RoverLimits(
-            wheel_diameter=0.15,
+            wheel_diameter=WHEEL_DIAMETER / 1000,
             wheel_speed_max=60,
             steer_angle_max=math.radians(30.0),
             accel_max=0.8,
