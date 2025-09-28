@@ -1,4 +1,7 @@
+import numpy as np
+
 """Rover geometric constants (units: millimeters)
+
 
 Coordinate Frame (body frame / base_link):
     +X forward, +Y left, +Z up.
@@ -62,4 +65,15 @@ WHEEL_LOCATIONS = {
     "rear_left":  (-REAR_TO_MIDDLE_RATIO * WHEEL_BASE,  TRACK_WIDTH_STEERING / 2),
     "rear_right": (-REAR_TO_MIDDLE_RATIO * WHEEL_BASE, -TRACK_WIDTH_STEERING / 2),
 }
+STEERABLE = {"front_left", "front_right", "rear_left", "rear_right"}
 # ---------------------------------------------------------------------------
+PLOT_SCALE = 1000  # Scale down for plotting
+WHEEL_LOCATIONS_PLOT = {
+    name: np.array(loc) / PLOT_SCALE for name, loc in WHEEL_LOCATIONS.items()
+}
+# Change to raw dictionary again for easier import without numpy dependency
+WHEEL_LOCATIONS_SCALED = {name: (
+    loc[0] / PLOT_SCALE, loc[1] / PLOT_SCALE) for name, loc in WHEEL_LOCATIONS.items()}
+print(f"WHEEL_LOCATIONS: {WHEEL_LOCATIONS}")
+print(f"WHEEL_LOCATIONS_PLOT: {WHEEL_LOCATIONS_PLOT}")
+print(f"WHEEL_LOCATIONS_SCALED: {WHEEL_LOCATIONS_SCALED}")
