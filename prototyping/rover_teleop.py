@@ -3,7 +3,7 @@ from typing import Dict, Tuple
 import numpy as np
 from rover_constants import WHEEL_LOCATIONS, WHEEL_BASE, \
     WHEEL_DIAMETER, TRACK_WIDTH_MIDDLE, TRACK_WIDTH_STEERING, \
-    ROVER_BODY_LENGTH, ROVER_BODY_WIDTH
+    ROVER_BODY_LENGTH, ROVER_BODY_WIDTH, STEERABLE_WHEELS
 import pygame as pg
 from typing import Dict
 
@@ -57,10 +57,6 @@ class Twist:
         )
 
 
-STEERABLE = {"front_left", "front_right", "rear_left", "rear_right"}
-MIDDLE = {"middle_left", "middle_right"}
-
-
 def _normalize_angle(a: float) -> float:
     a = (a + np.pi) % (2*np.pi) - np.pi
     return float(a)
@@ -91,7 +87,7 @@ def twist_to_wheels_icr(cmd: Twist, eps_omega: float = 1e-4):
     for name, (x_i, y_i) in WHEEL_LOCATIONS.items():
         v_i = np.array([vx - w*y_i, vy_feas + w*x_i])   # contact vel at wheel
 
-        if name in STEERABLE:
+        if name in STEERABLE_WHEELS:
             if p_c is not None:
                 t = np.array([-(y_i - p_c[1]), (x_i - p_c[0])])  # tangent
                 if np.allclose(t, 0.0):
@@ -150,7 +146,7 @@ def plot_steering_geometry(twist: Twist, title: str = ""):
         # Heading ray (blue for steerable, gray for fixed)
         delta = ang[name]
         u = np.array([np.cos(delta), np.sin(delta)])
-        color = "C0" if name in STEERABLE else "0.5"
+        color = "C0" if name in STEERABLE_WHEELS else "0.5"
         ax.arrow(x, y, 0.15*ROVER_BODY_LENGTH*u[0], 0.15*ROVER_BODY_LENGTH*u[1],
                  head_width=0.02*ROVER_BODY_LENGTH, length_includes_head=True,
                  lw=2, color=color)

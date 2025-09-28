@@ -44,9 +44,12 @@ pillow==11.3.0
 protobuf==6.32.0
 psutil==7.0.0
 pygame==2.6.1
+pygame-ce==2.5.5
+pygame_gui==0.6.14
 Pygments==2.19.2
 pyparsing==3.2.3
 python-dateutil==2.9.0.post0
+python-i18n==0.3.9
 pytz==2025.2
 requests==2.32.5
 rich==14.1.0

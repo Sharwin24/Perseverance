@@ -3,15 +3,20 @@ import math
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Set
 import numpy as np
+from rover_constants import WHEEL_DIAMETER
 
 
 @dataclass
 class RoverLimits:
     wheel_diameter: float         # [m]
-    wheel_speed_max: float        # [m/s] tread speed limit
+    wheel_speed_max: float        # [rpm] rotational speed
     steer_angle_max: float        # [rad]
     accel_max: float              # [m/s^2] centerline
     decel_max: float              # [m/s^2] centerline
+
+    def linear_speed_max(self) -> float:
+        """Uses the max rotational speed to convert to linear speed [m/s]"""
+        return ((WHEEL_DIAMETER/1000) * math.pi / 60) * self.wheel_speed_max
 
 
 class AckermannPlanner:
@@ -272,11 +277,11 @@ class AckermannPlanner:
             k = float(kappas[i])
             ang = self._steer_angles_from_kappa(k)
             # find largest v such that all |s_i| <= wheel_speed_max
-            vlo, vhi = 0.0, self.limits.wheel_speed_max * 2.0 + 1e-6
+            vlo, vhi = 0.0, self.limits.linear_speed_max() * 2.0 + 1e-6
             for _ in range(28):
                 vm = 0.5 * (vlo + vhi)
                 speeds = self._per_wheel_speed(vm, k, ang)
-                if max(abs(s) for s in speeds.values()) <= self.limits.wheel_speed_max:
+                if max(abs(s) for s in speeds.values()) <= self.limits.linear_speed_max():
                     vlo = vm
                 else:
                     vhi = vm
@@ -389,17 +394,21 @@ class AckermannPlanner:
 
 # -------------------- Example usage --------------------
 if __name__ == "__main__":
-    from rover_constants import WHEEL_LOCATIONS_SCALED, STEERABLE
+    from rover_constants import WHEEL_LOCATIONS, STEERABLE_WHEELS
     limits = RoverLimits(
         wheel_diameter=0.15,
-        wheel_speed_max=1.2,            # m/s tread speed
-        steer_angle_max=math.radians(30.0),
-        accel_max=0.8,                  # m/s^2
-        decel_max=1.2,                  # m/s^2
+        wheel_speed_max=60,            # [rpm]
+        steer_angle_max=math.radians(30.0),  # [rad]
+        accel_max=0.8,                  # [m/s^2]
+        decel_max=1.2,                  # [m/s^2]
     )
 
+    # Convert wheel locations from mm to m
+    wheel_locations_m = {name: (x/1000.0, y/1000.0)
+                         for name, (x, y) in WHEEL_LOCATIONS.items()}
+
     planner = AckermannPlanner(
-        WHEEL_LOCATIONS_SCALED(1/1000), STEERABLE, limits)
+        wheel_locations_m, STEERABLE_WHEELS, limits)
 
     start = (0.0, 0.0, 0.0)
     goal = (3.0, 2.0, math.radians(90.0))
@@ -409,9 +418,9 @@ if __name__ == "__main__":
     # Quick peek
     print(f"Total time: {traj['t'][-1]:.2f} s, samples: {len(traj['t'])}")
     print("At t=0.0: steer angles (deg):",
-          {k: math.degrees(traj['wheel_angles'][k][0]) for k in STEERABLE})
+          {k: math.degrees(traj['wheel_angles'][k][0]) for k in STEERABLE_WHEELS})
     print("At t=end: steer angles (deg):",
-          {k: math.degrees(traj['wheel_angles'][k][-1]) for k in STEERABLE})
+          {k: math.degrees(traj['wheel_angles'][k][-1]) for k in STEERABLE_WHEELS})
 
     # Plot the path
     import matplotlib.pyplot as plt

@@ -65,7 +65,7 @@ WHEEL_LOCATIONS = {
     "rear_left":  (-REAR_TO_MIDDLE_RATIO * WHEEL_BASE,  TRACK_WIDTH_STEERING / 2),
     "rear_right": (-REAR_TO_MIDDLE_RATIO * WHEEL_BASE, -TRACK_WIDTH_STEERING / 2),
 }
-STEERABLE = {"front_left", "front_right", "rear_left", "rear_right"}
+STEERABLE_WHEELS = {"front_left", "front_right", "rear_left", "rear_right"}
 # ---------------------------------------------------------------------------
 
 
