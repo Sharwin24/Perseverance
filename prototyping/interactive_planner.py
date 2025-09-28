@@ -63,8 +63,38 @@ def draw_pose(surface, pose, color, size=15):
 def draw_trajectory(surface, traj):
     if not traj or len(traj['x']) < 2:
         return
-    points = [world_to_screen(x, y) for x, y in zip(traj['x'], traj['y'])]
-    pygame.draw.aalines(surface, (200, 200, 255), False, points, 1)
+
+    # Centerline (already calculated)
+    center_points = [world_to_screen(x, y)
+                     for x, y in zip(traj['x'], traj['y'])]
+    pygame.draw.aalines(surface, (200, 200, 255), False,
+                        center_points, 2)  # Thicker center
+
+    # Rover width for visualization
+    # From rover_constants, wheels are at +/- 250mm from center
+    half_width_m = 0.25
+
+    # Calculate left and right path points
+    left_points = []
+    right_points = []
+    for x, y, theta in zip(traj['x'], traj['y'], traj['theta']):
+        # Perpendicular vector to heading
+        perp_dx = -math.sin(theta)
+        perp_dy = math.cos(theta)
+
+        # Left point
+        x_left = x + half_width_m * perp_dx
+        y_left = y + half_width_m * perp_dy
+        left_points.append(world_to_screen(x_left, y_left))
+
+        # Right point
+        x_right = x - half_width_m * perp_dx
+        y_right = y - half_width_m * perp_dy
+        right_points.append(world_to_screen(x_right, y_right))
+
+    # Draw left and right lines
+    pygame.draw.aalines(surface, (150, 150, 200), False, left_points, 1)
+    pygame.draw.aalines(surface, (150, 150, 200), False, right_points, 1)
 
 # --- Main Application Class ---
 

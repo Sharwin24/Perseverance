@@ -142,82 +142,86 @@ class AckermannPlanner:
         x1, y1, th1 = q1
         dx, dy = x1 - x0, y1 - y0
         c, s = math.cos(th0), math.sin(th0)
+
         # transform goal into start frame, scaled by Rmin
-        x = (c * dx + s * dy) / Rmin
-        y = (-s * dx + c * dy) / Rmin
+        x = (c*dx + s*dy) / Rmin
+        y = (-s*dx + c*dy) / Rmin
         th = self._wrap_to_pi(th1 - th0)
 
-        def mod2pi(a): return a % (2 * math.pi)
+        def mod2pi(a): return a % (2*math.pi)
         def polar(X, Y): return math.hypot(X, Y), math.atan2(Y, X)
+        def clamp(a, lo, hi): return lo if a < lo else (hi if a > hi else a)
 
+        EPS = 1e-9
         sols = []
 
         # LSL
-        r, t = polar(x - math.sin(th), y - 1 + math.cos(th))
-        if r >= 0:
-            t1 = mod2pi(t)
-            t2 = r
-            t3 = mod2pi(th - t)
-            sols.append(
-                (t1 + t2 + t3, [("L", t1 * Rmin), ("S", t2 * Rmin), ("L", t3 * Rmin)]))
+        r, t = polar(x - math.sin(th), y - 1.0 + math.cos(th))
+        t1 = mod2pi(t)
+        t2 = r
+        t3 = mod2pi(th - t)
+        sols.append(
+            (t1 + t2 + t3, [("L", t1*Rmin), ("S", t2*Rmin), ("L", t3*Rmin)]))
 
         # RSR
-        r, t = polar(x + math.sin(th), y + 1 - math.cos(th))
-        if r >= 0:
-            t1 = mod2pi(-t)
-            t2 = r
-            t3 = mod2pi(-self._wrap_to_pi(th) + t)
-            sols.append(
-                (t1 + t2 + t3, [("R", t1 * Rmin), ("S", t2 * Rmin), ("R", t3 * Rmin)]))
+        r, t = polar(x + math.sin(th), y + 1.0 - math.cos(th))
+        t1 = mod2pi(-t)
+        t2 = r
+        t3 = mod2pi(-self._wrap_to_pi(th) + t)
+        sols.append(
+            (t1 + t2 + t3, [("R", t1*Rmin), ("S", t2*Rmin), ("R", t3*Rmin)]))
 
         # LSR
-        r0, t0 = polar(x - math.sin(th), y - 1 + math.cos(th))
-        r = math.hypot(r0, 2.0)
-        if r >= 2.0:
+        r0, t0 = polar(x - math.sin(th), y - 1.0 + math.cos(th))
+        rr = math.hypot(r0, 2.0)
+        if rr >= 2.0 - EPS:
+            # guard sqrt; ang between circles
+            t2 = math.sqrt(max(0.0, rr*rr - 4.0))
             theta = math.atan2(2.0, r0)
             t1 = mod2pi(t0 + theta)
-            t2 = math.sqrt(r * r - 4.0)
             t3 = mod2pi(-self._wrap_to_pi(th) - t0 + theta)
             sols.append(
-                (t1 + t2 + t3, [("L", t1 * Rmin), ("S", t2 * Rmin), ("R", t3 * Rmin)]))
+                (t1 + t2 + t3, [("L", t1*Rmin), ("S", t2*Rmin), ("R", t3*Rmin)]))
 
         # RSL
-        r0, t0 = polar(x + math.sin(th), y + 1 - math.cos(th))
-        r = math.hypot(r0, 2.0)
-        if r >= 2.0:
+        r0, t0 = polar(x + math.sin(th), y + 1.0 - math.cos(th))
+        rr = math.hypot(r0, 2.0)
+        if rr >= 2.0 - EPS:
+            t2 = math.sqrt(max(0.0, rr*rr - 4.0))
             theta = math.atan2(2.0, r0)
             t1 = mod2pi(-t0 + theta)
-            t2 = math.sqrt(r * r - 4.0)
             t3 = mod2pi(self._wrap_to_pi(th) - t0 + theta)
             sols.append(
-                (t1 + t2 + t3, [("R", t1 * Rmin), ("S", t2 * Rmin), ("L", t3 * Rmin)]))
+                (t1 + t2 + t3, [("R", t1*Rmin), ("S", t2*Rmin), ("L", t3*Rmin)]))
 
         # RLR
-        r0, t0 = polar(x - math.sin(th), y - 1 + math.cos(th))
-        d = 0.25 * (2.0 + r0 * r0)
-        if d <= 1.0:
-            phi = math.acos(d)
-            t1 = mod2pi(-t0 + phi + math.pi / 2.0)
-            t2 = mod2pi(2 * math.pi - 2 * phi)
-            t3 = mod2pi(self._wrap_to_pi(th) - t0 + phi + math.pi / 2.0)
+        r0, t0 = polar(x - math.sin(th), y - 1.0 + math.cos(th))
+        d = 0.25 * (2.0 + r0*r0)
+        if d <= 1.0 + EPS:
+            phi = math.acos(clamp(d, -1.0, 1.0))
+            t1 = mod2pi(-t0 + phi + math.pi/2.0)
+            t2 = mod2pi(2*math.pi - 2*phi)
+            t3 = mod2pi(self._wrap_to_pi(th) - t0 + phi + math.pi/2.0)
             sols.append(
-                (t1 + t2 + t3, [("R", t1 * Rmin), ("L", t2 * Rmin), ("R", t3 * Rmin)]))
+                (t1 + t2 + t3, [("R", t1*Rmin), ("L", t2*Rmin), ("R", t3*Rmin)]))
 
         # LRL
-        r0, t0 = polar(x + math.sin(th), y + 1 - math.cos(th))
-        d = 0.25 * (2.0 + r0 * r0)
-        if d <= 1.0:
-            phi = math.acos(d)
-            t1 = mod2pi(t0 - phi - math.pi / 2.0)
-            t2 = mod2pi(2 * math.pi - 2 * phi)
-            t3 = mod2pi(-self._wrap_to_pi(th) + t0 - phi - math.pi / 2.0)
+        r0, t0 = polar(x + math.sin(th), y + 1.0 - math.cos(th))
+        d = 0.25 * (2.0 + r0*r0)
+        if d <= 1.0 + EPS:
+            phi = math.acos(clamp(d, -1.0, 1.0))
+            t1 = mod2pi(t0 - phi - math.pi/2.0)
+            t2 = mod2pi(2*math.pi - 2*phi)
+            t3 = mod2pi(-self._wrap_to_pi(th) + t0 - phi - math.pi/2.0)
             sols.append(
-                (t1 + t2 + t3, [("L", t1 * Rmin), ("R", t2 * Rmin), ("L", t3 * Rmin)]))
+                (t1 + t2 + t3, [("L", t1*Rmin), ("R", t2*Rmin), ("L", t3*Rmin)]))
 
         if not sols:
-            raise RuntimeError("Dubins failed: no solutions")
+            # With eps-clamping, this should not happen; if it does, nudge th by tiny epsilon and retry.
+            th_perturb = th + (1e-9 if th >= 0 else -1e-9)
+            return self._dubins_shortest_path((x0, y0, th0), (x1, y1, th1+1e-9), Rmin)
 
-        return min(sols, key=lambda x: x[0])[1]  # [(kind, length_m), ...]
+        return min(sols, key=lambda x: x[0])[1]
 
     def _propagate_exact(self, q0, segs, Rmin, ds=0.01):
         """
