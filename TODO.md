@@ -29,3 +29,4 @@
 
 # Prototyping
 - Interactive pygame simulation for testing translation from geometry_msgs/Twist to wheel velocities and steering angles.
+- Translate steering planner from Python to C++
