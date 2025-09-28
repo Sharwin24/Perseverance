@@ -1,14 +1,25 @@
 # ROS
+
+## State Estimation
 - Add simulated Wheel Odometry
 - Publish robot twist along with odometry from state estimation
-- Use robot twist for simulated Lidar and IMU
-- Build a basic URDF for rover (diff-drive for now, can worry about rocker-bogie later by locking the differential as a fixed joint)
 - Define a reference trajectory for tuning kalman filter (circle trajectory)
+
+## Sensors
+- Use robot twist for simulated Lidar and IMU
 - Debug simulated IMU causing NaN state values
-- Start designing a controller for trajectory tracking (PIC, MPC, LQR, MPPI)
-- Once robot is done, setup Gazebo and replace simulated Lidar with Gazebo Lidar
+
+## Communications
 - ROS node for interfacing with Feather MCU over SPI
-- ROS node for implementing kinematics for rover, translate Twist commands to wheel velocities and steering angles
+
+## Motion Control
+- Start designing a controller for trajectory tracking (PIC, MPC, LQR, MPPI)
+- Ackermann Steering Planner for translating Twist commands to wheel velocities and steering angles
+- Utilize AckermannDrive messages for sending wheel commands around ROS ecosystem
+
+## Robot Model
+- Build a basic URDF for rover (diff-drive for now, can worry about rocker-bogie later by locking the differential as a fixed joint)
+- Setup Gazebo and replace simulated Lidar with Gazebo Lidar
 
 # Rover Design
 - Figure out how to convert OnShape CAD model to URDF for visualization
