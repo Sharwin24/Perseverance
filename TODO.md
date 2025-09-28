@@ -8,7 +8,7 @@
 - Start designing a controller for trajectory tracking (PIC, MPC, LQR, MPPI)
 - Once robot is done, setup Gazebo and replace simulated Lidar with Gazebo Lidar
 - ROS node for interfacing with Feather MCU over SPI
-- ROS node for implementing kinematics for rover, translate cmd_vel to wheel velocities and steering angles
+- ROS node for implementing kinematics for rover, translate Twist commands to wheel velocities and steering angles
 
 # Rover Design
 - Figure out how to convert OnShape CAD model to URDF for visualization
@@ -25,7 +25,7 @@
   - 12V PD device for charging (Adafruit 5807)
   - 12V 3S Lipo Charger
   - 12V 3S Lipo Battery
-  - 12V to 5V Buck Converter
+  - 12V to 5V/5A Buck Converter (for Raspberry Pi 5)
 
 # Prototyping
 - Interactive pygame simulation for testing translation from geometry_msgs/Twist to wheel velocities and steering angles.
