@@ -1,9 +1,13 @@
+import matplotlib.pyplot as plt
+from typing import Dict, Tuple
 import numpy as np
 from rover_constants import WHEEL_LOCATIONS, WHEEL_BASE, \
     WHEEL_DIAMETER, TRACK_WIDTH_MIDDLE, TRACK_WIDTH_STEERING, \
     ROVER_BODY_LENGTH, ROVER_BODY_WIDTH
 import pygame as pg
 from typing import Dict
+
+SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 1200
 
 
 class Pose:
@@ -51,6 +55,132 @@ class Twist:
             linear_y=self.linear_y - other.linear_y,
             angular_z=self.angular_z - other.angular_z
         )
+
+
+STEERABLE = {"front_left", "front_right", "rear_left", "rear_right"}
+MIDDLE = {"middle_left", "middle_right"}
+
+
+def _normalize_angle(a: float) -> float:
+    a = (a + np.pi) % (2*np.pi) - np.pi
+    return float(a)
+
+
+def twist_to_wheels_icr(cmd: Twist, eps_omega: float = 1e-4):
+    """
+    Project to feasible twist for fixed middle wheels (vy -> 0),
+    compute ICR (if omega != 0), per-wheel steer angles for the 4 steerables,
+    and wheel speeds for all 6. Also returns per-wheel lateral slip (should be ~0).
+    """
+    vx, vy, w = float(cmd.linear_x), float(cmd.linear_y), float(cmd.angular_z)
+    vy_feas = 0.0
+    feas = Twist(vx, vy_feas, w)
+
+    wheel_angles: Dict[str, float] = {k: 0.0 for k in WHEEL_LOCATIONS.keys()}
+    wheel_speeds: Dict[str, float] = {}
+    slip_error: Dict[str, float] = {}
+
+    # ICR
+    if abs(w) > eps_omega:
+        x_c = -vy_feas / w
+        y_c = vx / w
+        p_c = np.array([x_c, y_c])
+    else:
+        p_c = None  # "ICR at infinity"
+
+    for name, (x_i, y_i) in WHEEL_LOCATIONS.items():
+        v_i = np.array([vx - w*y_i, vy_feas + w*x_i])   # contact vel at wheel
+
+        if name in STEERABLE:
+            if p_c is not None:
+                t = np.array([-(y_i - p_c[1]), (x_i - p_c[0])])  # tangent
+                if np.allclose(t, 0.0):
+                    t = v_i
+                delta = float(np.arctan2(t[1], t[0]))
+                u = t / (np.linalg.norm(t) + 1e-12)
+            else:
+                # straight; align with +x since vy_feas=0
+                delta = 0.0
+                u = np.array([1.0, 0.0])
+            wheel_angles[name] = _normalize_angle(delta)
+            s = float(v_i @ u)
+            n = np.array([-u[1], u[0]])
+            wheel_speeds[name] = s
+            slip_error[name] = float(v_i @ n)
+        else:
+            # middle fixed: heading +x
+            u = np.array([1.0, 0.0])
+            s = float(v_i @ u)        # = vx - w*y_i
+            wheel_speeds[name] = s
+            slip_error[name] = float(v_i[1])  # lateral component
+            wheel_angles[name] = 0.0
+
+    return p_c, wheel_angles, wheel_speeds, feas, slip_error
+
+
+def plot_steering_geometry(twist: Twist, title: str = ""):
+    p_c, ang, spd, feas, slip = twist_to_wheels_icr(twist)
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.set_aspect("equal", "box")
+    ax.grid(True, linestyle="--", alpha=0.4)
+    ax.set_xlabel("Body X")
+    ax.set_ylabel("Body Y")
+    ax.set_title(
+        title or f"Twist: vx={feas.linear_x:.2f}, vy={feas.linear_y:.2f}, w={feas.angular_z:.3f}")
+
+    # Draw body rectangle (approx) for context
+    ax.add_patch(plt.Rectangle((-ROVER_BODY_LENGTH/2, -ROVER_BODY_WIDTH/2),
+                               ROVER_BODY_LENGTH, ROVER_BODY_WIDTH,
+                               fill=False, lw=1.5))
+
+    # Draw ICR (if finite) and turning circle through body origin
+    if p_c is not None:
+        ax.plot(p_c[0], p_c[1], "o", ms=6, label="ICR")
+        R = np.hypot(p_c[0], p_c[1])
+        circle = plt.Circle((p_c[0], p_c[1]), R, fill=False, ls=":", lw=1.2)
+        ax.add_patch(circle)
+
+    # For each wheel: draw pos, heading, speed vector, lateral slip
+    for name, (x, y) in WHEEL_LOCATIONS.items():
+        ax.plot(x, y, "ko", ms=4)
+        ax.text(x + 0.01*ROVER_BODY_LENGTH, y + 0.01 *
+                ROVER_BODY_WIDTH, name, fontsize=8)
+
+        # Heading ray (blue for steerable, gray for fixed)
+        delta = ang[name]
+        u = np.array([np.cos(delta), np.sin(delta)])
+        color = "C0" if name in STEERABLE else "0.5"
+        ax.arrow(x, y, 0.15*ROVER_BODY_LENGTH*u[0], 0.15*ROVER_BODY_LENGTH*u[1],
+                 head_width=0.02*ROVER_BODY_LENGTH, length_includes_head=True,
+                 lw=2, color=color)
+
+        # Contact velocity vector (green)
+        vx = feas.linear_x - feas.angular_z * y
+        vy = feas.linear_y + feas.angular_z * x
+        ax.arrow(x, y, 0.12*ROVER_BODY_LENGTH*vx/max(1.0, abs(feas.linear_x)+abs(feas.angular_z)*max(1.0, ROVER_BODY_LENGTH)),
+                 0.12*ROVER_BODY_LENGTH*vy /
+                 max(1.0, abs(feas.linear_x)+abs(feas.angular_z)
+                     * max(1.0, ROVER_BODY_LENGTH)),
+                 head_width=0.02*ROVER_BODY_LENGTH, color="C2", length_includes_head=True, lw=1.5)
+
+        # Lateral slip component (red, should be ~0)
+        n = np.array([-u[1], u[0]])
+        v = np.array([vx, vy])
+        lat = float(v @ n)
+        ax.arrow(x, y, 0.12*ROVER_BODY_LENGTH*lat*n[0],
+                 0.12*ROVER_BODY_LENGTH*lat*n[1],
+                 head_width=0.02*ROVER_BODY_LENGTH, color="C3",
+                 length_includes_head=True, lw=1.2, alpha=0.9)
+
+    ax.legend(loc="upper right")
+    # auto-limits
+    xs = [p[0] for p in WHEEL_LOCATIONS.values()]
+    ys = [p[1] for p in WHEEL_LOCATIONS.values()]
+    pad = 0.3*max(ROVER_BODY_LENGTH, ROVER_BODY_WIDTH)
+    ax.set_xlim(min(xs)-pad, max(xs)+pad)
+    ax.set_ylim(min(ys)-pad, max(ys)+pad)
+    plt.show()
 
 
 def rocker_bogie_forward_kinematics(wheel_drive_speeds, wheel_steer_angles) -> Twist:
@@ -497,6 +627,72 @@ def draw_robot(screen, position, angle, steer_angles: Dict[str, float]):
     return rect
 
 
+def draw_icr(screen, pose: Pose, icr_body: np.ndarray):
+    """Draw ICR (blue dot) and a faint circle through robot center (dashed)."""
+    if icr_body is None:
+        return
+    R = float(np.hypot(icr_body[0], icr_body[1]))
+    theta = pose.theta
+    # ICR in world
+    icc_x = pose.x + np.cos(theta)*icr_body[0] - np.sin(theta)*icr_body[1]
+    icc_y = pose.y + np.sin(theta)*icr_body[0] + np.cos(theta)*icr_body[1]
+    cx = int(SCREEN_WIDTH//2 + icc_x)
+    cy = int(SCREEN_HEIGHT//2 - icc_y)
+    pg.draw.circle(screen, (25, 120, 240), (cx, cy), 4)
+
+    # dashed circle through robot center
+    rad = int(abs(R))
+    if rad > 4 and rad < 4000:
+        segs = max(64, int(2*np.pi*rad/10))
+        for i in range(segs):
+            if i % 2:   # gaps
+                continue
+            a0 = 2*np.pi*i/segs
+            a1 = 2*np.pi*(i+1)/segs
+            x0 = cx + int(rad*np.cos(a0))
+            y0 = cy + int(rad*np.sin(a0))
+            x1 = cx + int(rad*np.cos(a1))
+            y1 = cy + int(rad*np.sin(a1))
+            pg.draw.line(screen, (120, 180, 255), (x0, y0), (x1, y1), 1)
+
+
+def draw_wheel_vectors(screen, pose: Pose, feas: Twist, wheel_angles: Dict[str, float]):
+    """Draw per-wheel contact velocity (green) and lateral slip (red)."""
+    theta = pose.theta
+    # transform function: body (x,y) -> screen
+
+    def to_screen_body(bx, by):
+        # world point of wheel
+        wx = pose.x + bx*np.cos(theta) - by*np.sin(theta)
+        wy = pose.y + bx*np.sin(theta) + by*np.cos(theta)
+        return int(SCREEN_WIDTH//2 + wx), int(SCREEN_HEIGHT//2 - wy)
+
+    for name, (x_i, y_i) in WHEEL_LOCATIONS.items():
+        # wheel world position
+        sx, sy = to_screen_body(x_i, y_i)
+
+        # contact velocity in body at wheel
+        vx = feas.linear_x - feas.angular_z * y_i
+        vy = feas.linear_y + feas.angular_z * x_i
+        # heading
+        delta = wheel_angles[name]
+        u = np.array([np.cos(delta), np.sin(delta)])
+        n = np.array([-u[1], u[0]])
+        v = np.array([vx, vy])
+
+        # scale for visibility
+        scale = 0.2  # tune to taste
+        tip_v = (sx + int(scale*v[0]), sy - int(scale*v[1]))
+        tip_lat = (sx + int(scale*(v @ n)*n[0]), sy - int(scale*(v @ n)*n[1]))
+
+        # contact velocity (green)
+        draw_arrow(screen, (sx, sy), tip_v, color=(
+            40, 160, 80), width=2, head_len=8)
+        # lateral slip (red)
+        draw_arrow(screen, (sx, sy), tip_lat, color=(
+            200, 60, 60), width=2, head_len=8)
+
+
 def update_steering_from_keys(keys, steer_angles: Dict[str, float], dt: float) -> Dict[str, float]:
     """Update per-wheel steering angles from held keys.
 
@@ -550,9 +746,6 @@ def update_steering_from_keys(keys, steer_angles: Dict[str, float], dt: float) -
         angles[k] = float(np.clip(angles.get(k, 0.0), -max_rad, max_rad))
 
     return angles
-
-
-SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 1200
 
 
 def print_controls():
@@ -622,6 +815,9 @@ def main():
 
         # Build full angle set including middle wheels
         full_angles = build_full_wheel_angles(steer_angles)
+
+        # Use the ICR-based helper (projects vy->0 internally)
+        icr_body, _, _, feas_twist, slip = twist_to_wheels_icr(robot_twist)
         # Compute wheel speeds from current commanded twist and angles
         wheel_speeds = compute_wheel_speeds_from_twist(
             robot_twist, full_angles)
@@ -639,6 +835,8 @@ def main():
             robot_pose.theta,
             steer_angles,
         )
+        draw_icr(screen, robot_pose, icr_body)
+        draw_wheel_vectors(screen, robot_pose, feas_twist, full_angles)
         # Visualize FK-estimated body velocity at robot center
         draw_body_velocity(screen, robot_pose, fk_twist)
         # Display steering angles above the robot
@@ -663,4 +861,6 @@ def main():
 
 
 if __name__ == "__main__":
+    plot_steering_geometry(Twist(linear_x=200.0, linear_y=50.0,
+                           angular_z=0.8), "Arbitrary Twist (vy projected to 0)")
     main()
