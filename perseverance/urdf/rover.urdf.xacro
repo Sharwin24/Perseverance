@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<!-- Generated using onshape-to-robot -->
+<!-- Onshape https://cad.onshape.com/documents/31ca51e87164d5a2ae3b11dc/w/1e07aa3f18f08d453ac8b6a1/e/c6031188983b3698192fd890 -->
+<robot name="perseverance" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:property name="mesh_dir" value="file://$(find perseverance)/meshes"/>
+  <!-- Link base -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0.00194388 -0.00615083 0.0142334" rpy="0 0 0"/>
+      <mass value="0.792684"/>
+      <inertia ixx="0.0056261" ixy="-0.000184338" ixz="-4.5498e-06" iyy="0.00337652" iyz="3.08805e-05" izz="0.00873301"/>
+    </inertial>
+    <!-- Part base_link -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/body.stl"/>
+      </geometry>
+      <material name="body_material">
+        <color rgba="0.811765 0.858824 0.898039 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 -0 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/body.stl"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>

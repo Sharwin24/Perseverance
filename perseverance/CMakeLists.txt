@@ -110,6 +110,14 @@ ament_target_dependencies(state_estimator
   tf2_geometry_msgs
 )
 
+# --- WheelDataSPI Node ---
+add_executable(wheel_data_spi src/communications/wheel_data_spi_node.cpp)
+target_include_directories(wheel_data_spi PUBLIC
+  $<BUILD_INTERFACE:${INCLUDE_DIR}>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(wheel_data_spi rclcpp std_msgs geometry_msgs)
+
 # Install Targets (Nodes and libraries)
 install(TARGETS
   sim_sensors_lib
@@ -120,6 +128,7 @@ install(TARGETS
   simulated_imu
   simulated_lidar
   state_estimator
+  wheel_data_spi
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -132,6 +141,18 @@ install(DIRECTORY
 # Install config files
 install(DIRECTORY
   config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# Install URDF files
+install(DIRECTORY
+  urdf
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# Install Mesh files
+install(DIRECTORY
+  meshes
   DESTINATION share/${PROJECT_NAME}
 )
 

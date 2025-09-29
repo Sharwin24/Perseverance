@@ -1,8 +1,11 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.launch_description_sources import XmlLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.conditions import IfCondition
+from launch.launch_description_sources.any_launch_description_source import AnyLaunchDescriptionSource
+from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import Node
+import os
 
 
 def generate_launch_description():
@@ -24,7 +27,7 @@ def generate_launch_description():
     )
     use_sim_sensors_arg = DeclareLaunchArgument(
         'use_sim_sensors',
-        default_value='true',
+        default_value='false',
         description='Use simulated or real sensors [true, false]'
     )
     launch_rviz_arg = DeclareLaunchArgument(
@@ -41,7 +44,7 @@ def generate_launch_description():
 
     # --- Include Launch Files ---
     state_estimation_launch = IncludeLaunchDescription(
-        XmlLaunchDescriptionSource(
+        AnyLaunchDescriptionSource(
             PathJoinSubstitution([
                 perseverance_pkg_share, 'launch',
                 'state_estimation.launch.xml'
@@ -54,7 +57,7 @@ def generate_launch_description():
     )
 
     sensors_launch = IncludeLaunchDescription(
-        XmlLaunchDescriptionSource(
+        AnyLaunchDescriptionSource(
             PathJoinSubstitution([
                 perseverance_pkg_share, 'launch',
                 'sensors.launch.xml'
@@ -68,7 +71,7 @@ def generate_launch_description():
     )
 
     communications_launch = IncludeLaunchDescription(
-        XmlLaunchDescriptionSource(
+        AnyLaunchDescriptionSource(
             PathJoinSubstitution([
                 perseverance_pkg_share, 'launch',
                 'communications.launch.xml'
@@ -79,12 +82,45 @@ def generate_launch_description():
         }.items()
     )
 
+    # --- Robot State Publisher ---
+    robot_state_publisher_node = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[
+            {
+                'robot_description': Command([
+                    FindExecutable(name='xacro'), ' ', PathJoinSubstitution(
+                        [perseverance_pkg_share, 'urdf', 'rover.urdf.xacro'])
+                ])
+            }
+        ],
+        arguments=['--ros-args', '--log-level', log_level]
+    )
+
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=[
+            '-d',
+            PathJoinSubstitution(
+                [perseverance_pkg_share, 'config', 'rover.rviz']),
+            '--ros-args', '--log-level', log_level
+        ],
+        condition=IfCondition(launch_rviz)
+    )
+
     return LaunchDescription([
         sensor_namespace_arg,
         log_level_arg,
         use_sim_sensors_arg,
         launch_rviz_arg,
+        robot_state_publisher_node,
         state_estimation_launch,
         sensors_launch,
-        communications_launch
+        # communications_launch,
+        rviz_node
     ])
