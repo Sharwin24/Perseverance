@@ -47,6 +47,7 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   double wheel_base = this->declare_parameter("wheel_base", 1.0); // [m]
   double wheel_radius = this->declare_parameter("wheel_radius", 0.05); // [m]
   double track_width = this->declare_parameter("track_width", 0.6); // [m]
+  double base_height = this->declare_parameter("base_height", 0.05 + 0.05); // [m]
   // Get parameters from yaml config file
   timer_freq = this->get_parameter("timer_frequency").as_double();
   initial_x = this->get_parameter("initial_x").as_double();
@@ -58,6 +59,7 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   wheel_base = this->get_parameter("wheel_base").as_double();
   wheel_radius = this->get_parameter("wheel_radius").as_double();
   track_width = this->get_parameter("track_width").as_double();
+  base_height = this->get_parameter("base_height").as_double();
 
   // Sensor Data QoS (Subscribers)
   const auto sensorDataQoS = rclcpp::QoS(rclcpp::SensorDataQoS());
@@ -109,7 +111,7 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
   );
 
   // Create Robot Constants
-  RobotConstants robotConstants(wheel_base, wheel_radius, track_width);
+  RobotConstants robotConstants(wheel_base, wheel_radius, track_width, base_height);
 
   // Setup Kalman Filter
   this->kalmanFilter = std::make_unique<KalmanFilter>(
@@ -134,6 +136,9 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
     mapToOdom.transform.rotation = q;
     this->staticTfBroadcaster->sendTransform(mapToOdom);
   }
+
+  // Initialize the transform broadcaster
+  this->tfBroadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   this->timer = this->create_wall_timer(
     std::chrono::duration<double>(1.0 / timer_freq),
@@ -222,13 +227,33 @@ void StateEstimator::timerCallback() {
     predictedState.x, predictedState.y, predictedState.theta, predictedState.vx, predictedState.vy, predictedState.omega
   );
   // Create an Odom message to publish the current state
+  this->odomPublisher->publish(this->createOdomMessage(predictedState));
+
+  // Broadcast the odom -> base_link TF
+  this->tfBroadcaster->sendTransform(this->createOdomToBaseLinkTF(predictedState));
+}
+
+geometry_msgs::msg::Quaternion StateEstimator::yaw2Quaternion(const double yaw) {
+  // Convert yaw to quaternion
+  const double half_yaw = yaw / 2.0;
+  const double w = std::cos(half_yaw);
+  const double z = std::sin(half_yaw);
+  geometry_msgs::msg::Quaternion q;
+  q.w = w;
+  q.x = 0.0;
+  q.y = 0.0;
+  q.z = z;
+  return q;
+}
+
+nav_msgs::msg::Odometry StateEstimator::createOdomMessage(const RobotState& state) {
   nav_msgs::msg::Odometry odomMsg;
-  odomMsg.header.frame_id = "odom";
-  odomMsg.child_frame_id = "base_link";
   odomMsg.header.stamp = this->now();
-  odomMsg.pose.pose.position.x = predictedState.x;
-  odomMsg.pose.pose.position.y = predictedState.y;
-  odomMsg.pose.pose.orientation = this->yaw2Quaternion(predictedState.theta);
+  odomMsg.header.frame_id = "base_link";
+  odomMsg.child_frame_id = "odom";
+  odomMsg.pose.pose.position.x = state.x;
+  odomMsg.pose.pose.position.y = state.y;
+  odomMsg.pose.pose.orientation = this->yaw2Quaternion(state.theta);
   auto create_odom_cov_array = [&](const Eigen::Matrix<double, 6, 6>& P) {
     // Only copy x, y, theta covariance to the pose covariance array
     std::array<double, 36> arr{};
@@ -246,24 +271,26 @@ void StateEstimator::timerCallback() {
     return arr;
   };
   odomMsg.pose.covariance = create_odom_cov_array(this->kalmanFilter->getStateCovariance());
-  odomMsg.twist.twist.linear.x = predictedState.vx;
-  odomMsg.twist.twist.linear.y = predictedState.vy;
-  odomMsg.twist.twist.angular.z = predictedState.omega;
+  odomMsg.twist.twist.linear.x = state.vx;
+  odomMsg.twist.twist.linear.y = state.vy;
+  odomMsg.twist.twist.angular.z = state.omega;
   odomMsg.twist.covariance = create_twist_cov_array(this->kalmanFilter->getStateCovariance());
-  this->odomPublisher->publish(odomMsg);
+  return odomMsg;
 }
 
-geometry_msgs::msg::Quaternion StateEstimator::yaw2Quaternion(const double yaw) {
-  // Convert yaw to quaternion
-  const double half_yaw = yaw / 2.0;
-  const double w = std::cos(half_yaw);
-  const double z = std::sin(half_yaw);
-  geometry_msgs::msg::Quaternion q;
-  q.w = w;
-  q.x = 0.0;
-  q.y = 0.0;
-  q.z = z;
-  return q;
+
+geometry_msgs::msg::TransformStamped StateEstimator::createOdomToBaseLinkTF(const RobotState& state) {
+  // Given a RobotState and a timestamp, create a TransformStamped message
+  geometry_msgs::msg::TransformStamped tf;
+  tf.header.stamp = this->now();
+  tf.header.frame_id = "base_link";
+  tf.child_frame_id = "odom";
+  tf.transform.translation.x = state.x;
+  tf.transform.translation.y = state.y;
+  tf.transform.translation.z = this->kalmanFilter->getRobotConstants().baseHeight +
+    this->kalmanFilter->getRobotConstants().wheelRadius;
+  tf.transform.rotation = this->yaw2Quaternion(state.theta);
+  return tf;
 }
 
 int main(int argc, char* argv[]) {

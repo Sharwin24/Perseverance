@@ -10,6 +10,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "tf2_ros/static_transform_broadcaster.h"
+#include "tf2_ros/transform_broadcaster.h"
 
 #include "kalman_filter.hpp"
 
@@ -26,6 +27,11 @@ private:
   void updateState(RobotState newState) const { this->kalmanFilter->updateState(newState.vec()); }
 
   geometry_msgs::msg::Quaternion yaw2Quaternion(const double yaw);
+
+  nav_msgs::msg::Odometry createOdomMessage(const RobotState& state);
+
+  geometry_msgs::msg::TransformStamped createOdomToBaseLinkTF(const RobotState& state);
+
 
   // State Estimate (Odometry)
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odomPublisher;
@@ -44,6 +50,9 @@ private:
 
   // Static TF broadcaster for map -> odom
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> staticTfBroadcaster;
+
+  // TF broadcaster for odom -> base_link
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 };
 
 #endif // !STATE_ESTIMATION_HPP

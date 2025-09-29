@@ -270,12 +270,14 @@ struct RobotConstants {
   double wheelRadius;
   // The back wheel to front wheel distance along the Robot X-axis [m]
   double trackWidth;
+  // The height of the robot base from the bottom of the base to the center of the wheel [m]
+  double baseHeight;
   // Array that holds all 6 wheel locations since Mecanum locations align with rocker bogie
   std::array<Eigen::Vector2d, 6> wheelLocations;
 
   RobotConstants() = default;
-  RobotConstants(const double wheelBase, const double wheelRadius, const double trackWidth)
-    : wheelBase(wheelBase), wheelRadius(wheelRadius), trackWidth(trackWidth) {
+  RobotConstants(const double wheelBase, const double wheelRadius, const double trackWidth, const double baseHeight)
+    : wheelBase(wheelBase), wheelRadius(wheelRadius), trackWidth(trackWidth), baseHeight(baseHeight) {
     wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_FRONT_LEFT)] = Eigen::Vector2d(-trackWidth / 2.0, wheelBase / 2.0);
     wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_FRONT_RIGHT)] = Eigen::Vector2d(trackWidth / 2.0, wheelBase / 2.0);
     wheelLocations[static_cast<size_t>(RockerBogieWheelID::RB_MIDDLE_LEFT)] = Eigen::Vector2d(-trackWidth / 2.0, 0.0);
@@ -327,6 +329,8 @@ public:
   void updateState(const Eigen::Vector<double, 6>& X) { this->currentState = RobotState(X); }
   void updateProcessNoiseCovariance(const Eigen::Matrix<double, 6, 6>& Q) { this->covariance.setProcessNoiseCovariance(Q); }
   void updateStateCovariance(const Eigen::Matrix<double, 6, 6>& P) { this->covariance.setStateCovariance(P); }
+
+  RobotConstants getRobotConstants() const { return this->robotConstants; }
 
 private:
   // Robot constants (e.g., wheel base, wheel radius, track width)

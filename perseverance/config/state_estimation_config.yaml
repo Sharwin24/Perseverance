@@ -10,3 +10,4 @@ state_estimator:
     wheel_radius: 0.035 # Wheel radius [m]
     wheel_base: 0.25 # Middle Wheel to Wheel distance along the Robot Y-axis [m]
     track_width: 0.2945 # The back to front wheel distance along the Robot X-axis [m]
+    base_height: 0.0448 # Height of the robot base to the wheel center [m]
