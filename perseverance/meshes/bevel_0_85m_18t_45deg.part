@@ -1,12 +1,12 @@
 {
     "configuration": "default",
     "documentId": "31ca51e87164d5a2ae3b11dc",
-    "documentMicroversion": "3027f2663f2d31e987fe7328",
+    "documentMicroversion": "da6c8fe57dd019e8cce7ef54",
     "elementId": "4bb309cd3d306bc1aa938f85",
     "fullConfiguration": "default",
-    "id": "MRbJoEpqwZfLuE8+W",
+    "id": "MBSqDa3bVNGEnNlZ1",
     "isStandardContent": false,
-    "name": "Bevel 0.85M 18T 45deg <3>",
+    "name": "Bevel 0.85M 18T 45deg <2>",
     "partId": "RLCH",
     "suppressed": false,
     "type": "Part"
