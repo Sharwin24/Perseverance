@@ -8,9 +8,11 @@ WheelDataSpiNode::WheelDataSpiNode() :
   this->spi_dev_ = this->declare_parameter<std::string>("spi_device", "/dev/spidev0.0");
   this->spi_speed_ = this->declare_parameter<int>("spi_speed_hz", 8'000'000);
   this->spi_mode_ = this->declare_parameter<int>("spi_mode", 0);
+  this->timer_freq = this->declare_parameter("timer_freq", 10);
   this->spi_dev_ = this->get_parameter("spi_device").as_string();
   this->spi_speed_ = this->get_parameter("spi_speed_hz").as_int();
   this->spi_mode_ = this->get_parameter("spi_mode").as_int();
+  this->timer_freq = this->get_parameter("timer_freq").as_double();
 
   // Initialize SPI
   try {
@@ -29,6 +31,16 @@ WheelDataSpiNode::WheelDataSpiNode() :
 
   RCLCPP_INFO(get_logger(), "Using SPI dev %s @ %d Hz, mode %d",
     spi_dev_.c_str(), spi_speed_, spi_mode_);
+
+  this->timer = this->create_wall_timer(
+    std::chrono::duration<double>(1.0 / timer_freq),
+    std::bind(&WheelDataSpiNode::timerCallback, this)
+  );
+}
+
+void WheelDataSpiNode::timerCallback() {
+  // Periodically read from the SPI to get the latest Encoder counts
+  // and to send the latest wheel speeds and steering angles
 }
 
 WheelDataPacket WheelDataSpiNode::fromTwist(const geometry_msgs::msg::Twist::SharedPtr msg) {
@@ -56,8 +68,7 @@ void WheelDataSpiNode::onTwist(const geometry_msgs::msg::Twist::SharedPtr msg) {
     spi_->write(&pkt, sizeof(pkt));
   }
   catch (const std::exception& e) {
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000,
-      "SPI write failed: %s", e.what());
+    RCLCPP_ERROR(get_logger(), "SPI write failed: %s", e.what());
   }
 }
 

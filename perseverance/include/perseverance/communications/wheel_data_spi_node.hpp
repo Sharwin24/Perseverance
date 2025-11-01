@@ -15,10 +15,15 @@ private:
 
   WheelDataPacket fromTwist(const geometry_msgs::msg::Twist::SharedPtr msg);
 
+  void timerCallback();
+
   std::string spi_dev_;
   int spi_speed_;
   int spi_mode_;
   std::unique_ptr<SpiDevice> spi_;
   std::atomic<uint32_t> seq_;
+  float timer_freq;
+
+  rclcpp::TimerBase::SharedPtr timer;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_;
 };

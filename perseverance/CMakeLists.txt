@@ -24,6 +24,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(ackermann_msgs REQUIRED)
 
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(
@@ -108,6 +109,7 @@ ament_target_dependencies(state_estimator
   std_msgs
   tf2_ros
   tf2_geometry_msgs
+  ackermann_msgs
 )
 
 # --- WheelDataSPI Node ---
@@ -116,7 +118,12 @@ target_include_directories(wheel_data_spi PUBLIC
   $<BUILD_INTERFACE:${INCLUDE_DIR}>
   $<INSTALL_INTERFACE:include>
 )
-ament_target_dependencies(wheel_data_spi rclcpp std_msgs geometry_msgs)
+ament_target_dependencies(wheel_data_spi
+  rclcpp
+  std_msgs
+  geometry_msgs
+  ackermann_msgs
+)
 
 # Install Targets (Nodes and libraries)
 install(TARGETS
