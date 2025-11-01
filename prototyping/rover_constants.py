@@ -1,5 +1,3 @@
-import numpy as np
-
 """Rover geometric constants (units: millimeters)
 
 
@@ -26,16 +24,9 @@ Wheel Locations Mapping:
      y: half of the appropriate lateral spacing:
                 - Middle wheels use TRACK_WIDTH_MIDDLE / 2
                 - Front & rear steering wheels use TRACK_WIDTH_STEERING / 2
-
-If future designs differentiate front vs rear steering lateral spacing, introduce
-    TRACK_WIDTH_FRONT_STEERING and TRACK_WIDTH_REAR_STEERING and update WHEEL_LOCATIONS.
-
-Migration Guidance:
-    Replace imports of deprecated names (TRACK_WIDTH, STEERING_WHEEL_BASE) with the explicit new semantic constant.
-    Re-derive any kinematic matrices (e.g., mecanum) using:
-            L = WHEEL_BASE / 2 (half-length), W = TRACK_WIDTH_MIDDLE / 2 (half-width)
-    rather than the legacy swapped usage.
 """
+from typing import Dict, Tuple, Set
+
 
 # ---------------- Core Dimensions ----------------
 WHEEL_DIAMETER = 70  # Wheel diameter [mm]
@@ -54,7 +45,7 @@ FRONT_TO_MIDDLE_RATIO = 0.533416
 REAR_TO_MIDDLE_RATIO = 0.478844
 
 # ---------------- Wheel Locations (Body Frame) ----------------
-WHEEL_LOCATIONS = {
+WHEEL_LOCATIONS: Dict[str, Tuple[float, float]] = {
     # Front steering pair
     "front_left":  (FRONT_TO_MIDDLE_RATIO * WHEEL_BASE,  TRACK_WIDTH_STEERING / 2),
     "front_right": (FRONT_TO_MIDDLE_RATIO * WHEEL_BASE, -TRACK_WIDTH_STEERING / 2),
@@ -65,7 +56,10 @@ WHEEL_LOCATIONS = {
     "rear_left":  (-REAR_TO_MIDDLE_RATIO * WHEEL_BASE,  TRACK_WIDTH_STEERING / 2),
     "rear_right": (-REAR_TO_MIDDLE_RATIO * WHEEL_BASE, -TRACK_WIDTH_STEERING / 2),
 }
-STEERABLE_WHEELS = {"front_left", "front_right", "rear_left", "rear_right"}
+STEERABLE_WHEELS: Set[str] = {
+    "front_left", "front_right",
+    "rear_left", "rear_right"
+}
 # ---------------------------------------------------------------------------
 
 
