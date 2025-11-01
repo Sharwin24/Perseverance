@@ -1,16 +1,48 @@
 <?xml version="1.0" ?>
 <!-- Generated using onshape-to-robot -->
-<!-- Onshape https://cad.onshape.com/documents/31ca51e87164d5a2ae3b11dc/w/1e07aa3f18f08d453ac8b6a1/e/c6031188983b3698192fd890 -->
+<!-- Onshape https://cad.onshape.com/documents/31ca51e87164d5a2ae3b11dc/w/1e07aa3f18f08d453ac8b6a1/e/be108145cc25fea61866c58d -->
 <robot name="perseverance" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:property name="mesh_dir" value="file://$(find perseverance)/meshes"/>
-  <!-- Link base -->
-  <link name="base_link">
+  <!-- Link body -->
+  <link name="body">
     <inertial>
-      <origin xyz="0.00194388 -0.00615083 0.0142334" rpy="0 0 0"/>
-      <mass value="0.792684"/>
-      <inertia ixx="0.0056261" ixy="-0.000184338" ixz="-4.5498e-06" iyy="0.00337652" iyz="3.08805e-05" izz="0.00873301"/>
+      <origin xyz="0.00132088 -0.0106351 0.0110544" rpy="0 0 0"/>
+      <mass value="1.16655"/>
+      <!-- <inertia ixx="0.00718086" ixy="-0.000191247" ixz="-9.44893e-06" iyy="0.00962338" iyz="0.000134967" izz="0.0161498"/> -->
     </inertial>
-    <!-- Part base_link -->
+    <!-- Part rightbogie -->
+    <visual>
+      <origin xyz="-0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/rightbogie.stl"/>
+      </geometry>
+      <material name="rightbogie_material">
+        <color rgba="0.262745 0.282353 0.301961 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/rightbogie.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part bevel_0_85m_18t_45deg -->
+    <visual>
+      <origin xyz="-0.012226 -0.042 0.024" rpy="-0 1.5708 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/bevel_0_85m_18t_45deg.stl"/>
+      </geometry>
+      <material name="bevel_0_85m_18t_45deg_material">
+        <color rgba="0.729412 0.25098 0.105882 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.012226 -0.042 0.024" rpy="-0 1.5708 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/bevel_0_85m_18t_45deg.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part body -->
     <visual>
       <origin xyz="0 0 0" rpy="0 -0 0"/>
       <geometry>
@@ -26,5 +58,453 @@
         <mesh filename="${mesh_dir}/body.stl"/>
       </geometry>
     </collision>
+    <!-- Part bevel_0_85m_18t_45deg_2 -->
+    <visual>
+      <origin xyz="0.012226 -0.042 0.024" rpy="-1.3494e-79 -1.5708 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/bevel_0_85m_18t_45deg.stl"/>
+      </geometry>
+      <material name="bevel_0_85m_18t_45deg_2_material">
+        <color rgba="0.729412 0.25098 0.105882 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.012226 -0.042 0.024" rpy="-1.3494e-79 -1.5708 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/bevel_0_85m_18t_45deg.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part mg995 -->
+    <visual>
+      <origin xyz="-0.1425 -0.140031 0.043" rpy="3.14159 -0 -3.14159"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/mg995.stl"/>
+      </geometry>
+      <material name="mg995_material">
+        <color rgba="0.792157 0.819608 0.933333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.1425 -0.140031 0.043" rpy="3.14159 -0 -3.14159"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/mg995.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part mg995_2 -->
+    <visual>
+      <origin xyz="-0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.74533"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/mg995.stl"/>
+      </geometry>
+      <material name="mg995_2_material">
+        <color rgba="0.792157 0.819608 0.933333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.74533"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/mg995.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part mg995_3 -->
+    <visual>
+      <origin xyz="0.1425 -0.140031 0.043" rpy="3.14159 -0 -2.01228e-16"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/mg995.stl"/>
+      </geometry>
+      <material name="mg995_3_material">
+        <color rgba="0.792157 0.819608 0.933333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.1425 -0.140031 0.043" rpy="3.14159 -0 -2.01228e-16"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/mg995.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part leftrocker -->
+    <visual>
+      <origin xyz="0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/leftrocker.stl"/>
+      </geometry>
+      <material name="leftrocker_material">
+        <color rgba="0.262745 0.282353 0.301961 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/leftrocker.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part rightrocker -->
+    <visual>
+      <origin xyz="-0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/rightrocker.stl"/>
+      </geometry>
+      <material name="rightrocker_material">
+        <color rgba="0.262745 0.282353 0.301961 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="-0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/rightrocker.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part mg995_4 -->
+    <visual>
+      <origin xyz="0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.39626"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/mg995.stl"/>
+      </geometry>
+      <material name="mg995_4_material">
+        <color rgba="0.792157 0.819608 0.933333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.39626"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/mg995.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part leftbogie -->
+    <visual>
+      <origin xyz="0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/leftbogie.stl"/>
+      </geometry>
+      <material name="leftbogie_material">
+        <color rgba="0.262745 0.282353 0.301961 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/leftbogie.stl"/>
+      </geometry>
+    </collision>
   </link>
+  <!-- Link part_1 -->
+  <link name="part_1">
+    <inertial>
+      <origin xyz="0.0162576 1.99588e-09 -0.0222692" rpy="0 0 0"/>
+      <mass value="0.0309807"/>
+      <inertia ixx="1.46169e-05" ixy="-1.34476e-13" ixz="1.19558e-06" iyy="1.75736e-05" iyz="1.92805e-12" izz="5.44298e-06"/>
+    </inertial>
+    <!-- Part part_1 -->
+    <visual>
+      <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="9.24446e-33 -2.82529e-32 -4.77087e-18"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1.stl"/>
+      </geometry>
+      <material name="part_1_material">
+        <color rgba="0.458824 0.105882 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="9.24446e-33 -2.82529e-32 -4.77087e-18"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Link part_1_2 -->
+  <link name="part_1_2">
+    <inertial>
+      <origin xyz="-3.19312e-19 3.11998e-18 0.00460287" rpy="0 0 0"/>
+      <mass value="0.0820664"/>
+      <inertia ixx="3.08808e-05" ixy="-3.64091e-55" ixz="-1.42616e-21" iyy="3.08808e-05" iyz="1.12352e-54" izz="5.62507e-05"/>
+    </inertial>
+    <!-- Part part_1_2 -->
+    <visual>
+      <origin xyz="0 0 -0.005" rpy="-1.5708 1.35456e-17 3.31859e-65"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+      <material name="part_1_2_material">
+        <color rgba="0.498039 0.498039 0.498039 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.005" rpy="-1.5708 1.35456e-17 3.31859e-65"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Joint from part_1 to part_1_2 -->
+  <joint name="bl_wheel" type="continuous">
+    <origin xyz="-0.005 -5.55112e-17 -0.0463814" rpy="-1.5708 1.249e-16 -1.5708"/>
+    <parent link="part_1"/>
+    <child link="part_1_2"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10"/>
+  </joint>
+  <!-- Joint from body to part_1 -->
+  <joint name="bl_steering" type="revolute">
+    <origin xyz="0.1525 0.10997 -0.00127218" rpy="-1.249e-16 4.18641e-16 2.96706"/>
+    <parent link="body"/>
+    <child link="part_1"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-0.610865" upper="0.610865"/>
+  </joint>
+  <!-- Link part_1_3 -->
+  <link name="part_1_3">
+    <inertial>
+      <origin xyz="0.0162576 1.99588e-09 -0.0222692" rpy="0 0 0"/>
+      <mass value="0.0309807"/>
+      <inertia ixx="1.46169e-05" ixy="-1.34476e-13" ixz="1.19558e-06" iyy="1.75736e-05" iyz="1.92805e-12" izz="5.44298e-06"/>
+    </inertial>
+    <!-- Part part_1_3 -->
+    <visual>
+      <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="-8.84344e-75 -0 -7.75341e-18"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1.stl"/>
+      </geometry>
+      <material name="part_1_3_material">
+        <color rgba="0.458824 0.105882 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="-8.84344e-75 -0 -7.75341e-18"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Link part_1_4 -->
+  <link name="part_1_4">
+    <inertial>
+      <origin xyz="2.74897e-17 3.11998e-18 0.00460287" rpy="0 0 0"/>
+      <mass value="0.0820664"/>
+      <inertia ixx="3.08808e-05" ixy="3.47568e-93" ixz="-7.5456e-22" iyy="3.08808e-05" iyz="5.5184e-80" izz="5.62507e-05"/>
+    </inertial>
+    <!-- Part part_1_4 -->
+    <visual>
+      <origin xyz="2.77556e-17 0 -0.005" rpy="-1.5708 1.93111e-18 9.91647e-75"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+      <material name="part_1_4_material">
+        <color rgba="0.498039 0.498039 0.498039 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="2.77556e-17 0 -0.005" rpy="-1.5708 1.93111e-18 9.91647e-75"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Joint from part_1_3 to part_1_4 -->
+  <joint name="br_wheel" type="continuous">
+    <origin xyz="-0.005 5.55112e-17 -0.0463814" rpy="1.5708 -0 1.5708"/>
+    <parent link="part_1_3"/>
+    <child link="part_1_4"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10"/>
+  </joint>
+  <!-- Joint from body to part_1_3 -->
+  <joint name="br_steering" type="revolute">
+    <origin xyz="-0.1525 0.10997 -0.00127218" rpy="4.22436e-59 -1.37735e-59 0.174533"/>
+    <parent link="body"/>
+    <child link="part_1_3"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-0.610865" upper="0.610865"/>
+  </joint>
+  <!-- Link part_1_5 -->
+  <link name="part_1_5">
+    <inertial>
+      <origin xyz="0.0160954 1.24761e-09 -0.0207225" rpy="0 0 0"/>
+      <mass value="0.0305721"/>
+      <inertia ixx="1.28485e-05" ixy="-1.54012e-13" ixz="1.11198e-06" iyy="1.57606e-05" iyz="1.84212e-12" izz="5.35874e-06"/>
+    </inertial>
+    <!-- Part part_1_5 -->
+    <visual>
+      <origin xyz="0 0 -0.005" rpy="0 -0 9.24446e-33"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__3.stl"/>
+      </geometry>
+      <material name="part_1_5_material">
+        <color rgba="0.458824 0.105882 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.005" rpy="0 -0 9.24446e-33"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__3.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Link part_1_6 -->
+  <link name="part_1_6">
+    <inertial>
+      <origin xyz="-1.47254e-19 3.11998e-18 0.00460287" rpy="0 0 0"/>
+      <mass value="0.0820664"/>
+      <inertia ixx="3.08808e-05" ixy="0" ixz="-5.47239e-37" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
+    </inertial>
+    <!-- Part part_1_6 -->
+    <visual>
+      <origin xyz="0 0 -0.005" rpy="-1.5708 -2.15704e-32 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+      <material name="part_1_6_material">
+        <color rgba="0.498039 0.498039 0.498039 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.005" rpy="-1.5708 -2.15704e-32 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Joint from part_1_5 to part_1_6 -->
+  <joint name="fl_wheel" type="continuous">
+    <origin xyz="-0.005 -2.77556e-17 -0.0433189" rpy="-1.5708 -0 -1.5708"/>
+    <parent link="part_1_5"/>
+    <child link="part_1_6"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10"/>
+  </joint>
+  <!-- Joint from body to part_1_5 -->
+  <joint name="fl_steering" type="revolute">
+    <origin xyz="0.1525 -0.140031 -0.0015" rpy="0 -0 3.14159"/>
+    <parent link="body"/>
+    <child link="part_1_5"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-0.610865" upper="0.610865"/>
+  </joint>
+  <!-- Link part_1_7 -->
+  <link name="part_1_7">
+    <inertial>
+      <origin xyz="-0.0160954 -1.24761e-09 -0.0207225" rpy="0 0 0"/>
+      <mass value="0.0305721"/>
+      <inertia ixx="1.28485e-05" ixy="-1.54012e-13" ixz="-1.11198e-06" iyy="1.57606e-05" iyz="-1.84212e-12" izz="5.35874e-06"/>
+    </inertial>
+    <!-- Part part_1_7 -->
+    <visual>
+      <origin xyz="0 2.77556e-17 -0.005" rpy="0 -0 3.14159"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__3.stl"/>
+      </geometry>
+      <material name="part_1_7_material">
+        <color rgba="0.458824 0.105882 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 2.77556e-17 -0.005" rpy="0 -0 3.14159"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__3.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Link part_1_8 -->
+  <link name="part_1_8">
+    <inertial>
+      <origin xyz="-1.47254e-19 3.11998e-18 0.00460287" rpy="0 0 0"/>
+      <mass value="0.0820664"/>
+      <inertia ixx="3.08808e-05" ixy="1.05339e-100" ixz="-2.68495e-37" iyy="3.08808e-05" iyz="-3.41845e-68" izz="5.62507e-05"/>
+    </inertial>
+    <!-- Part part_1_8 -->
+    <visual>
+      <origin xyz="0 0 -0.005" rpy="-1.5708 3.08149e-33 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+      <material name="part_1_8_material">
+        <color rgba="0.498039 0.498039 0.498039 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.005" rpy="-1.5708 3.08149e-33 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Joint from part_1_7 to part_1_8 -->
+  <joint name="fr_wheel" type="continuous">
+    <origin xyz="0.005 2.77556e-17 -0.0433189" rpy="1.5708 3.93984e-31 -1.5708"/>
+    <parent link="part_1_7"/>
+    <child link="part_1_8"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10"/>
+  </joint>
+  <!-- Joint from body to part_1_7 -->
+  <joint name="fr_steering" type="revolute">
+    <origin xyz="-0.1525 -0.140031 -0.0015" rpy="0 -0 -3.14159"/>
+    <parent link="body"/>
+    <child link="part_1_7"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-0.610865" upper="0.610865"/>
+  </joint>
+  <!-- Link part_1_9 -->
+  <link name="part_1_9">
+    <inertial>
+      <origin xyz="-1.47254e-19 3.11998e-18 0.00460287" rpy="0 0 0"/>
+      <mass value="0.0820664"/>
+      <inertia ixx="3.08808e-05" ixy="0" ixz="6.18563e-36" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
+    </inertial>
+    <!-- Part part_1_9 -->
+    <visual>
+      <origin xyz="0 0 -0.005" rpy="-1.5708 -4.31408e-32 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+      <material name="part_1_9_material">
+        <color rgba="0.498039 0.498039 0.498039 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.005" rpy="-1.5708 -4.31408e-32 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Joint from body to part_1_9 -->
+  <joint name="mr_wheel" type="continuous">
+    <origin xyz="-0.177 -0.00814152 -0.0476535" rpy="1.5708 -0 1.5708"/>
+    <parent link="body"/>
+    <child link="part_1_9"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10"/>
+  </joint>
+  <!-- Link part_1_10 -->
+  <link name="part_1_10">
+    <inertial>
+      <origin xyz="1.22488e-17 -3.81891e-18 -0.000397125" rpy="0 0 0"/>
+      <mass value="0.0820664"/>
+      <inertia ixx="3.08808e-05" ixy="0" ixz="9.67354e-20" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
+    </inertial>
+    <!-- Part part_1_10 -->
+    <visual>
+      <origin xyz="1.73472e-18 -6.93889e-18 -0.01" rpy="-1.5708 -1.11022e-15 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+      <material name="part_1_10_material">
+        <color rgba="0.498039 0.498039 0.498039 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="1.73472e-18 -6.93889e-18 -0.01" rpy="-1.5708 -1.11022e-15 0"/>
+      <geometry>
+        <mesh filename="${mesh_dir}/part_1__2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- Joint from body to part_1_10 -->
+  <joint name="ml_wheel" type="continuous">
+    <origin xyz="0.172 -0.00814152 -0.0476535" rpy="1.5708 -0 -1.5708"/>
+    <parent link="body"/>
+    <child link="part_1_10"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10"/>
+  </joint>
 </robot>
