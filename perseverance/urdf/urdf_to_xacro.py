@@ -7,13 +7,12 @@ Procedure implemented (from the inline spec):
 - Replace the <robot name="perseverance"> tag with
   '<robot name="perseverance" xmlns:xacro="http://ros.org/wiki/xacro">'
 - Add this tag inside the robot tag:
-    '<xacro:property name="mesh_dir" value="$(find-pkg-share perseverance)/meshes"/>'
+  '<xacro:property name="mesh_dir" value="file://$(find perseverance)/meshes"/>'
 - Replace 'package://meshes' with '${mesh_dir}'
 
 Notes:
-- Uses ROS 2 style $(find-pkg-share ...) substitution. For robustness, we also replace
-    'package://perseverance/meshes' with '${mesh_dir}'. If the xmlns:xacro attribute or
-    xacro:property already exist, we avoid duplicating them.
+- For robustness, we also replace 'package://perseverance/meshes' with '${mesh_dir}'.
+- If the xmlns:xacro attribute or xacro:property already exist, we avoid duplicating them.
 """
 
 from __future__ import annotations
@@ -21,6 +20,22 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
+
+
+def run_onshape_to_robot():
+    """Run the onshape-to-robot conversion script to generate URDF.
+
+    This script is in the urdf folder in the Perseverance package.
+    We want to go up 2 levels to the root folder to run the command
+    so we can call `onshape-to-robot perseverance`
+    """
+    script_dir = Path(__file__).resolve().parent
+    os.chdir(script_dir.parent.parent)
+    os.system("source .venv/bin/activate")
+    os.system("onshape-to-robot perseverance")
+    os.system("deactivate")
+    os.chdir(script_dir)
+    print("onshape-to-robot conversion completed")
 
 
 def convert_urdf_to_xacro(urdf_filename: str) -> Path:
@@ -68,7 +83,7 @@ def convert_urdf_to_xacro(urdf_filename: str) -> Path:
 
     # 2) Insert xacro:property for mesh_dir right after the opening <robot ...> tag
     if 'xacro:property' not in text and 'xacro: property' not in text:
-        prop_line = '\n  <xacro:property name="mesh_dir" value="$(find-pkg-share perseverance)/meshes"/>'
+        prop_line = '\n  <xacro:property name="mesh_dir" value="file://$(find perseverance)/meshes"/>'
         # Insert after the first occurrence of ">" of the robot start tag
         m = re.search(r"<robot\b[^>]*>", text)
         if m:
@@ -84,10 +99,7 @@ def convert_urdf_to_xacro(urdf_filename: str) -> Path:
     return xacro_path
 
 
-def main():
+if __name__ == "__main__":
+    # run_onshape_to_robot()
     out = convert_urdf_to_xacro('rover.urdf')
     print(f"Generated XACRO: {out}")
-
-
-if __name__ == "__main__":
-    main()
