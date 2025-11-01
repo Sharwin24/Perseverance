@@ -7,12 +7,13 @@ Procedure implemented (from the inline spec):
 - Replace the <robot name="perseverance"> tag with
   '<robot name="perseverance" xmlns:xacro="http://ros.org/wiki/xacro">'
 - Add this tag inside the robot tag:
-  '<xacro:property name="mesh_dir" value="file://$(find perseverance)/meshes"/>'
+    '<xacro:property name="mesh_dir" value="$(find-pkg-share perseverance)/meshes"/>'
 - Replace 'package://meshes' with '${mesh_dir}'
 
 Notes:
-- For robustness, we also replace 'package://perseverance/meshes' with '${mesh_dir}'.
-- If the xmlns:xacro attribute or xacro:property already exist, we avoid duplicating them.
+- Uses ROS 2 style $(find-pkg-share ...) substitution. For robustness, we also replace
+    'package://perseverance/meshes' with '${mesh_dir}'. If the xmlns:xacro attribute or
+    xacro:property already exist, we avoid duplicating them.
 """
 
 from __future__ import annotations
@@ -67,7 +68,7 @@ def convert_urdf_to_xacro(urdf_filename: str) -> Path:
 
     # 2) Insert xacro:property for mesh_dir right after the opening <robot ...> tag
     if 'xacro:property' not in text and 'xacro: property' not in text:
-        prop_line = '\n  <xacro:property name="mesh_dir" value="file://$(find perseverance)/meshes"/>'
+        prop_line = '\n  <xacro:property name="mesh_dir" value="$(find-pkg-share perseverance)/meshes"/>'
         # Insert after the first occurrence of ">" of the robot start tag
         m = re.search(r"<robot\b[^>]*>", text)
         if m:

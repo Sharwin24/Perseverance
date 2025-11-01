@@ -2,7 +2,7 @@
 <!-- Generated using onshape-to-robot -->
 <!-- Onshape https://cad.onshape.com/documents/31ca51e87164d5a2ae3b11dc/w/1e07aa3f18f08d453ac8b6a1/e/be108145cc25fea61866c58d -->
 <robot name="perseverance" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:property name="mesh_dir" value="file://$(find perseverance)/meshes"/>
+  <xacro:property name="mesh_dir" value="$(find-pkg-share perseverance)/meshes"/>
   <!-- Link body -->
   <link name="body">
     <inertial>
