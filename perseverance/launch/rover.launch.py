@@ -82,7 +82,24 @@ def generate_launch_description():
         }.items()
     )
 
-    # --- Robot State Publisher ---
+    # --- Joint + Robot State Publisher ---
+    joint_state_publisher_node = Node(
+        package='joint_state_publisher',
+        executable='joint_state_publisher',
+        name='joint_state_publisher',
+        output='screen',
+        parameters=[
+            {
+                'robot_description': Command([
+                    FindExecutable(name='xacro'), ' ', PathJoinSubstitution(
+                        [perseverance_pkg_share, 'urdf', 'rover.urdf.xacro'])
+                ])
+            }
+        ],
+        arguments=['--ros-args', '--log-level', log_level]
+    )
+
+    # Robot State Publisher uses the same robot_description
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
@@ -118,6 +135,7 @@ def generate_launch_description():
         log_level_arg,
         use_sim_sensors_arg,
         launch_rviz_arg,
+        joint_state_publisher_node,
         robot_state_publisher_node,
         state_estimation_launch,
         sensors_launch,

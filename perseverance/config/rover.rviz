@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Odometry1/Shape1
-        - /RobotModel1/Status1
       Splitter Ratio: 0.5
     Tree Height: 707
   - Class: rviz_common/Selection
@@ -67,16 +66,20 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        base_link:
+          Value: true
         map:
           Value: true
         odom:
           Value: true
-      Marker Scale: 1.5
+      Marker Scale: 0.5
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
+        base_link:
+          {}
         map:
           odom:
             {}
@@ -165,10 +168,10 @@ Visualization Manager:
         Axes Length: 1
         Axes Radius: 0.10000000149011612
         Color: 255; 25; 0
-        Head Length: 0.30000001192092896
-        Head Radius: 0.10000000149011612
-        Shaft Length: 1
-        Shaft Radius: 0.05000000074505806
+        Head Length: 0.10000000149011612
+        Head Radius: 0.02500000037252903
+        Shaft Length: 0.25
+        Shaft Radius: 0.009999999776482582
         Value: Arrow
       Topic:
         Depth: 5
@@ -201,6 +204,56 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        frontsteeringarm:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        frontsteeringarm_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rearsteeringarm:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rearsteeringarm_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheelhub:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheelhub_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheelhub_3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheelhub_4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheelhub_5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheelhub_6:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Mass Properties:
         Inertia: false
         Mass: false
@@ -212,7 +265,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: map
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -255,25 +308,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 7.667200088500977
+      Distance: 1.5269984006881714
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.040253933519124985
-        Y: 0.3428667485713959
-        Z: -0.26763486862182617
+        X: 0.0002327367546968162
+        Y: 0.02922627702355385
+        Z: 0.004771401174366474
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6953982710838318
+      Pitch: 0.5147971510887146
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.8203979730606079
+      Yaw: 0.7753936052322388
     Saved: ~
 Window Geometry:
   Displays:
@@ -292,4 +345,4 @@ Window Geometry:
     collapsed: false
   Width: 1854
   X: 66
-  Y: 32
+  Y: 392

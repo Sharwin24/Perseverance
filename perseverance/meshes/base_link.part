@@ -2,12 +2,12 @@
     "configuration": "default",
     "documentId": "31ca51e87164d5a2ae3b11dc",
     "documentMicroversion": "0dba6d6338e6299b22002650",
-    "elementId": "55b9c124cd19b4475e41b9af",
+    "elementId": "0c560b10021ee9a9ba857f17",
     "fullConfiguration": "default",
-    "id": "M5QhTWrQD9b2D/lYH",
+    "id": "M9T2tese22AN1PkbK",
     "isStandardContent": false,
-    "name": "RightBogie <1>",
-    "partId": "R6BD",
+    "name": "base_link <10>",
+    "partId": "JHD",
     "suppressed": false,
     "type": "Part"
 }
