@@ -14,15 +14,18 @@
 
 ## Motion Control
 - Start designing a controller for trajectory tracking (PIC, MPC, LQR, MPPI)
+  - Implement a simple Pure Pursuit controller for testing
 - Ackermann Steering Planner for translating Twist commands to wheel velocities and steering angles
 - Utilize AckermannDrive messages for sending wheel commands around ROS ecosystem
+- Create a ROS node to handle motion control logic:
+  - Subscribe to goal pose and current robot state
+  - Plan a wheel velocity and steering angle trajectory
+  - Publish wheel commands to the appropriate topic (later be consumed by comms node for sending to MCU)
 
 ## Robot Model
-- Build a basic URDF for rover (diff-drive for now, can worry about rocker-bogie later by locking the differential as a fixed joint)
 - Setup Gazebo and replace simulated Lidar with Gazebo Lidar
 
 # Rover Design
-- Figure out how to convert OnShape CAD model to URDF for visualization
 - Mounting Electronics
   - Feather MCU
   - IMU
@@ -30,7 +33,7 @@
   - Camera
   - Battery Monitor
 
-# Electronics
+## Electronics
 - Battery Management System (BMS) Design
   - Monitor (Adafruit LC709203F)
   - 12V PD device for charging (Adafruit 5807)
@@ -39,5 +42,4 @@
   - 12V to 5V/5A Buck Converter (for Raspberry Pi 5)
 
 # Prototyping
-- Interactive pygame simulation for testing translation from geometry_msgs/Twist to wheel velocities and steering angles.
 - Translate steering planner from Python to C++
