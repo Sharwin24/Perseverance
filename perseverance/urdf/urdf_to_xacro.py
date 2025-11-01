@@ -20,21 +20,49 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
+import subprocess
+import shutil
 
 
-def run_onshape_to_robot():
-    """Run the onshape-to-robot conversion script to generate URDF.
+def run_onshape_to_robot(target_dir: str | Path | None = None) -> None:
+    """Run onshape-to-robot to (re)generate URDF meshes for the package.
 
-    This script is in the urdf folder in the Perseverance package.
-    We want to go up 2 levels to the root folder to run the command
-    so we can call `onshape-to-robot perseverance`
+    Behavior:
+    - By default, runs inside the perseverance package directory and uses
+      `onshape-to-robot .` (matches manual usage you ran earlier).
+    - If a local virtual environment exists at repo_root/.venv, we will prefer
+      its onshape-to-robot console script; otherwise we use the one on PATH.
+
+    Args:
+      target_dir: Directory to run the tool in. Defaults to the package dir.
     """
-    script_dir = Path(__file__).resolve().parent
-    os.chdir(script_dir.parent.parent)
-    os.system("source .venv/bin/activate")
-    os.system("onshape-to-robot perseverance")
-    os.system("deactivate")
-    os.chdir(script_dir)
+    script_dir = Path(__file__).resolve().parent  # .../perseverance/urdf
+    # .../perseverance
+    package_dir = Path(target_dir) if target_dir else script_dir.parent
+    if not package_dir.exists():
+        raise FileNotFoundError(
+            f"Target directory does not exist: {package_dir}")
+
+    repo_root = package_dir.parent  # repo root
+    venv_bin = repo_root / ".venv" / "bin"
+    venv_tool = venv_bin / "onshape-to-robot"
+
+    # Prefer venv console script if it exists; otherwise fall back to PATH
+    if venv_tool.exists():
+        cmd_path = str(venv_tool)
+    else:
+        which = shutil.which("onshape-to-robot")
+        if not which:
+            raise RuntimeError(
+                "onshape-to-robot not found. Install it (preferably in .venv) or add it to PATH.")
+        cmd_path = which
+
+    print(f"Running: {cmd_path} . (cwd={package_dir})")
+    try:
+        subprocess.run([cmd_path, "."], cwd=str(package_dir), check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"onshape-to-robot failed with exit code {e.returncode}") from e
     print("onshape-to-robot conversion completed")
 
 
@@ -100,6 +128,6 @@ def convert_urdf_to_xacro(urdf_filename: str) -> Path:
 
 
 if __name__ == "__main__":
-    # run_onshape_to_robot()
+    run_onshape_to_robot()
     out = convert_urdf_to_xacro('rover.urdf')
     print(f"Generated XACRO: {out}")
