@@ -1,4 +1,3 @@
-# ackermann_planner.py
 import math
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Set
