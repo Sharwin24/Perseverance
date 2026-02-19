@@ -2,6 +2,7 @@
 .vscode/
 __pycache__/
 .venv/
+.claude/
 
 # Ignore ROS Build and Install Directories
 build/
