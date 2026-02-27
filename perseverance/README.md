@@ -24,7 +24,7 @@ The function that describes the state's evolution is the **process model:** $f\l
 <!-- $$\begin{bmatrix}x \\ y \\ \theta \\ v_{x} \\ v_{y} \\ \omega \end{bmatrix} = \begin{bmatrix}x_{prev} + V \cos\theta_{prev} \Delta t \\ y_{prev} + V\sin\theta _{prev}\Delta t \\ \theta_{prev} + \omega \Delta t \\ V a_x \Delta t \\ V a_y \Delta t \\ \omega\end{bmatrix}$$ -->
 
 <div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
-  <img src="equations/process_model.svg" alt="Process Model Equation" style="width: 50%;">
+  <img src="../equations/process_model.svg" alt="Process Model Equation" style="width: 50%;">
 </div>
 
 The state transition matrix $F$ (also known as the Jacobian of the process model) describes how a new state relates to the old state as a matrix of partial derivatives.
@@ -32,7 +32,7 @@ The state transition matrix $F$ (also known as the Jacobian of the process model
 <!-- $$F = \begin{bmatrix} 1 & 0 & -V\sin(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 1 & V\cos(\theta)\Delta t & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 & 0 & 0 \\ 0 & 0 & -V\sin(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & V\cos(\theta_{new}) & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \end{bmatrix}$$ -->
 
 <div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
-  <img src="equations/F_diff_drive_kinematic.svg" alt="F_diff_drive_kinematic Matrix" style="width: 50%;">
+  <img src="../equations/F_diff_drive_kinematic.svg" alt="F_diff_drive_kinematic Matrix" style="width: 50%;">
 </div>
 
 
@@ -129,7 +129,8 @@ F = \frac{\delta f(X,U)}{\delta X} =\begin{bmatrix}\frac{\delta x_{new}}{\delta 
 $$ -->
 
 <div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
-  <img src="equations/state_transition_matrix.svg" alt="State Transition Matrix" style="width: 100%;">
+  <img src="../
+    ../equations/state_transition_matrix.svg" alt="State Transition Matrix" style="width: 100%;">
 </div>
 
 
