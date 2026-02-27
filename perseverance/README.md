@@ -7,9 +7,9 @@ Approximating the robot as a diff-drive robot makes it easier to compute the sta
 *Note: Each motion model still needs to be tested rigorously*
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-  <img src="prototyping/plots/robot_trajectory_rocker_bogie_kinematic.png" alt="Robot Trajectory Comparison" style="width: 100%; min-width: 200px;">
-  <img src="prototyping/plots/kalman_filter_states_comparison.png" alt="Kalman Filter States Comparison" style="width: 49%; min-width: 200px;">
-  <img src="prototyping/plots/kalman_filter_errors_comparison.png" alt="Kalman Filter Errors Comparison" style="width: 49%; min-width: 200px;">
+  <img src="../prototyping/plots/robot_trajectory_rocker_bogie_kinematic.png" alt="Robot Trajectory Comparison" style="width: 100%; min-width: 200px;">
+  <img src="../prototyping/plots/kalman_filter_states_comparison.png" alt="Kalman Filter States Comparison" style="width: 49%; min-width: 200px;">
+  <img src="../prototyping/plots/kalman_filter_errors_comparison.png" alt="Kalman Filter Errors Comparison" style="width: 49%; min-width: 200px;">
 </div>
 
 ## Prediction Models
