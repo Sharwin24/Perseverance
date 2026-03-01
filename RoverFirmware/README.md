@@ -49,11 +49,11 @@ All tasks run cooperatively using `ArduinoThread`, checked in priority order in 
 
 ## Task Details
 
-### Encoder Task — 1 kHz
+### Encoder Task (1 kHz)
 
 Reads all 6 quadrature encoders using ISR-driven `Encoder` objects and stores the raw tick counts into the shared `encoderCounts[6]` array (`{FL, FR, ML, MR, RL, RR}`). Running at 1 kHz gives 1 ms resolution for the velocity estimation performed in the Motor Task.
 
-### Motor Task — 100 Hz
+### Motor Task (100 Hz)
 
 Implements an independent PID velocity control loop for each of the 6 drive motors:
 
@@ -64,11 +64,11 @@ Implements an independent PID velocity control loop for each of the 6 drive moto
 
 PID gains: `Kp = 2.0`, `Ki = 5.0`, `Kd = 1.0`. The two MotorShields sit at I2C addresses `0x60` (left side: FL, ML, RL) and `0x61` (right side: FR, MR, RR).
 
-### Steering Task — 100 Hz
+### Steering Task (100 Hz)
 
 Reads the shared `servoAngleCommands[4]` array (`{FL, FR, RL, RR}` in radians) and writes positions to the 4 steering servos. Angles are converted from radians to degrees, then mapped from `[-90°, 90°]` to the `[0°, 180°]` servo range.
 
-### Communication Task — 100 Hz
+### Communication Task (100 Hz)
 
 Handles the full-duplex SPI transaction with the Raspberry Pi 5:
 
@@ -77,7 +77,7 @@ Handles the full-duplex SPI transaction with the Raspberry Pi 5:
 
 Values are unpacked via a `union { uint32_t u; float f; }` bitcast and written into `motorSpeedCommands` and `servoAngleCommands`. On a failed SPI transaction, previous command values are retained unchanged.
 
-### Battery Monitor Task — 0.5 Hz
+### Battery Monitor Task (0.5 Hz)
 
 Polls the MAX17048 fuel gauge for active alerts and responds accordingly:
 
@@ -92,7 +92,7 @@ Polls the MAX17048 fuel gauge for active alerts and responds accordingly:
 
 Thresholds: low = 3.30 V, full = 4.20 V, hysteresis = 0.05 V (prevents rapid toggling at boundary voltages).
 
-### Heartbeat Task — 0.25 Hz
+### Heartbeat Task (0.25 Hz)
 
 Pulses the built-in LED for 100 ms every 4 seconds as a visual indicator that the cooperative scheduler is alive and not deadlocked.
 
