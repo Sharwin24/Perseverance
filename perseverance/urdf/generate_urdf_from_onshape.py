@@ -80,7 +80,7 @@ def clean_urdf(urdf_filename: str):
     text = urdf_path.read_text(encoding="utf-8")
 
     # Replace onshape-to-robot's package URI with the correct ROS package path
-    text = text.replace('package://urdf/', '')
+    text = text.replace('package://', '')
     # Write to the original URDF file (overwriting it)
     urdf_path.write_text(text, encoding="utf-8")
 
