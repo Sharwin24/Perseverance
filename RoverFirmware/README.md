@@ -1,6 +1,8 @@
 # RoverFirmware
 Firmware for the [**Adafruit Feather M4 Express**](https://www.adafruit.com/product/3857) (SAMD51, Cortex-M4F) on the rover, handling low-level motor control and SPI communication with the Raspberry Pi 5.
 
+<img src="AdafruitFeatherM4ExpressPinout.png" alt="Adafruit Feather M4 Express Pinout" width=95%>
+
 ## Why the Feather M4 Express?
 
 The M4 Express was chosen over alternatives (RP2040, Teensy 4.1) for the following reasons:

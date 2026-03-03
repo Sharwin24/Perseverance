@@ -17,9 +17,11 @@
  * - 6 encoder positions (for wheel odometry)
  *
  * 1. Encoder Task: Reading Encoders and saving encoder count (1kHz)
- * 2. Motor Task: PID Control loop for drive motors and updating PWM signals (200Hz)
+ * 2. Motor Task: PID Control loop for drive motors and updating PWM signals (100Hz)
  * 3. Communication Task: Handle SPI communication with RPI5 (100Hz)
  * 4. Steering Task: Control steering servos based on RPI5 commands (100Hz)
+ * 5. Battery Monitor Task: Poll battery voltage and enable charging circuit if low (0.5Hz)
+ * 6. Heartbeat Task: Blink LED to indicate system is alive (0.25Hz)
  */
 
 
@@ -39,17 +41,17 @@
 #define PWM_FREQ 20000 // 20 kHz PWM frequency for motor control
 
  // --- Task Frequencies ---
-#define MOTOR_TASK_FREQ 100 // [Hz]
+#define MOTOR_TASK_FREQ 100 // Frequency for task that runs PID position control for motors [Hz]
 #define MOTOR_TASK_PERIOD_MS (1000 / MOTOR_TASK_FREQ)
-#define ENCODER_TASK_FREQ 1000 // [Hz]
+#define ENCODER_TASK_FREQ 1000 // Frequency for task that reads motor encoders to report motor position [Hz]
 #define ENCODER_TASK_PERIOD_MS (1000 / ENCODER_TASK_FREQ)
-#define COMM_TASK_FREQ 100 // [Hz]
+#define COMM_TASK_FREQ 100 // Frequency to handle communications between RPI5 and MCU[Hz]
 #define COMM_TASK_PERIOD_MS (1000 / COMM_TASK_FREQ)
-#define STEER_TASK_FREQ 100 // [Hz]
+#define STEER_TASK_FREQ 100 // Frequency for task that handles steering servos [Hz]
 #define STEER_TASK_PERIOD_MS (1000 / STEER_TASK_FREQ)
-#define HEARTBEAT_TASK_FREQ 0.25 // [Hz]
+#define HEARTBEAT_TASK_FREQ 0.25 // Frequency for task that blinks LED to indicate system is alive[Hz]
 #define HEARTBEAT_TASK_PERIOD_MS (1000 / HEARTBEAT_TASK_FREQ)
-#define BATTERY_MONITOR_TASK_FREQ 0.5 // [Hz]
+#define BATTERY_MONITOR_TASK_FREQ 0.5 // Frequency for task that monitors battery level to enable/disable charging [Hz]
 #define BATTERY_MONITOR_TASK_PERIOD_MS (1000 / BATTERY_MONITOR_TASK_FREQ)
 
 // Motor Shield with I2C addresses 0x60 and 0x61 hosting the left and right 3 drive motors respectively
@@ -172,7 +174,6 @@ void motorTask() {
     long c = encoderCounts[i];
     double vel = (double)(c - prevEncoderCounts[i]) / dt; // ticks/s
     prevEncoderCounts[i] = c;
-
     pid_inputs[i] = vel;
     pid_targets[i] = local_motor_cmd[i];
     pid_controllers[i].Compute();
