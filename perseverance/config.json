@@ -4,6 +4,6 @@
   "output_filename": "urdf/rover",
   "robot_name": "perseverance",
   "assembly_name": "URDFRover",
-  "assets_directory": "meshes",
+  "assets_directory": "urdf",
   "draw_frames": true
 }

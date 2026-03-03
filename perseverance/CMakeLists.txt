@@ -157,12 +157,6 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
-# Install Mesh files
-install(DIRECTORY
-  meshes
-  DESTINATION share/${PROJECT_NAME}
-)
-
 if(BUILD_TESTING)
   # find_package(ament_lint_auto REQUIRED)
   # # the following line skips the linter which checks for copyrights

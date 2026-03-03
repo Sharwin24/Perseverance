@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <!-- Generated using onshape-to-robot -->
 <!-- Onshape https://cad.onshape.com/documents/31ca51e87164d5a2ae3b11dc/w/1e07aa3f18f08d453ac8b6a1/e/be108145cc25fea61866c58d -->
-<robot name="perseverance" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:property name="mesh_dir" value="file://$(find perseverance)/meshes"/>
+<robot name="perseverance"
+  xmlns:xacro="http://ros.org/wiki/xacro">
   <!-- Link base_link -->
   <link name="base_link">
     <inertial>
@@ -14,7 +14,7 @@
     <visual>
       <origin xyz="-0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
       <geometry>
-        <mesh filename="${mesh_dir}/rightbogie.stl"/>
+        <mesh filename="rightbogie.stl"/>
       </geometry>
       <material name="rightbogie_material">
         <color rgba="0.262745 0.282353 0.301961 1"/>
@@ -23,14 +23,14 @@
     <collision>
       <origin xyz="-0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
       <geometry>
-        <mesh filename="${mesh_dir}/rightbogie.stl"/>
+        <mesh filename="rightbogie.stl"/>
       </geometry>
     </collision>
     <!-- Part bevel_0_85m_18t_45deg -->
     <visual>
       <origin xyz="-0.012226 -0.042 0.024" rpy="-0 1.5708 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/bevel_0_85m_18t_45deg.stl"/>
+        <mesh filename="bevel_0_85m_18t_45deg.stl"/>
       </geometry>
       <material name="bevel_0_85m_18t_45deg_material">
         <color rgba="0.729412 0.25098 0.105882 1"/>
@@ -39,14 +39,14 @@
     <collision>
       <origin xyz="-0.012226 -0.042 0.024" rpy="-0 1.5708 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/bevel_0_85m_18t_45deg.stl"/>
+        <mesh filename="bevel_0_85m_18t_45deg.stl"/>
       </geometry>
     </collision>
     <!-- Part base_link -->
     <visual>
       <origin xyz="0 0 0" rpy="0 -0 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/base_link.stl"/>
+        <mesh filename="base_link.stl"/>
       </geometry>
       <material name="base_link_material">
         <color rgba="0.811765 0.858824 0.898039 1"/>
@@ -55,14 +55,14 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 -0 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/base_link.stl"/>
+        <mesh filename="base_link.stl"/>
       </geometry>
     </collision>
     <!-- Part bevel_0_85m_18t_45deg_2 -->
     <visual>
       <origin xyz="0.012226 -0.042 0.024" rpy="-1.3494e-79 -1.5708 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/bevel_0_85m_18t_45deg.stl"/>
+        <mesh filename="bevel_0_85m_18t_45deg.stl"/>
       </geometry>
       <material name="bevel_0_85m_18t_45deg_2_material">
         <color rgba="0.729412 0.25098 0.105882 1"/>
@@ -71,14 +71,14 @@
     <collision>
       <origin xyz="0.012226 -0.042 0.024" rpy="-1.3494e-79 -1.5708 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/bevel_0_85m_18t_45deg.stl"/>
+        <mesh filename="bevel_0_85m_18t_45deg.stl"/>
       </geometry>
     </collision>
     <!-- Part mg995 -->
     <visual>
       <origin xyz="-0.1425 -0.140031 0.043" rpy="3.14159 -0 -3.14159"/>
       <geometry>
-        <mesh filename="${mesh_dir}/mg995.stl"/>
+        <mesh filename="mg995.stl"/>
       </geometry>
       <material name="mg995_material">
         <color rgba="0.792157 0.819608 0.933333 1"/>
@@ -87,14 +87,14 @@
     <collision>
       <origin xyz="-0.1425 -0.140031 0.043" rpy="3.14159 -0 -3.14159"/>
       <geometry>
-        <mesh filename="${mesh_dir}/mg995.stl"/>
+        <mesh filename="mg995.stl"/>
       </geometry>
     </collision>
     <!-- Part mg995_2 -->
     <visual>
       <origin xyz="-0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.74533"/>
       <geometry>
-        <mesh filename="${mesh_dir}/mg995.stl"/>
+        <mesh filename="mg995.stl"/>
       </geometry>
       <material name="mg995_2_material">
         <color rgba="0.792157 0.819608 0.933333 1"/>
@@ -103,14 +103,14 @@
     <collision>
       <origin xyz="-0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.74533"/>
       <geometry>
-        <mesh filename="${mesh_dir}/mg995.stl"/>
+        <mesh filename="mg995.stl"/>
       </geometry>
     </collision>
     <!-- Part mg995_3 -->
     <visual>
       <origin xyz="0.1425 -0.140031 0.043" rpy="3.14159 -0 -2.01228e-16"/>
       <geometry>
-        <mesh filename="${mesh_dir}/mg995.stl"/>
+        <mesh filename="mg995.stl"/>
       </geometry>
       <material name="mg995_3_material">
         <color rgba="0.792157 0.819608 0.933333 1"/>
@@ -119,14 +119,14 @@
     <collision>
       <origin xyz="0.1425 -0.140031 0.043" rpy="3.14159 -0 -2.01228e-16"/>
       <geometry>
-        <mesh filename="${mesh_dir}/mg995.stl"/>
+        <mesh filename="mg995.stl"/>
       </geometry>
     </collision>
     <!-- Part leftrocker -->
     <visual>
       <origin xyz="0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
       <geometry>
-        <mesh filename="${mesh_dir}/leftrocker.stl"/>
+        <mesh filename="leftrocker.stl"/>
       </geometry>
       <material name="leftrocker_material">
         <color rgba="0.262745 0.282353 0.301961 1"/>
@@ -135,14 +135,14 @@
     <collision>
       <origin xyz="0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
       <geometry>
-        <mesh filename="${mesh_dir}/leftrocker.stl"/>
+        <mesh filename="leftrocker.stl"/>
       </geometry>
     </collision>
     <!-- Part rightrocker -->
     <visual>
       <origin xyz="-0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
       <geometry>
-        <mesh filename="${mesh_dir}/rightrocker.stl"/>
+        <mesh filename="rightrocker.stl"/>
       </geometry>
       <material name="rightrocker_material">
         <color rgba="0.262745 0.282353 0.301961 1"/>
@@ -151,14 +151,14 @@
     <collision>
       <origin xyz="-0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
       <geometry>
-        <mesh filename="${mesh_dir}/rightrocker.stl"/>
+        <mesh filename="rightrocker.stl"/>
       </geometry>
     </collision>
     <!-- Part mg995_4 -->
     <visual>
       <origin xyz="0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.39626"/>
       <geometry>
-        <mesh filename="${mesh_dir}/mg995.stl"/>
+        <mesh filename="mg995.stl"/>
       </geometry>
       <material name="mg995_4_material">
         <color rgba="0.792157 0.819608 0.933333 1"/>
@@ -167,14 +167,14 @@
     <collision>
       <origin xyz="0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.39626"/>
       <geometry>
-        <mesh filename="${mesh_dir}/mg995.stl"/>
+        <mesh filename="mg995.stl"/>
       </geometry>
     </collision>
     <!-- Part leftbogie -->
     <visual>
       <origin xyz="0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
       <geometry>
-        <mesh filename="${mesh_dir}/leftbogie.stl"/>
+        <mesh filename="leftbogie.stl"/>
       </geometry>
       <material name="leftbogie_material">
         <color rgba="0.262745 0.282353 0.301961 1"/>
@@ -183,7 +183,7 @@
     <collision>
       <origin xyz="0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
       <geometry>
-        <mesh filename="${mesh_dir}/leftbogie.stl"/>
+        <mesh filename="leftbogie.stl"/>
       </geometry>
     </collision>
   </link>
@@ -198,7 +198,7 @@
     <visual>
       <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="9.24446e-33 -2.82529e-32 -4.77087e-18"/>
       <geometry>
-        <mesh filename="${mesh_dir}/rearsteeringarm.stl"/>
+        <mesh filename="rearsteeringarm.stl"/>
       </geometry>
       <material name="rearsteeringarm_material">
         <color rgba="0.458824 0.105882 0 1"/>
@@ -207,7 +207,7 @@
     <collision>
       <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="9.24446e-33 -2.82529e-32 -4.77087e-18"/>
       <geometry>
-        <mesh filename="${mesh_dir}/rearsteeringarm.stl"/>
+        <mesh filename="rearsteeringarm.stl"/>
       </geometry>
     </collision>
   </link>
@@ -222,7 +222,7 @@
     <visual>
       <origin xyz="0 0 -0.005" rpy="-1.5708 1.35456e-17 3.31859e-65"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
       <material name="wheelhub_material">
         <color rgba="0.498039 0.498039 0.498039 1"/>
@@ -231,7 +231,7 @@
     <collision>
       <origin xyz="0 0 -0.005" rpy="-1.5708 1.35456e-17 3.31859e-65"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
     </collision>
   </link>
@@ -262,7 +262,7 @@
     <visual>
       <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="-8.84344e-75 -0 -7.75341e-18"/>
       <geometry>
-        <mesh filename="${mesh_dir}/rearsteeringarm.stl"/>
+        <mesh filename="rearsteeringarm.stl"/>
       </geometry>
       <material name="rearsteeringarm_2_material">
         <color rgba="0.458824 0.105882 0 1"/>
@@ -271,7 +271,7 @@
     <collision>
       <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="-8.84344e-75 -0 -7.75341e-18"/>
       <geometry>
-        <mesh filename="${mesh_dir}/rearsteeringarm.stl"/>
+        <mesh filename="rearsteeringarm.stl"/>
       </geometry>
     </collision>
   </link>
@@ -286,7 +286,7 @@
     <visual>
       <origin xyz="2.77556e-17 0 -0.005" rpy="-1.5708 1.93111e-18 9.91647e-75"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
       <material name="wheelhub_2_material">
         <color rgba="0.498039 0.498039 0.498039 1"/>
@@ -295,7 +295,7 @@
     <collision>
       <origin xyz="2.77556e-17 0 -0.005" rpy="-1.5708 1.93111e-18 9.91647e-75"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
     </collision>
   </link>
@@ -326,7 +326,7 @@
     <visual>
       <origin xyz="0 0 -0.005" rpy="0 -0 9.24446e-33"/>
       <geometry>
-        <mesh filename="${mesh_dir}/frontsteeringarm.stl"/>
+        <mesh filename="frontsteeringarm.stl"/>
       </geometry>
       <material name="frontsteeringarm_material">
         <color rgba="0.458824 0.105882 0 1"/>
@@ -335,7 +335,7 @@
     <collision>
       <origin xyz="0 0 -0.005" rpy="0 -0 9.24446e-33"/>
       <geometry>
-        <mesh filename="${mesh_dir}/frontsteeringarm.stl"/>
+        <mesh filename="frontsteeringarm.stl"/>
       </geometry>
     </collision>
   </link>
@@ -350,7 +350,7 @@
     <visual>
       <origin xyz="0 0 -0.005" rpy="-1.5708 -2.15704e-32 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
       <material name="wheelhub_3_material">
         <color rgba="0.498039 0.498039 0.498039 1"/>
@@ -359,7 +359,7 @@
     <collision>
       <origin xyz="0 0 -0.005" rpy="-1.5708 -2.15704e-32 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
     </collision>
   </link>
@@ -390,7 +390,7 @@
     <visual>
       <origin xyz="0 2.77556e-17 -0.005" rpy="0 -0 3.14159"/>
       <geometry>
-        <mesh filename="${mesh_dir}/frontsteeringarm.stl"/>
+        <mesh filename="frontsteeringarm.stl"/>
       </geometry>
       <material name="frontsteeringarm_2_material">
         <color rgba="0.458824 0.105882 0 1"/>
@@ -399,7 +399,7 @@
     <collision>
       <origin xyz="0 2.77556e-17 -0.005" rpy="0 -0 3.14159"/>
       <geometry>
-        <mesh filename="${mesh_dir}/frontsteeringarm.stl"/>
+        <mesh filename="frontsteeringarm.stl"/>
       </geometry>
     </collision>
   </link>
@@ -414,7 +414,7 @@
     <visual>
       <origin xyz="0 0 -0.005" rpy="-1.5708 3.08149e-33 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
       <material name="wheelhub_4_material">
         <color rgba="0.498039 0.498039 0.498039 1"/>
@@ -423,7 +423,7 @@
     <collision>
       <origin xyz="0 0 -0.005" rpy="-1.5708 3.08149e-33 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
     </collision>
   </link>
@@ -454,7 +454,7 @@
     <visual>
       <origin xyz="0 0 -0.005" rpy="-1.5708 -4.31408e-32 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
       <material name="wheelhub_5_material">
         <color rgba="0.498039 0.498039 0.498039 1"/>
@@ -463,7 +463,7 @@
     <collision>
       <origin xyz="0 0 -0.005" rpy="-1.5708 -4.31408e-32 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
     </collision>
   </link>
@@ -486,7 +486,7 @@
     <visual>
       <origin xyz="1.73472e-18 -6.93889e-18 -0.01" rpy="-1.5708 -1.11022e-15 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
       <material name="wheelhub_6_material">
         <color rgba="0.498039 0.498039 0.498039 1"/>
@@ -495,7 +495,7 @@
     <collision>
       <origin xyz="1.73472e-18 -6.93889e-18 -0.01" rpy="-1.5708 -1.11022e-15 0"/>
       <geometry>
-        <mesh filename="${mesh_dir}/wheelhub.stl"/>
+        <mesh filename="wheelhub.stl"/>
       </geometry>
     </collision>
   </link>
