@@ -5,9 +5,9 @@
   <!-- Link base_link -->
   <link name="base_link">
     <inertial>
-      <origin xyz="0.00132088 -0.0106351 0.0110544" rpy="0 0 0"/>
-      <mass value="1.16655"/>
-      <inertia ixx="0.00718086" ixy="-0.000191247" ixz="-9.44893e-06" iyy="0.00962338" iyz="0.000134967" izz="0.0161498"/>
+      <origin xyz="-0.0231097 -0.0121514 0.0104769" rpy="0 0 0"/>
+      <mass value="0.946692"/>
+      <inertia ixx="0.00570557" ixy="-0.000168043" ixz="9.0997e-07" iyy="0.00582409" iyz="0.000115698" izz="0.0109455"/>
     </inertial>
     <!-- Part rightbogie -->
     <visual>
@@ -27,7 +27,7 @@
     </collision>
     <!-- Part bevel_0_85m_18t_45deg -->
     <visual>
-      <origin xyz="-0.012226 -0.042 0.024" rpy="-0 1.5708 0"/>
+      <origin xyz="-0.037226 -0.042 0.024" rpy="-0 1.5708 0"/>
       <geometry>
         <mesh filename="bevel_0_85m_18t_45deg.stl"/>
       </geometry>
@@ -36,14 +36,14 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="-0.012226 -0.042 0.024" rpy="-0 1.5708 0"/>
+      <origin xyz="-0.037226 -0.042 0.024" rpy="-0 1.5708 0"/>
       <geometry>
         <mesh filename="bevel_0_85m_18t_45deg.stl"/>
       </geometry>
     </collision>
     <!-- Part base_link -->
     <visual>
-      <origin xyz="0 0 0" rpy="0 -0 0"/>
+      <origin xyz="-0.025 1.35308e-15 1.78677e-16" rpy="0 -0 0"/>
       <geometry>
         <mesh filename="base_link.stl"/>
       </geometry>
@@ -52,14 +52,14 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 -0 0"/>
+      <origin xyz="-0.025 1.35308e-15 1.78677e-16" rpy="0 -0 0"/>
       <geometry>
         <mesh filename="base_link.stl"/>
       </geometry>
     </collision>
     <!-- Part bevel_0_85m_18t_45deg_2 -->
     <visual>
-      <origin xyz="0.012226 -0.042 0.024" rpy="-1.3494e-79 -1.5708 0"/>
+      <origin xyz="-0.012774 -0.042 0.024" rpy="-1.3494e-79 -1.5708 0"/>
       <geometry>
         <mesh filename="bevel_0_85m_18t_45deg.stl"/>
       </geometry>
@@ -68,7 +68,7 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.012226 -0.042 0.024" rpy="-1.3494e-79 -1.5708 0"/>
+      <origin xyz="-0.012774 -0.042 0.024" rpy="-1.3494e-79 -1.5708 0"/>
       <geometry>
         <mesh filename="bevel_0_85m_18t_45deg.stl"/>
       </geometry>
@@ -107,7 +107,7 @@
     </collision>
     <!-- Part mg995_3 -->
     <visual>
-      <origin xyz="0.1425 -0.140031 0.043" rpy="3.14159 -0 -2.01228e-16"/>
+      <origin xyz="0.0925 -0.140031 0.043" rpy="3.14159 -0 -2.01228e-16"/>
       <geometry>
         <mesh filename="mg995.stl"/>
       </geometry>
@@ -116,14 +116,14 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.1425 -0.140031 0.043" rpy="3.14159 -0 -2.01228e-16"/>
+      <origin xyz="0.0925 -0.140031 0.043" rpy="3.14159 -0 -2.01228e-16"/>
       <geometry>
         <mesh filename="mg995.stl"/>
       </geometry>
     </collision>
     <!-- Part leftrocker -->
     <visual>
-      <origin xyz="0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
+      <origin xyz="0.065 -0.042 0.024" rpy="0 -0 -1.5708"/>
       <geometry>
         <mesh filename="leftrocker.stl"/>
       </geometry>
@@ -132,7 +132,7 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.115 -0.042 0.024" rpy="0 -0 -1.5708"/>
+      <origin xyz="0.065 -0.042 0.024" rpy="0 -0 -1.5708"/>
       <geometry>
         <mesh filename="leftrocker.stl"/>
       </geometry>
@@ -155,7 +155,7 @@
     </collision>
     <!-- Part mg995_4 -->
     <visual>
-      <origin xyz="0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.39626"/>
+      <origin xyz="0.100764 0.100122 0.0432278" rpy="3.14159 -0 1.39626"/>
       <geometry>
         <mesh filename="mg995.stl"/>
       </geometry>
@@ -164,14 +164,14 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.150764 0.100122 0.0432278" rpy="3.14159 -0 1.39626"/>
+      <origin xyz="0.100764 0.100122 0.0432278" rpy="3.14159 -0 1.39626"/>
       <geometry>
         <mesh filename="mg995.stl"/>
       </geometry>
     </collision>
     <!-- Part leftbogie -->
     <visual>
-      <origin xyz="0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
+      <origin xyz="0.1 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
       <geometry>
         <mesh filename="leftbogie.stl"/>
       </geometry>
@@ -180,7 +180,7 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0.15 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
+      <origin xyz="0.1 0.0418583 -0.00306575" rpy="0 -0 -1.5708"/>
       <geometry>
         <mesh filename="leftbogie.stl"/>
       </geometry>
@@ -195,7 +195,7 @@
     </inertial>
     <!-- Part rearsteeringarm -->
     <visual>
-      <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="9.24446e-33 -2.82529e-32 -4.77087e-18"/>
+      <origin xyz="0 0 -0.005" rpy="9.24446e-33 -2.82529e-32 -4.77087e-18"/>
       <geometry>
         <mesh filename="rearsteeringarm.stl"/>
       </geometry>
@@ -204,7 +204,7 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="2.77556e-17 2.77556e-17 -0.005" rpy="9.24446e-33 -2.82529e-32 -4.77087e-18"/>
+      <origin xyz="0 0 -0.005" rpy="9.24446e-33 -2.82529e-32 -4.77087e-18"/>
       <geometry>
         <mesh filename="rearsteeringarm.stl"/>
       </geometry>
@@ -213,7 +213,7 @@
   <!-- Link wheelhub -->
   <link name="wheelhub">
     <inertial>
-      <origin xyz="-3.19312e-19 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-3.19312e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="-3.64091e-55" ixz="-1.42616e-21" iyy="3.08808e-05" iyz="1.12352e-54" izz="5.62507e-05"/>
     </inertial>
@@ -236,7 +236,7 @@
   </link>
   <!-- Joint from rearsteeringarm to wheelhub -->
   <joint name="bl_wheel" type="continuous">
-    <origin xyz="-0.005 -5.55112e-17 -0.0463814" rpy="-1.5708 1.249e-16 -1.5708"/>
+    <origin xyz="-0.005 2.77556e-17 -0.0463814" rpy="-1.5708 1.249e-16 -1.5708"/>
     <parent link="rearsteeringarm"/>
     <child link="wheelhub"/>
     <axis xyz="0 0 1"/>
@@ -244,7 +244,7 @@
   </joint>
   <!-- Joint from base_link to rearsteeringarm -->
   <joint name="bl_steering" type="revolute">
-    <origin xyz="0.1525 0.10997 -0.00127218" rpy="-1.249e-16 4.18641e-16 2.96706"/>
+    <origin xyz="0.1025 0.10997 -0.00127218" rpy="-1.249e-16 4.18641e-16 2.96706"/>
     <parent link="base_link"/>
     <child link="rearsteeringarm"/>
     <axis xyz="0 0 1"/>
@@ -277,7 +277,7 @@
   <!-- Link wheelhub_2 -->
   <link name="wheelhub_2">
     <inertial>
-      <origin xyz="2.74897e-17 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="2.74897e-17 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="3.5356e-93" ixz="-7.5456e-22" iyy="3.08808e-05" iyz="5.5184e-80" izz="5.62507e-05"/>
     </inertial>
@@ -323,7 +323,7 @@
     </inertial>
     <!-- Part frontsteeringarm -->
     <visual>
-      <origin xyz="0 0 -0.005" rpy="0 -0 9.24446e-33"/>
+      <origin xyz="0 2.77556e-17 -0.005" rpy="0 -0 9.24446e-33"/>
       <geometry>
         <mesh filename="frontsteeringarm.stl"/>
       </geometry>
@@ -332,7 +332,7 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 -0.005" rpy="0 -0 9.24446e-33"/>
+      <origin xyz="0 2.77556e-17 -0.005" rpy="0 -0 9.24446e-33"/>
       <geometry>
         <mesh filename="frontsteeringarm.stl"/>
       </geometry>
@@ -341,7 +341,7 @@
   <!-- Link wheelhub_3 -->
   <link name="wheelhub_3">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47254e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="-5.47239e-37" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>
@@ -364,7 +364,7 @@
   </link>
   <!-- Joint from frontsteeringarm to wheelhub_3 -->
   <joint name="fl_wheel" type="continuous">
-    <origin xyz="-0.005 -2.77556e-17 -0.0433189" rpy="-1.5708 -0 -1.5708"/>
+    <origin xyz="-0.005 2.77556e-17 -0.0433189" rpy="-1.5708 -0 -1.5708"/>
     <parent link="frontsteeringarm"/>
     <child link="wheelhub_3"/>
     <axis xyz="0 0 1"/>
@@ -372,7 +372,7 @@
   </joint>
   <!-- Joint from base_link to frontsteeringarm -->
   <joint name="fl_steering" type="revolute">
-    <origin xyz="0.1525 -0.140031 -0.0015" rpy="0 -0 3.14159"/>
+    <origin xyz="0.1025 -0.140031 -0.0015" rpy="0 -0 3.14159"/>
     <parent link="base_link"/>
     <child link="frontsteeringarm"/>
     <axis xyz="0 0 1"/>
@@ -405,7 +405,7 @@
   <!-- Link wheelhub_4 -->
   <link name="wheelhub_4">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47254e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="1.05339e-100" ixz="-2.68495e-37" iyy="3.08808e-05" iyz="-3.41845e-68" izz="5.62507e-05"/>
     </inertial>
@@ -445,7 +445,7 @@
   <!-- Link wheelhub_5 -->
   <link name="wheelhub_5">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47254e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="6.18563e-36" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>
@@ -477,13 +477,13 @@
   <!-- Link wheelhub_6 -->
   <link name="wheelhub_6">
     <inertial>
-      <origin xyz="1.22488e-17 -3.81892e-18 -0.000397125" rpy="0 0 0"/>
+      <origin xyz="1.05738e-19 3.11993e-18 -0.000397125" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="9.67354e-20" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>
     <!-- Part wheelhub_6 -->
     <visual>
-      <origin xyz="1.73472e-18 -6.93889e-18 -0.01" rpy="-1.5708 -1.11022e-15 0"/>
+      <origin xyz="-1.04083e-17 0 -0.01" rpy="-1.5708 -1.11022e-15 0"/>
       <geometry>
         <mesh filename="wheelhub.stl"/>
       </geometry>
@@ -492,7 +492,7 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="1.73472e-18 -6.93889e-18 -0.01" rpy="-1.5708 -1.11022e-15 0"/>
+      <origin xyz="-1.04083e-17 0 -0.01" rpy="-1.5708 -1.11022e-15 0"/>
       <geometry>
         <mesh filename="wheelhub.stl"/>
       </geometry>
@@ -500,7 +500,7 @@
   </link>
   <!-- Joint from base_link to wheelhub_6 -->
   <joint name="ml_wheel" type="continuous">
-    <origin xyz="0.172 -0.00814152 -0.0476535" rpy="1.5708 -0 -1.5708"/>
+    <origin xyz="0.122 -0.00814152 -0.0476535" rpy="1.5708 -0 -1.5708"/>
     <parent link="base_link"/>
     <child link="wheelhub_6"/>
     <axis xyz="0 0 1"/>
