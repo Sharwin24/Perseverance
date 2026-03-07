@@ -5,9 +5,9 @@
   <!-- Link base_link -->
   <link name="base_link">
     <inertial>
-      <origin xyz="-0.0231097 -0.0121514 0.0104769" rpy="0 0 0"/>
-      <mass value="0.946692"/>
-      <inertia ixx="0.00570557" ixy="-0.000168043" ixz="9.0997e-07" iyy="0.00582409" iyz="0.000115698" izz="0.0109455"/>
+      <origin xyz="-0.0231102 -0.0121377 0.0104735" rpy="0 0 0"/>
+      <mass value="0.946932"/>
+      <inertia ixx="0.00570632" ixy="-0.000168018" ixz="9.03822e-07" iyy="0.00582642" iyz="0.000115874" izz="0.0109485"/>
     </inertial>
     <!-- Part rightbogie -->
     <visual>
@@ -213,7 +213,7 @@
   <!-- Link wheelhub -->
   <link name="wheelhub">
     <inertial>
-      <origin xyz="-3.19312e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-3.19312e-19 3.11989e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="-3.64091e-55" ixz="-1.42616e-21" iyy="3.08808e-05" iyz="1.12352e-54" izz="5.62507e-05"/>
     </inertial>
@@ -277,7 +277,7 @@
   <!-- Link wheelhub_2 -->
   <link name="wheelhub_2">
     <inertial>
-      <origin xyz="2.74897e-17 3.11993e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="2.74897e-17 3.11989e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="3.5356e-93" ixz="-7.5456e-22" iyy="3.08808e-05" iyz="5.5184e-80" izz="5.62507e-05"/>
     </inertial>
@@ -341,7 +341,7 @@
   <!-- Link wheelhub_3 -->
   <link name="wheelhub_3">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47254e-19 3.11989e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="-5.47239e-37" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>
@@ -405,7 +405,7 @@
   <!-- Link wheelhub_4 -->
   <link name="wheelhub_4">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47254e-19 3.11989e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="1.05339e-100" ixz="-2.68495e-37" iyy="3.08808e-05" iyz="-3.41845e-68" izz="5.62507e-05"/>
     </inertial>
@@ -445,7 +445,7 @@
   <!-- Link wheelhub_5 -->
   <link name="wheelhub_5">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47254e-19 3.11989e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="6.18563e-36" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>
@@ -477,7 +477,7 @@
   <!-- Link wheelhub_6 -->
   <link name="wheelhub_6">
     <inertial>
-      <origin xyz="1.05738e-19 3.11993e-18 -0.000397125" rpy="0 0 0"/>
+      <origin xyz="1.05738e-19 3.11989e-18 -0.000397125" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="9.67354e-20" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>

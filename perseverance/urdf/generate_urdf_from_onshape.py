@@ -37,13 +37,12 @@ def run_onshape_to_robot(target_dir: str | Path | None = None) -> None:
       target_dir: Directory to run the tool in. Defaults to the package dir.
     """
     script_dir = Path(__file__).resolve().parent  # .../perseverance/urdf
-    # .../perseverance
-    package_dir = Path(target_dir) if target_dir else script_dir.parent
+    package_dir = Path(target_dir) if target_dir else script_dir
     if not package_dir.exists():
         raise FileNotFoundError(
             f"Target directory does not exist: {package_dir}")
 
-    repo_root = package_dir.parent  # repo root
+    repo_root = package_dir.parent.parent  # repo root
     venv_bin = repo_root / ".venv" / "bin"
     venv_tool = venv_bin / "onshape-to-robot"
 
