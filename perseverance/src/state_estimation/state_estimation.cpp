@@ -222,7 +222,7 @@ void StateEstimator::timerCallback() {
   this->updateState(predictedState);
 
   // Display the current Robot State Vector
-  RCLCPP_INFO(this->get_logger(),
+  RCLCPP_DEBUG(this->get_logger(),
     "Current State Estimate: [x=%.3f [m], y=%.3f [m], theta=%.3f [rad], vx=%.3f [m/s], vy=%.3f [m/s], omega=%.3f [rad/s]]",
     predictedState.x, predictedState.y, predictedState.theta, predictedState.vx, predictedState.vy, predictedState.omega
   );
