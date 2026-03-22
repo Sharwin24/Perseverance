@@ -99,7 +99,6 @@ ament_target_dependencies(laser_manager_node rclcpp sensor_msgs nav_msgs geometr
 # --- State Estimation Node ---
 add_executable(state_estimator
   src/state_estimation/state_estimation.cpp
-  src/state_estimation/kalman_filter.cpp
 )
 ament_target_dependencies(state_estimator
   rclcpp

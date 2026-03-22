@@ -12,7 +12,8 @@
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
 
-#include "kalman_filter.hpp"
+#include "base_kalman_filter.hpp"
+#include "perseverance_kalman_filter.hpp"
 
 class StateEstimator : public rclcpp::Node {
 public:
@@ -20,38 +21,41 @@ public:
   ~StateEstimator() = default;
 
 private:
+  // EKF Instance that offers prediction and update steps for the timer to call
+  std::unique_ptr<PerseveranceEKF> kalmanFilter;
+
   void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void timerCallback();
 
-  void updateState(RobotState newState) const { this->kalmanFilter->updateState(newState.vec()); }
-
   geometry_msgs::msg::Quaternion yaw2Quaternion(const double yaw);
 
-  nav_msgs::msg::Odometry createOdomMessage(const RobotState& state);
-
-  geometry_msgs::msg::TransformStamped createOdomToBaseLinkTF(const RobotState& state);
-
+  nav_msgs::msg::Odometry createOdomMessage(const PerseveranceEKF::StateVector& state);
+  geometry_msgs::msg::TransformStamped createOdomToBaseFootprintTF(const PerseveranceEKF::StateVector& state);
+  geometry_msgs::msg::TransformStamped createBaseLinkCenteredToBaseFootprintTF(const PerseveranceEKF::StateVector& state);
 
   // State Estimate (Odometry)
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odomPublisher;
+
   // IMU Data Subscription
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imuSubscription;
+
   // Wheel Odometry Subscription
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odomSubscription;
 
+  // Timer for running the kalman filter
   rclcpp::TimerBase::SharedPtr timer;
-
-  std::unique_ptr<KalmanFilter> kalmanFilter;
 
   // Cache of the latest IMU message for use in the timer
   sensor_msgs::msg::Imu::SharedPtr lastImuMsg;
+
+  // Mutex for accessing latest IMU message
   std::mutex imuMutex;
 
   // Static TF broadcaster for map -> odom
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> staticTfBroadcaster;
 
-  // TF broadcaster for odom -> base_link
+  // TF broadcaster for odom -> base_footprint and base_footprint -> base_link_centered
   std::unique_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 };
 
