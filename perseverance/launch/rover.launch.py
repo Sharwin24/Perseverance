@@ -1,9 +1,9 @@
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources.any_launch_description_source import AnyLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 import os
 
@@ -35,12 +35,18 @@ def generate_launch_description():
         default_value='true',
         description='Launch RViz2 [true, false]'
     )
+    use_jsp_gui_arg = DeclareLaunchArgument(
+        'use_jsp_gui',
+        default_value='false',
+        description='Launch joint_state_publisher_gui instead of joint_state_publisher [true, false]'
+    )
 
     # --- Launch Configurations ---
     sensor_namespace = LaunchConfiguration('sensor_namespace')
     log_level = LaunchConfiguration('log_level')
     use_sim_sensors = LaunchConfiguration('use_sim_sensors')
     launch_rviz = LaunchConfiguration('launch_rviz')
+    use_jsp_gui = LaunchConfiguration('use_jsp_gui')
 
     # --- Include Launch Files ---
     state_estimation_launch = IncludeLaunchDescription(
@@ -83,36 +89,36 @@ def generate_launch_description():
     )
 
     # --- Joint + Robot State Publisher ---
+    # TODO: conditionally use xacro if rover.urdf.xacro exists, falling back to rover.urdf
+    urdf_path = os.path.join(perseverance_pkg_share, 'urdf', 'rover.urdf')
+    with open(urdf_path, 'r') as f:
+        robot_description = f.read()
+
     joint_state_publisher_node = Node(
         package='joint_state_publisher',
         executable='joint_state_publisher',
         name='joint_state_publisher',
         output='screen',
-        parameters=[
-            {
-                'robot_description': Command([
-                    FindExecutable(name='xacro'), ' ', PathJoinSubstitution(
-                        [perseverance_pkg_share, 'urdf', 'rover.urdf.xacro'])
-                ])
-            }
-        ],
-        arguments=['--ros-args', '--log-level', log_level]
+        parameters=[{'robot_description': robot_description}],
+        arguments=['--ros-args', '--log-level', log_level],
+        condition=UnlessCondition(use_jsp_gui)
     )
 
-    # Robot State Publisher uses the same robot_description
+    joint_state_publisher_gui_node = Node(
+        package='joint_state_publisher_gui',
+        executable='joint_state_publisher_gui',
+        name='joint_state_publisher_gui',
+        output='screen',
+        parameters=[{'robot_description': robot_description}],
+        condition=IfCondition(use_jsp_gui)
+    )
+
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
-        parameters=[
-            {
-                'robot_description': Command([
-                    FindExecutable(name='xacro'), ' ', PathJoinSubstitution(
-                        [perseverance_pkg_share, 'urdf', 'rover.urdf.xacro'])
-                ])
-            }
-        ],
+        parameters=[{'robot_description': robot_description}],
         arguments=['--ros-args', '--log-level', log_level]
     )
 
@@ -135,7 +141,9 @@ def generate_launch_description():
         log_level_arg,
         use_sim_sensors_arg,
         launch_rviz_arg,
+        use_jsp_gui_arg,
         joint_state_publisher_node,
+        joint_state_publisher_gui_node,
         robot_state_publisher_node,
         state_estimation_launch,
         sensors_launch,
