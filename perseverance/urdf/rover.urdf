@@ -226,7 +226,7 @@
   <!-- Link wheel -->
   <link name="wheel">
     <inertial>
-      <origin xyz="-3.19312e-19 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-3.19706e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="-3.64091e-55" ixz="-1.42616e-21" iyy="3.08808e-05" iyz="1.12352e-54" izz="5.62507e-05"/>
     </inertial>
@@ -261,7 +261,7 @@
     <parent link="base_link"/>
     <child link="rearsteeringarm"/>
     <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-0.785398" upper="0.436332"/>
+    <limit effort="10" velocity="10" lower="-0.610865" upper="0.610865"/>
   </joint>
   <!-- Link rearsteeringarm_2 -->
   <link name="rearsteeringarm_2">
@@ -290,7 +290,7 @@
   <!-- Link wheel_2 -->
   <link name="wheel_2">
     <inertial>
-      <origin xyz="2.74897e-17 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="2.74893e-17 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="3.5356e-93" ixz="-7.5456e-22" iyy="3.08808e-05" iyz="5.5184e-80" izz="5.62507e-05"/>
     </inertial>
@@ -325,7 +325,7 @@
     <parent link="base_link"/>
     <child link="rearsteeringarm_2"/>
     <axis xyz="0 0 1"/>
-    <limit effort="10" velocity="10" lower="-0.436332" upper="0.785398"/>
+    <limit effort="10" velocity="10" lower="-0.610865" upper="0.610865"/>
   </joint>
   <!-- Link frontsteeringarm -->
   <link name="frontsteeringarm">
@@ -354,7 +354,7 @@
   <!-- Link wheel_3 -->
   <link name="wheel_3">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47648e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="-5.47239e-37" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>
@@ -418,7 +418,7 @@
   <!-- Link wheel_4 -->
   <link name="wheel_4">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47648e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="1.05339e-100" ixz="-2.68495e-37" iyy="3.08808e-05" iyz="-3.41845e-68" izz="5.62507e-05"/>
     </inertial>
@@ -458,7 +458,7 @@
   <!-- Link wheel_5 -->
   <link name="wheel_5">
     <inertial>
-      <origin xyz="-1.47254e-19 3.11997e-18 0.00460287" rpy="0 0 0"/>
+      <origin xyz="-1.47648e-19 3.11993e-18 0.00460287" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="6.18563e-36" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>
@@ -490,7 +490,7 @@
   <!-- Link wheel_6 -->
   <link name="wheel_6">
     <inertial>
-      <origin xyz="1.05738e-19 3.11997e-18 -0.000397125" rpy="0 0 0"/>
+      <origin xyz="1.05344e-19 3.11993e-18 -0.000397125" rpy="0 0 0"/>
       <mass value="0.0820664"/>
       <inertia ixx="3.08808e-05" ixy="0" ixz="9.67354e-20" iyy="3.08808e-05" iyz="0" izz="5.62507e-05"/>
     </inertial>

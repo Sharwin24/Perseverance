@@ -4,10 +4,9 @@ state_estimator:
     initial_x: 0.0 # Initial x position [m]
     initial_y: 0.0 # Initial y position [m]
     initial_theta: 0.0 # Initial orientation [rad]
-    initial_vx: 0.0 # Initial x velocity [m/s]
-    initial_vy: 0.0 # Initial y velocity [m/s]
-    initial_omega: 0.0 # Initial angular velocity [rad/s]
     wheel_radius: 0.035 # Wheel radius [m]
-    wheel_base: 0.25 # Middle Wheel to Wheel distance along the Robot Y-axis [m]
-    track_width: 0.2945 # The back to front wheel distance along the Robot X-axis [m]
-    base_height: 0.0448 # Height of the robot base to the wheel center [m]
+    front_wheel_base: 0.131889 # Middle Wheel to Front Wheel distance along the Robot X-axis [m]
+    rear_wheel_base: 0.118112 # Middle Wheel to Rear Wheel distance along the Robot X-axis [m]
+    base_to_wheel_height: 0.044850 # Height of the steering pivot above the wheel axle [m]
+    max_steering_front: 0.610865 # Front wheel max steering angle [rad] (35.0 deg)
+    max_steering_rear: 0.610865 # Rear wheel max steering angle [rad] (35.0 deg)

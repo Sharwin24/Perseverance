@@ -48,22 +48,18 @@ translation are derived accordingly.
 Rear steering zero offset
 ──────────────────────────
 The physical rear steering arms have a 10 degree mechanical offset from
-the Onshape CAD zero position. Correcting this in the URDF requires two
-coordinated changes to each affected joint:
+the Onshape CAD zero position. Correcting this in the URDF only requires
+updating the joint <origin> yaw so the child link (the steering arm) is
+rotated to its true straight-ahead pose when the joint variable reads 0.
 
-  1. Add the offset to the joint <origin> yaw so the child link (the
-     steering arm) is rotated to its true straight-ahead pose when the
-     joint variable reads 0.
-
-  2. Shift both limit bounds by the negative offset so the physical
-     travel range stays unchanged. Without this the limits would be
-     biased and the arm would hit a soft limit before reaching one
-     extreme of its physical travel.
+The Onshape joint limits are already set symmetrically around the physical
+zero (i.e. the CAD limits already account for the offset), so the limit
+bounds do not need to be modified.
 
   Example for REAR_STEERING_ZERO_OFFSET_RAD = +0.17453 (+10 deg):
     origin yaw:   old_yaw + 0.17453
-    lower limit:  old_lower - 0.17453
-    upper limit:  old_upper - 0.17453
+    lower limit:  unchanged
+    upper limit:  unchanged
 """
 
 from __future__ import annotations
@@ -323,28 +319,10 @@ def _apply_joint_zero_offsets(text: str) -> str:
 
         joint_xml = joint_xml.replace(origin_tag, new_origin_tag)
 
-        # ── Update limit bounds ───────────────────────────────────────────────
-        # Shift both bounds by -offset so the physical travel window slides
-        # with the new zero without changing its width.
-        limit_match = re.search(r'<limit\s+([^/]*?)/>', joint_xml, re.DOTALL)
-        if limit_match:
-            limit_tag = limit_match.group(0)
-            lower_match = re.search(r'lower="([^"]+)"', limit_tag)
-            upper_match = re.search(r'upper="([^"]+)"', limit_tag)
-
-            if lower_match and upper_match:
-                new_lower = float(lower_match.group(1)) - offset_rad
-                new_upper = float(upper_match.group(1)) - offset_rad
-                new_limit = limit_tag \
-                    .replace(lower_match.group(0), f'lower="{new_lower:.6f}"') \
-                    .replace(upper_match.group(0), f'upper="{new_upper:.6f}"')
-                joint_xml = joint_xml.replace(limit_tag, new_limit)
-
         text = text.replace(match.group(1), joint_xml)
         print(
             f"  Applied zero offset to '{joint_name}': "
-            f"yaw {math.degrees(old_yaw):.3f} -> {math.degrees(old_yaw + offset_rad):.3f} deg, "
-            f"limits shifted by {math.degrees(-offset_rad):.3f} deg"
+            f"yaw {math.degrees(old_yaw):.3f} -> {math.degrees(old_yaw + offset_rad):.3f} deg"
         )
 
     return text
@@ -412,11 +390,169 @@ def clean_urdf(urdf_filename: str) -> None:
     urdf_path.write_text(text, encoding="utf-8")
 
 
+def _parse_rpy(origin_elem: ET.Element | None) -> tuple[float, float, float]:
+    """Extract (roll, pitch, yaw) floats from a URDF <origin rpy="..."/> element."""
+    if origin_elem is None:
+        return 0.0, 0.0, 0.0
+    parts = origin_elem.get("rpy", "0 0 0").split()
+    return float(parts[0]), float(parts[1]), float(parts[2])
+
+
+def _get_joint(root: ET.Element, name: str) -> ET.Element:
+    for joint in root.iter("joint"):
+        if joint.get("name") == name:
+            return joint
+    raise ValueError(f"Joint '{name}' not found in URDF.")
+
+
+def _derive_rover_geometry(urdf_text: str) -> dict[str, float]:
+    """
+    Derive rover geometry constants from joint origins in the URDF.
+
+    The URDF is in the old CAD frame (x=lateral, y=longitudinal, forward=-y)
+    so coordinate axes are remapped to REP-105 (x=forward, y=left) before
+    computing distances.
+
+    Parameters derived
+    ──────────────────
+    front_wheel_base   : distance along REP-105 x (forward) from middle wheel
+                         axle to front steering pivot [m]
+    rear_wheel_base    : same but to rear steering pivot [m]
+    base_to_wheel_height : vertical drop from steering pivot to wheel axle [m]
+                           (taken from the z component of the wheel joint origin
+                           relative to its steering parent — always positive)
+    max_steering_front : front steering joint range, as the smaller of
+                         |lower| and |upper| limits [rad]
+    max_steering_rear  : same for rear steering joints [rad]
+
+    Note: wheel_radius cannot be derived from the URDF because the wheel
+    links use mesh geometry (no cylinder primitive). It must be set manually.
+    """
+    root = ET.fromstring(urdf_text)
+
+    # ── Collect steering joint origins (CAD frame: x=lateral, y=longitudinal) ─
+    def joint_xyz(name: str) -> tuple[float, float, float]:
+        return _parse_xyz(_get_joint(root, name).find("origin"))
+
+    def joint_limit(name: str) -> tuple[float, float]:
+        """Return (lower, upper) limits for a revolute joint."""
+        limit = _get_joint(root, name).find("limit")
+        if limit is None:
+            raise ValueError(f"Joint '{name}' has no <limit> element.")
+        return float(limit.get("lower", "0")), float(limit.get("upper", "0"))
+
+    # Steering pivot positions in CAD frame
+    _, bl_y, _ = joint_xyz("bl_steering")
+    _, br_y, _ = joint_xyz("br_steering")
+    _, fl_y, _ = joint_xyz("fl_steering")
+    _, fr_y, _ = joint_xyz("fr_steering")
+
+    # Middle wheel positions in CAD frame (no steering joint — use wheel joint)
+    ml_x, ml_y, _ = joint_xyz("ml_wheel")
+    mr_x, mr_y, _ = joint_xyz("mr_wheel")
+
+    # CAD frame: y is longitudinal, forward = -y.
+    # REP-105 forward distance = -(y_cad). Lateral distance = x_cad (left = +x).
+
+    # Middle axle longitudinal position (average of left/right)
+    mid_y_cad = (ml_y + mr_y) / 2.0
+
+    # Front wheel base: how far in front of middle axle are the front pivots
+    front_y_cad = (fl_y + fr_y) / 2.0
+    front_wheel_base = abs(front_y_cad - mid_y_cad)
+
+    # Rear wheel base: how far behind the middle axle are the rear pivots
+    rear_y_cad = (bl_y + br_y) / 2.0
+    rear_wheel_base = abs(rear_y_cad - mid_y_cad)
+
+    # base_to_wheel_height: z drop from steering pivot down to wheel axle.
+    # The wheel joint origin z gives this offset relative to the steering arm
+    # parent. Take absolute value and average across all four corners.
+    _, _, bl_wz = joint_xyz("bl_wheel")
+    _, _, br_wz = joint_xyz("br_wheel")
+    _, _, fl_wz = joint_xyz("fl_wheel")
+    _, _, fr_wz = joint_xyz("fr_wheel")
+    base_to_wheel_height = abs((bl_wz + br_wz + fl_wz + fr_wz) / 4.0)
+
+    # Steering limits: use the smaller of |lower| and |upper| for a symmetric range.
+    fl_lo, fl_hi = joint_limit("fl_steering")
+    fr_lo, fr_hi = joint_limit("fr_steering")
+    bl_lo, bl_hi = joint_limit("bl_steering")
+    br_lo, br_hi = joint_limit("br_steering")
+
+    max_steering_front = min(abs(fl_lo), abs(fl_hi), abs(fr_lo), abs(fr_hi))
+    max_steering_rear = min(abs(bl_lo), abs(bl_hi), abs(br_lo), abs(br_hi))
+
+    return {
+        "front_wheel_base": front_wheel_base,
+        "rear_wheel_base": rear_wheel_base,
+        "base_to_wheel_height": base_to_wheel_height,
+        "max_steering_front_rad": max_steering_front,
+        "max_steering_rear_rad": max_steering_rear,
+        "max_steering_front_deg": math.degrees(max_steering_front),
+        "max_steering_rear_deg": math.degrees(max_steering_rear),
+    }
+
+
+def update_rover_params(urdf_filename: str = "rover.urdf",
+                        config_filename: str = "../config/state_estimation_config.yaml") -> None:
+    """Update rover geometry constants in state_estimation_config.yaml from the URDF.
+
+    Derives all geometry values that can be computed from joint origins/limits.
+    wheel_radius cannot be derived (mesh-only geometry) and is left unchanged.
+
+    Args:
+        urdf_filename: Filename of the URDF relative to this script's directory.
+        config_filename: Path to the config yaml relative to this script's directory.
+    """
+    script_dir = Path(__file__).resolve().parent
+    urdf_path = (script_dir / urdf_filename).resolve()
+    config_path = (script_dir / config_filename).resolve()
+
+    if not urdf_path.exists():
+        raise FileNotFoundError(f"URDF not found: {urdf_path}")
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config not found: {config_path}")
+
+    urdf_text = urdf_path.read_text(encoding="utf-8")
+    geometry = _derive_rover_geometry(urdf_text)
+
+    config_text = config_path.read_text(encoding="utf-8")
+
+    # Update each parameter in-place, preserving comments and formatting.
+    # Matches:  <key>: <old_value> # optional comment
+    replacements = {
+        "front_wheel_base": (geometry["front_wheel_base"],
+                             "Middle Wheel to Front Wheel distance along the Robot X-axis [m]"),
+        "rear_wheel_base": (geometry["rear_wheel_base"],
+                            "Middle Wheel to Rear Wheel distance along the Robot X-axis [m]"),
+        "base_to_wheel_height": (geometry["base_to_wheel_height"],
+                                 "Height of the steering pivot above the wheel axle [m]"),
+        "max_steering_front": (geometry["max_steering_front_rad"],
+                               f"Front wheel max steering angle [rad] ({geometry['max_steering_front_deg']:.1f} deg)"),
+        "max_steering_rear": (geometry["max_steering_rear_rad"],
+                              f"Rear wheel max steering angle [rad] ({geometry['max_steering_rear_deg']:.1f} deg)"),
+    }
+
+    for key, (value, comment) in replacements.items():
+        config_text = re.sub(
+            rf'({re.escape(key)}:\s*)[\d.eE+\-]+([^\n]*)',
+            lambda m, v=value, c=comment: f"{m.group(1)}{v:.6f} # {c}",
+            config_text,
+        )
+        print(f"  {key}: {value:.6f}  # {comment}")
+
+    config_path.write_text(config_text, encoding="utf-8")
+    print(f"Updated {config_path}")
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Entry point
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 if __name__ == "__main__":
     run_onshape_to_robot()
     clean_urdf("rover.urdf")
     print("Cleaned URDF: rover.urdf")
+    print("Updating rover geometry parameters:")
+    update_rover_params()
