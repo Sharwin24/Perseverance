@@ -4,6 +4,10 @@
 #include <cmath>
 #include <stdexcept>
 
+constexpr int StateDimension = 7;  // [px, py, theta, v, delta_f, delta_r, omega]
+constexpr int ControlDimension = 3;  // [accel_x, delta_f_rate, delta_r_rate]
+constexpr int MeasurementDimension = 7;  // [px, py, theta, v, delta_f, delta_r, omega]
+
 /**
  * @brief EKF for a 6-wheel Perseverance-style rover with front and rear Ackermann steering.
  *
@@ -113,7 +117,7 @@
  *     ∂β/∂δ_f   =  (centerToRearAxle / cos²(δ_f)) / (L² + (L_r·tan(δ_f) + L_f·tan(δ_r))²) · L
  *     ∂β/∂δ_r   =  (centerToFrontAxle / cos²(δ_r)) / (L² + (L_r·tan(δ_f) + L_f·tan(δ_r))²) · L
  */
-class PerseveranceEKF : public BaseKalmanFilter<7, 7, 3> {
+class PerseveranceEKF : public BaseKalmanFilter<StateDimension, MeasurementDimension, ControlDimension> {
 public:
   // -------------------------------------------------------------------------
   // Index enumerations to avoid magic number indexing
@@ -135,7 +139,7 @@ public:
     kDeltaRRate = 2   // rear  steering rate
   };
 
-  enum MeasIndex {
+  enum MeasurementIndex {
     kMeasPx = 0,
     kMeasPy = 1,
     kMeasTheta = 2,
@@ -144,6 +148,59 @@ public:
     kMeasDeltaR = 5,
     kMeasOmega = 6
   };
+
+  static StateIndex stateIndexFromInt(int i) {
+    if (i < 0 || i >= StateDimension) throw std::out_of_range("Invalid state index");
+    return static_cast<StateIndex>(i);
+  }
+
+  static ControlIndex controlIndexFromInt(int i) {
+    if (i < 0 || i >= ControlDimension) throw std::out_of_range("Invalid control index");
+    return static_cast<ControlIndex>(i);
+  }
+
+  static MeasurementIndex measIndexFromInt(int i) {
+    if (i < 0 || i >= MeasurementDimension) throw std::out_of_range("Invalid measurement index");
+    return static_cast<MeasurementIndex>(i);
+  }
+
+  static std::string getStateIndexName(int i) { return getStateIndexName(stateIndexFromInt(i)); }
+  static std::string getStateIndexName(StateIndex i) {
+    switch (i) {
+    case PerseveranceEKF::kPx: return "px";
+    case PerseveranceEKF::kPy: return "py";
+    case PerseveranceEKF::kTheta: return "theta";
+    case PerseveranceEKF::kV: return "v";
+    case PerseveranceEKF::kDeltaF: return "delta_f";
+    case PerseveranceEKF::kDeltaR: return "delta_r";
+    case PerseveranceEKF::kOmega: return "omega";
+    default: return "unknown";
+    }
+  }
+
+  static std::string getControlIndexName(int i) { return getControlIndexName(controlIndexFromInt(i)); }
+  static std::string getControlIndexName(ControlIndex i) {
+    switch (i) {
+    case PerseveranceEKF::kAccel:      return "accel";
+    case PerseveranceEKF::kDeltaFRate: return "delta_f_rate";
+    case PerseveranceEKF::kDeltaRRate: return "delta_r_rate";
+    default: return "unknown";
+    }
+  }
+
+  static std::string getMeasurementIndexName(int i) { return getMeasurementIndexName(measIndexFromInt(i)); }
+  static std::string getMeasurementIndexName(MeasurementIndex i) {
+    switch (i) {
+    case PerseveranceEKF::kMeasPx:    return "px";
+    case PerseveranceEKF::kMeasPy:    return "py";
+    case PerseveranceEKF::kMeasTheta: return "theta";
+    case PerseveranceEKF::kMeasV:     return "v";
+    case PerseveranceEKF::kMeasDeltaF: return "delta_f";
+    case PerseveranceEKF::kMeasDeltaR: return "delta_r";
+    case PerseveranceEKF::kMeasOmega: return "omega";
+    default: return "unknown";
+    }
+  }
 
   // -------------------------------------------------------------------------
   // Vehicle geometry parameters
@@ -177,20 +234,22 @@ public:
    * @note The user must still call initialize() with the initial state and covariance before using the filter.
    * @param roverGeometry  Vehicle geometry (axle distances, steering limits)
    * @param deltaTimeStep  Nominal integration timestep [s]
+   * @param adapters       Array of 4 sensor adapters (ImuAdapter, WheelSpeedAdapter,
+   *                       front SteeringAdapter, rear SteeringAdapter)
    */
-  explicit PerseveranceEKF(const RoverGeometry& roverGeometry, double deltaTimeStep)
-    : _geometry(roverGeometry), _dt(deltaTimeStep) {
+  PerseveranceEKF(const RoverGeometry& roverGeometry, double deltaTimeStep, AdapterList adapters)
+    : BaseKalmanFilter<7, 7, 3>(std::move(adapters)), geometry(roverGeometry), dt(deltaTimeStep) {
     // Validate parameters
-    if (_geometry.centerToFrontAxle <= 0.0 || _geometry.centerToRearAxle <= 0.0)
+    if (geometry.centerToFrontAxle <= 0.0 || geometry.centerToRearAxle <= 0.0)
       throw std::invalid_argument("Axle distances centerToFrontAxle and centerToRearAxle must be positive.");
-    if (_dt <= 0.0)
+    if (dt <= 0.0)
       throw std::invalid_argument("Timestep dt must be positive.");
-    if (_geometry.maxSteeringFront <= 0.0 || _geometry.maxSteeringRear <= 0.0)
+    if (geometry.maxSteeringFront <= 0.0 || geometry.maxSteeringRear <= 0.0)
       throw std::invalid_argument("Steering limits must be positive.");
   }
 
-  void setDt(double dt) { _dt = dt; }
-  RoverGeometry getGeometry() const { return _geometry; }
+  void setDt(double newDt) { dt = newDt; }
+  RoverGeometry getGeometry() const { return geometry; }
 
 protected:
   // =========================================================================
@@ -204,36 +263,36 @@ protected:
    * to the body slip angle β. The mid fixed wheels impose no additional state —
    * their constraint is implicitly satisfied by the ICR geometry.
    */
-  StateVector motionModel(const StateVector& state, const ControlInput& control) const override {
+  StateVector motionModel(const StateVector& state, const ControlInput& controlInput) const override {
     const double px = state[kPx];
     const double py = state[kPy];
     const double theta = state[kTheta];
     const double v = state[kV];
-    const double delta_f = state[kDeltaF];
-    const double delta_r = state[kDeltaR];
+    const double deltaF = state[kDeltaF];
+    const double deltaR = state[kDeltaR];
 
-    const double accel = control[kAccel];
-    const double delta_f_rate = control[kDeltaFRate];
-    const double delta_r_rate = control[kDeltaRRate];
+    const double accel = controlInput[kAccel];
+    const double deltaFRate = controlInput[kDeltaFRate];
+    const double deltaRRate = controlInput[kDeltaRRate];
 
     // Combined yaw rate from both steerable axles
-    const double omega = computeYawRate(v, delta_f, delta_r);
+    const double omega = computeYawRate(v, deltaF, deltaR);
 
     // Body slip angle β: nonzero when centerToFrontAxle ≠ centerToRearAxle or in crab/pivot configurations
-    const double beta = computeSlipAngle(delta_f, delta_r);
+    const double beta = computeSlipAngle(deltaF, deltaR);
 
     const double effectiveHeading = theta + beta;  // effective velocity heading
 
-    StateVector next_state;
-    next_state[kPx] = px + v * std::cos(effectiveHeading) * _dt;
-    next_state[kPy] = py + v * std::sin(effectiveHeading) * _dt;
-    next_state[kTheta] = theta + omega * _dt;
-    next_state[kV] = v + accel * _dt;
-    next_state[kDeltaF] = std::clamp(delta_f + delta_f_rate * _dt, -_geometry.maxSteeringFront, _geometry.maxSteeringFront);
-    next_state[kDeltaR] = std::clamp(delta_r + delta_r_rate * _dt, -_geometry.maxSteeringRear, _geometry.maxSteeringRear);
-    next_state[kOmega] = omega;  // propagate kinematic yaw rate; corrected by gyro update
+    StateVector nextState;
+    nextState[kPx] = px + v * std::cos(effectiveHeading) * dt;
+    nextState[kPy] = py + v * std::sin(effectiveHeading) * dt;
+    nextState[kTheta] = theta + omega * dt;
+    nextState[kV] = v + accel * dt;
+    nextState[kDeltaF] = std::clamp(deltaF + deltaFRate * dt, -geometry.maxSteeringFront, geometry.maxSteeringFront);
+    nextState[kDeltaR] = std::clamp(deltaR + deltaRRate * dt, -geometry.maxSteeringRear, geometry.maxSteeringRear);
+    nextState[kOmega] = omega;  // propagate kinematic yaw rate; corrected by gyro update
 
-    return next_state;
+    return nextState;
   }
 
   // =========================================================================
@@ -260,28 +319,28 @@ protected:
    * Linearizes the nonlinear contributions of θ, v, δ_f, δ_r on the
    * position and heading propagation. See class-level docstring for full layout.
    */
-  StateTransition computeF(const StateVector& state, const ControlInput& /*control*/) const override {
+  StateTransition computeF(const StateVector& state, const ControlInput& /*controlInput*/) const override {
     const double theta = state[kTheta];
     const double v = state[kV];
-    const double delta_f = state[kDeltaF];
-    const double delta_r = state[kDeltaR];
+    const double deltaF = state[kDeltaF];
+    const double deltaR = state[kDeltaR];
 
-    const double tan_df = std::tan(delta_f);
-    const double tan_dr = std::tan(delta_r);
-    const double cos2_df = std::cos(delta_f) * std::cos(delta_f);
-    const double cos2_dr = std::cos(delta_r) * std::cos(delta_r);
+    const double tanDeltaF = std::tan(deltaF);
+    const double tanDeltaR = std::tan(deltaR);
+    const double cos2DeltaF = std::cos(deltaF) * std::cos(deltaF);
+    const double cos2DeltaR = std::cos(deltaR) * std::cos(deltaR);
 
-    const double beta = computeSlipAngle(delta_f, delta_r);
+    const double beta = computeSlipAngle(deltaF, deltaR);
     const double effectiveHeading = theta + beta;
-    const double cos_eff = std::cos(effectiveHeading);
-    const double sin_eff = std::sin(effectiveHeading);
+    const double cosEff = std::cos(effectiveHeading);
+    const double sinEff = std::sin(effectiveHeading);
 
     // ── Partial derivatives of yaw rate ω w.r.t. states ──────────────────
     // ω = v·(tan(δ_f) - tan(δ_r)) / L
-    const double& L = _geometry.getWheelbase();
-    const double domega_dv = (tan_df - tan_dr) / L;
-    const double domega_ddeltaf = v / (L * cos2_df);
-    const double domega_ddeltar = -v / (L * cos2_dr);
+    const double& L = geometry.getWheelbase();
+    const double dOmegaDv = (tanDeltaF - tanDeltaR) / L;
+    const double dOmegaDdeltaF = v / (L * cos2DeltaF);
+    const double dOmegaDdeltaR = -v / (L * cos2DeltaR);
 
     // ── Partial derivatives of slip angle β w.r.t. δ_f and δ_r ──────────
     // β = atan2(L_r·tan(δ_f) + L_f·tan(δ_r), L)
@@ -290,11 +349,11 @@ protected:
     // ∂β/∂δ_r = (centerToFrontAxle/cos²(δ_r)) / (L² + num²) · 1
     // (the L in the atan2 denominator is the constant, derivative of atan(num/L)
     //  w.r.t. num is L/(L²+num²))
-    const double slip_num = _geometry.centerToRearAxle * tan_df + _geometry.centerToFrontAxle * tan_dr;
-    const double atan_denom = L * L + slip_num * slip_num;
+    const double slipNumerator = geometry.centerToRearAxle * tanDeltaF + geometry.centerToFrontAxle * tanDeltaR;
+    const double atanDenom = L * L + slipNumerator * slipNumerator;
 
-    const double dbeta_ddeltaf = (_geometry.centerToRearAxle / cos2_df) * L / atan_denom;
-    const double dbeta_ddeltar = (_geometry.centerToFrontAxle / cos2_dr) * L / atan_denom;
+    const double dBetaDdeltaF = (geometry.centerToRearAxle / cos2DeltaF) * L / atanDenom;
+    const double dBetaDdeltaR = (geometry.centerToFrontAxle / cos2DeltaR) * L / atanDenom;
 
     // ── Partial derivatives of position through the chain rule ────────────
     // px_next = px + v·cos(θ+β)·dt
@@ -302,40 +361,40 @@ protected:
     // ∂px/∂v   =  cos(θ+β)·dt
     // ∂px/∂δ_f = -v·sin(θ+β)·∂β/∂δ_f·dt   (β depends on δ_f)
     // ∂px/∂δ_r = -v·sin(θ+β)·∂β/∂δ_r·dt
-    const double dpx_dtheta = -v * sin_eff * _dt;
-    const double dpx_dv = cos_eff * _dt;
-    const double dpx_ddeltaf = -v * sin_eff * dbeta_ddeltaf * _dt;
-    const double dpx_ddeltar = -v * sin_eff * dbeta_ddeltar * _dt;
+    const double dPxDtheta = -v * sinEff * dt;
+    const double dPxDv = cosEff * dt;
+    const double dPxDdeltaF = -v * sinEff * dBetaDdeltaF * dt;
+    const double dPxDdeltaR = -v * sinEff * dBetaDdeltaR * dt;
 
-    const double dpy_dtheta = v * cos_eff * _dt;
-    const double dpy_dv = sin_eff * _dt;
-    const double dpy_ddeltaf = v * cos_eff * dbeta_ddeltaf * _dt;
-    const double dpy_ddeltar = v * cos_eff * dbeta_ddeltar * _dt;
+    const double dPyDtheta = v * cosEff * dt;
+    const double dPyDv = sinEff * dt;
+    const double dPyDdeltaF = v * cosEff * dBetaDdeltaF * dt;
+    const double dPyDdeltaR = v * cosEff * dBetaDdeltaR * dt;
 
     // ── Assemble F ────────────────────────────────────────────────────────
     StateTransition F = StateTransition::Identity();
 
     // Position rows
-    F(kPx, kTheta) = dpx_dtheta;
-    F(kPx, kV) = dpx_dv;
-    F(kPx, kDeltaF) = dpx_ddeltaf;
-    F(kPx, kDeltaR) = dpx_ddeltar;
+    F(kPx, kTheta) = dPxDtheta;
+    F(kPx, kV) = dPxDv;
+    F(kPx, kDeltaF) = dPxDdeltaF;
+    F(kPx, kDeltaR) = dPxDdeltaR;
 
-    F(kPy, kTheta) = dpy_dtheta;
-    F(kPy, kV) = dpy_dv;
-    F(kPy, kDeltaF) = dpy_ddeltaf;
-    F(kPy, kDeltaR) = dpy_ddeltar;
+    F(kPy, kTheta) = dPyDtheta;
+    F(kPy, kV) = dPyDv;
+    F(kPy, kDeltaF) = dPyDdeltaF;
+    F(kPy, kDeltaR) = dPyDdeltaR;
 
     // Heading row: θ_next = θ + ω(v, δ_f, δ_r)·dt
-    F(kTheta, kV) = domega_dv * _dt;
-    F(kTheta, kDeltaF) = domega_ddeltaf * _dt;
-    F(kTheta, kDeltaR) = domega_ddeltar * _dt;
-    F(kTheta, kOmega) = _dt;  // θ also propagates through the stored ω state
+    F(kTheta, kV) = dOmegaDv * dt;
+    F(kTheta, kDeltaF) = dOmegaDdeltaF * dt;
+    F(kTheta, kDeltaR) = dOmegaDdeltaR * dt;
+    F(kTheta, kOmega) = dt;  // θ also propagates through the stored ω state
 
     // Omega row: ω_next = ω(v, δ_f, δ_r) — same kinematic formula, not a random walk
-    F(kOmega, kV) = domega_dv;
-    F(kOmega, kDeltaF) = domega_ddeltaf;
-    F(kOmega, kDeltaR) = domega_ddeltar;
+    F(kOmega, kV) = dOmegaDv;
+    F(kOmega, kDeltaF) = dOmegaDdeltaF;
+    F(kOmega, kDeltaR) = dOmegaDdeltaR;
     F(kOmega, kOmega) = 0.0;  // ω is fully recomputed from v and δ, not self-propagating
 
     return F;
@@ -357,6 +416,7 @@ protected:
     return MeasurementModel::Identity();  // H = I₇
   }
 
+
 private:
   // =========================================================================
   // Internal Kinematic Helpers
@@ -366,8 +426,8 @@ private:
    * @brief Compute the combined yaw rate from both steerable axles.
    *   ω = v · (tan(δ_f) - tan(δ_r)) / L
    */
-  double computeYawRate(double v, double delta_f, double delta_r) const {
-    return v * (std::tan(delta_f) - std::tan(delta_r)) / _geometry.getWheelbase();
+  double computeYawRate(double v, double deltaF, double deltaR) const {
+    return v * (std::tan(deltaF) - std::tan(deltaR)) / geometry.getWheelbase();
   }
 
   /**
@@ -378,11 +438,11 @@ private:
    *   β = 0 when the rover drives straight or centerToFrontAxle=centerToRearAxle with δ_f=-δ_r (pure spin).
    *   β ≠ 0 in asymmetric crab or turning configurations.
    */
-  double computeSlipAngle(double delta_f, double delta_r) const {
-    const double slip_num = _geometry.centerToRearAxle * std::tan(delta_f) + _geometry.centerToFrontAxle * std::tan(delta_r);
-    return std::atan2(slip_num, _geometry.getWheelbase());
+  double computeSlipAngle(double deltaF, double deltaR) const {
+    const double slipNumerator = geometry.centerToRearAxle * std::tan(deltaF) + geometry.centerToFrontAxle * std::tan(deltaR);
+    return std::atan2(slipNumerator, geometry.getWheelbase());
   }
 
-  RoverGeometry _geometry;    // vehicle geometry (axle distances, steering limits)
-  double   _dt;          // integration timestep [s]
+  RoverGeometry geometry;    // vehicle geometry (axle distances, steering limits)
+  double dt;                 // integration timestep [s]
 };

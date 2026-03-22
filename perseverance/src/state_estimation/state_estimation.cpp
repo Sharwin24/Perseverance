@@ -26,72 +26,123 @@
 ///   /state_estimation/odom (nav_msgs::msg::Odometry): Filtered robot state
 ///
 /// SUBSCRIBERS:
-///   /sensors/raw/imu  (sensor_msgs::msg::Imu):       Raw IMU data
-///   /sensors/raw/odom (nav_msgs::msg::Odometry):     Raw wheel odometry
+///   /sensors/raw/imu                     (sensor_msgs/Imu)                     → ImuAdapter
+///   /sensors/raw/wheel/speed             (geometry_msgs/TwistStamped)           → WheelSpeedAdapter
+///   /sensors/raw/wheel/steering/front    (ackermann_msgs/AckermannDriveStamped) → SteeringAdapter (front)
+///   /sensors/raw/wheel/steering/rear     (ackermann_msgs/AckermannDriveStamped) → SteeringAdapter (rear)
 
 #include "state_estimation/state_estimation.hpp"
 
 const char IMUTopic[] = "/sensors/raw/imu";
-const char ODOMTopic[] = "/sensors/raw/odom";
+const char WheelSpeedTopic[] = "/sensors/raw/wheel/speed";
+const char FrontSteeringTopic[] = "/sensors/raw/wheel/steering/front";
+const char RearSteeringTopic[] = "/sensors/raw/wheel/steering/rear";
 const char RobotStateTopic[] = "/state_estimation/odom";
 
-StateEstimator::StateEstimator() : Node("state_estimator") {
+StateEstimator::StateEstimator()
+  : Node("state_estimator") {
   RCLCPP_INFO(this->get_logger(), "State Estimator Node has been initialized.");
 
   // ── Parameters ─────────────────────────────────────────────────────────────
-  double timer_freq = this->declare_parameter("timer_frequency", 1.0); // [Hz]
-  double initial_x = this->declare_parameter("initial_x", 0.0); // [m]
-  double initial_y = this->declare_parameter("initial_y", 0.0); // [m]
-  double initial_theta = this->declare_parameter("initial_theta", 0.0); // [rad]
-  double front_wheel_base = this->declare_parameter("front_wheel_base", 0.125); // [m]
-  double rear_wheel_base = this->declare_parameter("rear_wheel_base", 0.125); // [m]
-  double wheel_radius = this->declare_parameter("wheel_radius", 0.035); // [m]
-  double base_to_wheel_height = this->declare_parameter("base_to_wheel_height", 0.045); // [m]
-  double max_steering_front = this->declare_parameter("max_steering_front", M_PI / 6.0); // [rad]
-  double max_steering_rear = this->declare_parameter("max_steering_rear", M_PI / 6.0); // [rad]
+  double timerFreq = this->declare_parameter("timer_frequency", 1.0); // [Hz]
+  double initialX = this->declare_parameter("initial_x", 0.0); // [m]
+  double initialY = this->declare_parameter("initial_y", 0.0); // [m]
+  double initialTheta = this->declare_parameter("initial_theta", 0.0); // [rad]
+  double frontWheelBase = this->declare_parameter("front_wheel_base", 0.125); // [m]
+  double rearWheelBase = this->declare_parameter("rear_wheel_base", 0.125); // [m]
+  double wheelRadius = this->declare_parameter("wheel_radius", 0.035); // [m]
+  double baseToWheelHeight = this->declare_parameter("base_to_wheel_height", 0.045); // [m]
+  double maxSteeringFront = this->declare_parameter("max_steering_front", M_PI / 6.0); // [rad]
+  double maxSteeringRear = this->declare_parameter("max_steering_rear", M_PI / 6.0); // [rad]
   // Get parameters from yaml config file
-  timer_freq = this->get_parameter("timer_frequency").as_double();
-  initial_x = this->get_parameter("initial_x").as_double();
-  initial_y = this->get_parameter("initial_y").as_double();
-  initial_theta = this->get_parameter("initial_theta").as_double();
-  front_wheel_base = this->get_parameter("front_wheel_base").as_double();
-  rear_wheel_base = this->get_parameter("rear_wheel_base").as_double();
-  wheel_radius = this->get_parameter("wheel_radius").as_double();
-  base_to_wheel_height = this->get_parameter("base_to_wheel_height").as_double();
-  max_steering_front = this->get_parameter("max_steering_front").as_double();
-  max_steering_rear = this->get_parameter("max_steering_rear").as_double();
-
-  // ── Subscriptions ───────────────────────────────────────────────────────────
-  const auto sensor_qos = rclcpp::QoS(rclcpp::SensorDataQoS());
-  this->imuSubscription = this->create_subscription<sensor_msgs::msg::Imu>(
-    IMUTopic, sensor_qos,
-    std::bind(&StateEstimator::imuCallback, this, std::placeholders::_1));
-  this->odomSubscription = this->create_subscription<nav_msgs::msg::Odometry>(
-    ODOMTopic, sensor_qos,
-    std::bind(&StateEstimator::odomCallback, this, std::placeholders::_1));
+  timerFreq = this->get_parameter("timer_frequency").as_double();
+  initialX = this->get_parameter("initial_x").as_double();
+  initialY = this->get_parameter("initial_y").as_double();
+  initialTheta = this->get_parameter("initial_theta").as_double();
+  frontWheelBase = this->get_parameter("front_wheel_base").as_double();
+  rearWheelBase = this->get_parameter("rear_wheel_base").as_double();
+  wheelRadius = this->get_parameter("wheel_radius").as_double();
+  baseToWheelHeight = this->get_parameter("base_to_wheel_height").as_double();
+  maxSteeringFront = this->get_parameter("max_steering_front").as_double();
+  maxSteeringRear = this->get_parameter("max_steering_rear").as_double();
 
   // ── Publisher ───────────────────────────────────────────────────────────────
   const auto stateEstimateQoS = rclcpp::QoS(rclcpp::KeepLast(10)).reliable();
-  this->odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>(
-    RobotStateTopic, stateEstimateQoS);
+  this->odomPublisher = this->create_publisher<nav_msgs::msg::Odometry>(RobotStateTopic, stateEstimateQoS);
+
+  // ── Subscriptions → sensor adapters ────────────────────────────────────────
+  // Each callback extracts the relevant scalar(s) from the ROS message and
+  // forwards them to the corresponding ROS-free adapter via update().
+  const auto sensorQoS = rclcpp::QoS(rclcpp::SensorDataQoS());
+
+  // ── Sensor adapter construction ─────────────────────────────────────────────
+  imuAdapter = std::make_shared<ImuAdapter>();
+  wheelSpeedAdapter = std::make_shared<WheelSpeedAdapter>();
+  frontSteeringAdapter = std::make_shared<SteeringAdapter>(PerseveranceEKF::kMeasDeltaF);
+  rearSteeringAdapter = std::make_shared<SteeringAdapter>(PerseveranceEKF::kMeasDeltaR);
+
+  imuSub = this->create_subscription<sensor_msgs::msg::Imu>(
+    IMUTopic, sensorQoS,
+    [this](sensor_msgs::msg::Imu::SharedPtr msg) {
+    imuAdapter->update(msg->angular_velocity.z, msg->linear_acceleration.x);
+  });
+
+  wheelSpeedSub = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+    WheelSpeedTopic, sensorQoS,
+    [this](geometry_msgs::msg::TwistStamped::SharedPtr msg) {
+    wheelSpeedAdapter->update(msg->twist.linear.x);
+  });
+
+  frontSteeringSub = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>(
+    FrontSteeringTopic, sensorQoS,
+    [this](ackermann_msgs::msg::AckermannDriveStamped::SharedPtr msg) {
+    frontSteeringAdapter->update(msg->drive.steering_angle);
+  });
+
+  rearSteeringSub = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>(
+    RearSteeringTopic, sensorQoS,
+    [this](ackermann_msgs::msg::AckermannDriveStamped::SharedPtr msg) {
+    rearSteeringAdapter->update(msg->drive.steering_angle);
+  });
 
   // ── Kalman Filter setup ────────────────────────────────────────────────────
-  const double deltaTime = 1.0 / timer_freq;
+  const double deltaTime = 1.0 / timerFreq;
   this->kalmanFilter = std::make_unique<PerseveranceEKF>(
     PerseveranceEKF::RoverGeometry(
-      front_wheel_base, rear_wheel_base,
-      base_to_wheel_height, wheel_radius,
-      max_steering_front, max_steering_rear
+      frontWheelBase, rearWheelBase,
+      baseToWheelHeight, wheelRadius,
+      maxSteeringFront, maxSteeringRear
     ),
-    deltaTime
+    deltaTime,
+    PerseveranceEKF::AdapterList{imuAdapter, wheelSpeedAdapter, frontSteeringAdapter, rearSteeringAdapter}
   );
   // TODO(Sharwin): Tune these covariances
   this->kalmanFilter->initialize(
-    PerseveranceEKF::StateVector{initial_x, initial_y, initial_theta, 0.0, 0.0, 0.0, 0.0},
+    PerseveranceEKF::StateVector{initialX, initialY, initialTheta, 0.0, 0.0, 0.0, 0.0},
     PerseveranceEKF::StateCovariance::Identity() * 0.0001, // initial state covariance
     PerseveranceEKF::ProcessNoise::Identity() * 0.01, // process noise covariance
     PerseveranceEKF::MeasurementCovariance::Identity() * 0.1  // measurement noise covariance
   );
+
+  // ── Sensor adapter coverage check ─────────────────────────────────────────
+  const auto coverage = this->kalmanFilter->checkAdapterCoverage();
+  if (coverage.complete) {
+    RCLCPP_INFO(this->get_logger(), "Sensor adapter coverage: all measurement and control indices covered.");
+  }
+  else {
+    for (int idx : coverage.uncoveredMeasurementIndices) {
+      RCLCPP_WARN(
+        this->get_logger(),
+        "Sensor adapter coverage: measurement index %d (%s) is uncovered.", idx, PerseveranceEKF::getMeasurementIndexName(idx).c_str()
+      );
+    }
+    for (int idx : coverage.uncoveredControlIndices) {
+      RCLCPP_WARN(
+        this->get_logger(),
+        "Sensor adapter coverage: control index %d (%s) is uncovered.", idx, PerseveranceEKF::getControlIndexName(idx).c_str()
+      );
+    }
+  }
 
   const auto& initialState = this->kalmanFilter->getState();
   RCLCPP_INFO(
@@ -141,10 +192,10 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
     map_to_odom.header.stamp = this->now();
     map_to_odom.header.frame_id = "map";
     map_to_odom.child_frame_id = "odom";
-    map_to_odom.transform.translation.x = initial_x;
-    map_to_odom.transform.translation.y = initial_y;
+    map_to_odom.transform.translation.x = initialX;
+    map_to_odom.transform.translation.y = initialY;
     map_to_odom.transform.translation.z = 0.0;   // odom is always at ground level
-    map_to_odom.transform.rotation = this->yaw2Quaternion(initial_theta);
+    map_to_odom.transform.rotation = this->yaw2Quaternion(initialTheta);
     this->staticTfBroadcaster->sendTransform(map_to_odom);
   }
 
@@ -156,33 +207,16 @@ StateEstimator::StateEstimator() : Node("state_estimator") {
 
   this->timer = this->create_wall_timer(
     std::chrono::duration<double>(deltaTime),
-    std::bind(&StateEstimator::timerCallback, this)
-  );
-}
+    std::bind(&StateEstimator::timerCallback, this));
 
-// ── Sensor callbacks ──────────────────────────────────────────────────────────
-
-void StateEstimator::imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg) {
-  {
-    std::lock_guard<std::mutex> lock(this->imuMutex);
-    this->lastImuMsg = msg;
-  }
-}
-
-void StateEstimator::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
-  const auto& position = msg->pose.pose.position;
-  const auto& quat = msg->pose.pose.orientation;
-
-  const Eigen::Quaterniond orientation(quat.w, quat.x, quat.y, quat.z);
-  const double yaw = orientation.toRotationMatrix().eulerAngles(0, 1, 2).z();
 }
 
 // ── Timer: predict + publish ──────────────────────────────────────────────────
 
 void StateEstimator::timerCallback() {
-  // TODO(Sharwin): Populate U and Z
-  PerseveranceEKF::ControlInput U = PerseveranceEKF::ControlInput::Zero();
-  PerseveranceEKF::MeasurementVector Z = PerseveranceEKF::MeasurementVector::Zero();
+  const PerseveranceEKF::ControlInput U = this->kalmanFilter->buildControlInput();
+  const PerseveranceEKF::MeasurementVector Z = this->kalmanFilter->buildMeasurementVector();
+
   this->kalmanFilter->predict(U);
   this->kalmanFilter->update(Z);
 
@@ -202,7 +236,7 @@ void StateEstimator::timerCallback() {
 
   this->odomPublisher->publish(this->createOdomMessage(predictedState));
   this->tfBroadcaster->sendTransform(this->createOdomToBaseFootprintTF(predictedState));
-  this->tfBroadcaster->sendTransform(this->createBaseLinkCenteredToBaseFootprintTF(predictedState));
+  this->tfBroadcaster->sendTransform(this->createBaseLinkCenteredToBaseFootprintTF());
 }
 
 // ── Helper methods ────────────────────────────────────────────────────────────
@@ -252,8 +286,7 @@ nav_msgs::msg::Odometry StateEstimator::createOdomMessage(const PerseveranceEKF:
   return msg;
 }
 
-geometry_msgs::msg::TransformStamped StateEstimator::createBaseLinkCenteredToBaseFootprintTF(
-  const PerseveranceEKF::StateVector& state) {
+geometry_msgs::msg::TransformStamped StateEstimator::createBaseLinkCenteredToBaseFootprintTF() {
   geometry_msgs::msg::TransformStamped tf;
   tf.header.stamp = this->now();
   tf.header.frame_id = "base_footprint";
@@ -262,8 +295,8 @@ geometry_msgs::msg::TransformStamped StateEstimator::createBaseLinkCenteredToBas
   // base_link_centered shares the same x/y/yaw as base_footprint.
   // The z offset accounts for chassis height above ground (including terrain elevation),
   // which is tracked via base_height and the current estimated z position.
-  tf.transform.translation.x = state(PerseveranceEKF::StateIndex::kPx);
-  tf.transform.translation.y = state(PerseveranceEKF::StateIndex::kPy);
+  tf.transform.translation.x = 0.0;
+  tf.transform.translation.y = 0.0;
   tf.transform.translation.z = this->kalmanFilter->getGeometry().baseToGround();
   tf.transform.rotation = this->yaw2Quaternion(0.0);  // no rotation relative to base_footprint
 
