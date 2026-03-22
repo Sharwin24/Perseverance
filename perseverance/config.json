@@ -3,7 +3,7 @@
   "output_format": "urdf",
   "output_filename": "urdf/rover",
   "robot_name": "perseverance",
-  "assembly_name": "URDFRover",
-  "assets_directory": "",
+  "assembly_name": "URDFRoverAxisAligned",
+  "assets_directory": "urdf",
   "draw_frames": true
 }
