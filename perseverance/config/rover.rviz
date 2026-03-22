@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Grid1
         - /Odometry1/Shape1
       Splitter Ratio: 0.5
     Tree Height: 707
@@ -30,7 +31,7 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 1
+      Cell Size: 0.4000000059604645
       Class: rviz_default_plugins/Grid
       Color: 160; 160; 164
       Enabled: true
@@ -65,24 +66,65 @@ Visualization Manager:
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
-        All Enabled: true
-        base_link:
+        All Enabled: false
+        base_footprint:
           Value: true
+        base_link:
+          Value: false
+        base_link_centered:
+          Value: true
+        frontsteeringarm:
+          Value: false
+        frontsteeringarm_2:
+          Value: false
         map:
           Value: true
         odom:
           Value: true
+        rearsteeringarm:
+          Value: false
+        rearsteeringarm_2:
+          Value: false
+        wheel:
+          Value: false
+        wheel_2:
+          Value: false
+        wheel_3:
+          Value: false
+        wheel_4:
+          Value: false
+        wheel_5:
+          Value: false
+        wheel_6:
+          Value: false
       Marker Scale: 0.5
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        base_link:
-          {}
+        base_link_centered:
+          base_link:
+            frontsteeringarm:
+              wheel_3:
+                {}
+            frontsteeringarm_2:
+              wheel_4:
+                {}
+            rearsteeringarm:
+              wheel:
+                {}
+            rearsteeringarm_2:
+              wheel_2:
+                {}
+            wheel_5:
+              {}
+            wheel_6:
+              {}
         map:
           odom:
-            {}
+            base_footprint:
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988079071
@@ -204,6 +246,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        base_link_centered:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         frontsteeringarm:
           Alpha: 1
           Show Axes: false
@@ -224,32 +270,32 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        wheelhub:
+        wheel:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheelhub_2:
+        wheel_2:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheelhub_3:
+        wheel_3:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheelhub_4:
+        wheel_4:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheelhub_5:
+        wheel_5:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wheelhub_6:
+        wheel_6:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -265,7 +311,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: base_link
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -308,7 +354,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.5269984006881714
+      Distance: 1.5599504709243774
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -323,10 +369,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5147971510887146
+      Pitch: 0.7297970056533813
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.7753936052322388
+      Yaw: 2.810372829437256
     Saved: ~
 Window Geometry:
   Displays:
@@ -345,4 +391,4 @@ Window Geometry:
     collapsed: false
   Width: 1854
   X: 66
-  Y: 392
+  Y: 32
