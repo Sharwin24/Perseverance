@@ -12,7 +12,7 @@
 ///   rear_wheel_base  (float64) : Middle Wheel to Rear Wheel distance along the Robot Y-axis [m]
 ///   base_to_wheel_height (float64) : Height of the robot base to the wheel center [m]
 ///   max_steering_front (float64) : Front wheel max steering angle [rad]
-///   max_steering_rear (float64) : Rear wheel max steering angle [
+///   max_steering_rear (float64) : Rear wheel max steering angle [rad]
 ///
 /// TF TREE:
 ///   map (static, published once at startup)
@@ -32,6 +32,7 @@
 ///   /sensors/raw/wheel/steering/rear     (ackermann_msgs/AckermannDriveStamped) → SteeringAdapter (rear)
 
 #include "state_estimation/state_estimation.hpp"
+#include "tf2/utils.h" // Honestly I'm not sure why but if this is in the header file it doesn't build
 
 const char IMUTopic[] = "/sensors/raw/imu";
 const char WheelSpeedTopic[] = "/sensors/raw/wheel/speed";
@@ -76,45 +77,75 @@ StateEstimator::StateEstimator()
   const auto sensorQoS = rclcpp::QoS(rclcpp::SensorDataQoS());
 
   // ── Sensor adapter construction ─────────────────────────────────────────────
+  const PerseveranceEKF::RoverGeometry roverGeometry(
+    frontWheelBase, rearWheelBase,
+    baseToWheelHeight, wheelRadius,
+    maxSteeringFront, maxSteeringRear
+  );
+
   imuAdapter = std::make_shared<ImuAdapter>();
   wheelSpeedAdapter = std::make_shared<WheelSpeedAdapter>();
-  frontSteeringAdapter = std::make_shared<SteeringAdapter>(PerseveranceEKF::kMeasDeltaF);
-  rearSteeringAdapter = std::make_shared<SteeringAdapter>(PerseveranceEKF::kMeasDeltaR);
+  frontSteeringAdapter = std::make_shared<SteeringAdapter>(PerseveranceEKF::kMeasDeltaF, PerseveranceEKF::kDeltaFRate);
+  rearSteeringAdapter = std::make_shared<SteeringAdapter>(PerseveranceEKF::kMeasDeltaR, PerseveranceEKF::kDeltaRRate);
+  odomPoseAdapter = std::make_shared<OdomPoseAdapter>(roverGeometry);
+  odomPoseAdapter->resetPose(initialX, initialY, initialTheta);
 
   imuSub = this->create_subscription<sensor_msgs::msg::Imu>(
     IMUTopic, sensorQoS,
     [this](sensor_msgs::msg::Imu::SharedPtr msg) {
-    imuAdapter->update(msg->angular_velocity.z, msg->linear_acceleration.x);
+    imuAdapter->update(
+      msg->angular_velocity.z,
+      msg->linear_acceleration.x,
+      tf2::getYaw(msg->orientation)
+    );
   });
 
   wheelSpeedSub = this->create_subscription<geometry_msgs::msg::TwistStamped>(
     WheelSpeedTopic, sensorQoS,
     [this](geometry_msgs::msg::TwistStamped::SharedPtr msg) {
-    wheelSpeedAdapter->update(msg->twist.linear.x);
+    const double speed = msg->twist.linear.x;
+    wheelSpeedAdapter->update(speed);
+    const rclcpp::Time stamp(msg->header.stamp);
+    const double dt = lastWheelSpeedTime.nanoseconds() > 0
+      ? (stamp - lastWheelSpeedTime).seconds() : 0.0;
+    lastWheelSpeedTime = stamp;
+    odomPoseAdapter->updateSpeed(speed, dt);
   });
 
   frontSteeringSub = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>(
     FrontSteeringTopic, sensorQoS,
     [this](ackermann_msgs::msg::AckermannDriveStamped::SharedPtr msg) {
-    frontSteeringAdapter->update(msg->drive.steering_angle);
+    const double angle = msg->drive.steering_angle;
+    const rclcpp::Time stamp(msg->header.stamp);
+    const double dt = lastFrontSteeringTime.nanoseconds() > 0
+      ? (stamp - lastFrontSteeringTime).seconds() : 0.0;
+    lastFrontSteeringTime = stamp;
+    frontSteeringAdapter->update(angle, dt);
+    odomPoseAdapter->updateFrontSteering(angle);
   });
 
   rearSteeringSub = this->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>(
     RearSteeringTopic, sensorQoS,
     [this](ackermann_msgs::msg::AckermannDriveStamped::SharedPtr msg) {
-    rearSteeringAdapter->update(msg->drive.steering_angle);
+    const double angle = msg->drive.steering_angle;
+    const rclcpp::Time stamp(msg->header.stamp);
+    const double dt = lastRearSteeringTime.nanoseconds() > 0
+      ? (stamp - lastRearSteeringTime).seconds() : 0.0;
+    lastRearSteeringTime = stamp;
+    rearSteeringAdapter->update(angle, dt);
+    odomPoseAdapter->updateRearSteering(angle);
   });
 
   // ── Kalman Filter setup ────────────────────────────────────────────────────
   const double deltaTime = 1.0 / timerFreq;
   this->kalmanFilter = std::make_unique<PerseveranceEKF>(
-    PerseveranceEKF::RoverGeometry(
-      frontWheelBase, rearWheelBase,
-      baseToWheelHeight, wheelRadius,
-      maxSteeringFront, maxSteeringRear
-    ),
+    roverGeometry,
     deltaTime,
-    PerseveranceEKF::AdapterList{imuAdapter, wheelSpeedAdapter, frontSteeringAdapter, rearSteeringAdapter}
+    PerseveranceEKF::AdapterList{
+      imuAdapter, wheelSpeedAdapter,
+      frontSteeringAdapter, rearSteeringAdapter,
+      odomPoseAdapter
+    }
   );
   // TODO(Sharwin): Tune these covariances
   this->kalmanFilter->initialize(

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base_kalman_filter.hpp"
+#include <array>
 #include <cmath>
 #include <stdexcept>
 
@@ -251,6 +252,50 @@ public:
   void setDt(double newDt) { dt = newDt; }
   RoverGeometry getGeometry() const { return geometry; }
 
+  // =========================================================================
+  // Public Static Kinematic Helpers
+  // =========================================================================
+
+  /**
+   * @brief Compute the combined yaw rate from both steerable axles.
+   *   ω = v · (tan(δ_f) - tan(δ_r)) / L
+   */
+  static double computeYawRate(double v, double deltaF, double deltaR, const RoverGeometry& geometry) {
+    return v * (std::tan(deltaF) - std::tan(deltaR)) / geometry.getWheelbase();
+  }
+
+  /**
+   * @brief Compute the body slip angle β from both steering angles.
+   *   β = atan( (L_r·tan(δ_f) + L_f·tan(δ_r)) / L )
+   */
+  static double computeSlipAngle(double deltaF, double deltaR, const RoverGeometry& geometry) {
+    const double slipNumerator =
+      geometry.centerToRearAxle * std::tan(deltaF) +
+      geometry.centerToFrontAxle * std::tan(deltaR);
+    return std::atan2(slipNumerator, geometry.getWheelbase());
+  }
+
+  /**
+   * @brief Integrate position one step forward using the rover bicycle kinematics.
+   *
+   * Computes the next (px, py, theta) given the current values, speed, steering
+   * angles, and timestep. This is the position/heading sub-step of the full
+   * motion model and can be called from outside the EKF (e.g. OdomPoseAdapter).
+   *
+   * @param currentState Current state vector [px, py, theta, v, delta_f, delta_r, omega]
+   * @param dt      Integration timestep [s]
+   * @param geometry  Rover geometry (axle distances)
+   * @return Array of {nextPx, nextPy, nextTheta}
+   */
+  static std::array<double, 3> integratePose(const StateVector& currentState, double dt, const RoverGeometry& geometry) {
+    const double beta = computeSlipAngle(currentState[kDeltaF], currentState[kDeltaR], geometry);
+    const double omega = computeYawRate(currentState[kV], currentState[kDeltaF], currentState[kDeltaR], geometry);
+    const double nextPx = currentState[kPx] + currentState[kV] * std::cos(currentState[kTheta] + beta) * dt;
+    const double nextPy = currentState[kPy] + currentState[kV] * std::sin(currentState[kTheta] + beta) * dt;
+    const double nextTheta = currentState[kTheta] + omega * dt;
+    return {nextPx, nextPy, nextTheta};
+  }
+
 protected:
   // =========================================================================
   // Motion Model  f(x, u)
@@ -276,10 +321,10 @@ protected:
     const double deltaRRate = controlInput[kDeltaRRate];
 
     // Combined yaw rate from both steerable axles
-    const double omega = computeYawRate(v, deltaF, deltaR);
+    const double omega = computeYawRate(v, deltaF, deltaR, geometry);
 
     // Body slip angle β: nonzero when centerToFrontAxle ≠ centerToRearAxle or in crab/pivot configurations
-    const double beta = computeSlipAngle(deltaF, deltaR);
+    const double beta = computeSlipAngle(deltaF, deltaR, geometry);
 
     const double effectiveHeading = theta + beta;  // effective velocity heading
 
@@ -330,7 +375,7 @@ protected:
     const double cos2DeltaF = std::cos(deltaF) * std::cos(deltaF);
     const double cos2DeltaR = std::cos(deltaR) * std::cos(deltaR);
 
-    const double beta = computeSlipAngle(deltaF, deltaR);
+    const double beta = computeSlipAngle(deltaF, deltaR, geometry);
     const double effectiveHeading = theta + beta;
     const double cosEff = std::cos(effectiveHeading);
     const double sinEff = std::sin(effectiveHeading);
@@ -416,33 +461,7 @@ protected:
     return MeasurementModel::Identity();  // H = I₇
   }
 
-
 private:
-  // =========================================================================
-  // Internal Kinematic Helpers
-  // =========================================================================
-
-  /**
-   * @brief Compute the combined yaw rate from both steerable axles.
-   *   ω = v · (tan(δ_f) - tan(δ_r)) / L
-   */
-  double computeYawRate(double v, double deltaF, double deltaR) const {
-    return v * (std::tan(deltaF) - std::tan(deltaR)) / geometry.getWheelbase();
-  }
-
-  /**
-   * @brief Compute the body slip angle β from both steering angles.
-   *
-   *   β = atan( (L_r·tan(δ_f) + L_f·tan(δ_r)) / L )
-   *
-   *   β = 0 when the rover drives straight or centerToFrontAxle=centerToRearAxle with δ_f=-δ_r (pure spin).
-   *   β ≠ 0 in asymmetric crab or turning configurations.
-   */
-  double computeSlipAngle(double deltaF, double deltaR) const {
-    const double slipNumerator = geometry.centerToRearAxle * std::tan(deltaF) + geometry.centerToFrontAxle * std::tan(deltaR);
-    return std::atan2(slipNumerator, geometry.getWheelbase());
-  }
-
   RoverGeometry geometry;    // vehicle geometry (axle distances, steering limits)
   double dt;                 // integration timestep [s]
 };

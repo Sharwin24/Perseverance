@@ -4,7 +4,8 @@
 #include <memory>
 
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
-#include "geometry_msgs/msg/quaternion.hpp"
+#include <geometry_msgs/msg/quaternion.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -34,6 +35,12 @@ private:
   std::shared_ptr<WheelSpeedAdapter> wheelSpeedAdapter;
   std::shared_ptr<SteeringAdapter> frontSteeringAdapter;
   std::shared_ptr<SteeringAdapter> rearSteeringAdapter;
+  std::shared_ptr<OdomPoseAdapter> odomPoseAdapter;
+
+  // ── Timestamps for finite-difference dt computation ────────────────────────
+  rclcpp::Time lastFrontSteeringTime{0, 0, RCL_ROS_TIME};
+  rclcpp::Time lastRearSteeringTime{0, 0, RCL_ROS_TIME};
+  rclcpp::Time lastWheelSpeedTime{0, 0, RCL_ROS_TIME};
 
   // ── ROS Subscriptions ──────────────────────────────────────────────────────
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imuSub;
