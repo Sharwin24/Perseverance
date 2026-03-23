@@ -76,13 +76,14 @@ StateEstimator::StateEstimator()
   // forwards them to the corresponding ROS-free adapter via update().
   const auto sensorQoS = rclcpp::QoS(rclcpp::SensorDataQoS());
 
-  // ── Sensor adapter construction ─────────────────────────────────────────────
+  // Rover Geometry with constants from parameters
   const PerseveranceEKF::RoverGeometry roverGeometry(
     frontWheelBase, rearWheelBase,
     baseToWheelHeight, wheelRadius,
     maxSteeringFront, maxSteeringRear
   );
 
+  // ── Sensor adapter construction ─────────────────────────────────────────────
   imuAdapter = std::make_shared<ImuAdapter>();
   wheelSpeedAdapter = std::make_shared<WheelSpeedAdapter>();
   frontSteeringAdapter = std::make_shared<SteeringAdapter>(PerseveranceEKF::kMeasDeltaF, PerseveranceEKF::kDeltaFRate);
