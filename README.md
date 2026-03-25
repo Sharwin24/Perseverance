@@ -8,12 +8,9 @@ Mobile Robot resembling NASA's Mars Perseverance Rover. Everything from scratch 
 This project is currently in progress and I'm currently focusing on the drive-base with the following tasks:
 
 - Building a Kalman Filter focusing on the kinematic model of a 6-wheel Mars Rover
-  - I have also implemented kinematic models for diff-drive, mecanum, and skid-steering for the educational value.
-- Creating a data-driven layout for the physical robot, focusing on the important features such as: rocker-bogie assembly, rocker-bogie differential system, and the 4 independently steered wheels.
-- Architecting the ROS2 package to easily fit sensors and modularize the filter.
 - ~~Creating a PPO RL training pipeline for a simplified mobile robot and goal pose navigation~~
 - Working on firmware for motor board (RoverFirmware)
-- Designing Battery Management System (BMS) and working on firmware required for battery monitoring
+- Designing a carrier PCB to connect the MCU with motors, sensors, and power.
 
 ---
 
