@@ -15,7 +15,7 @@ Approximating the robot as a diff-drive robot makes it easier to compute the sta
 ## Prediction Models
 
 ### Diff-drive Kinematic Model
-The control input for the diff-drive robot is very simple both wheel velocities:
+The control input for the diff-drive robot is very simply both wheel velocities:
 
 $$U_{\text{diff}} = \left[v_{left}, v_{right}\right]$$
 
@@ -34,58 +34,6 @@ The state transition matrix $F$ (also known as the Jacobian of the process model
 <div style="display: flex; justify-content: center; align-items: center; width: 100%; background: black; padding: 10px; border-radius: 8px;">
   <img src="../equations/F_diff_drive_kinematic.svg" alt="F_diff_drive_kinematic Matrix" style="width: 50%;">
 </div>
-
-
-### Mecanum Kinematic Model
-The mecanum wheel robot is omni-directional and each wheel contributes to the robot's overall velocity vector:
-
-$$U_{\text{mecanum}} = \left[v_{1}, v_{2}, v_{3}, v_{4}\right]$$
-
-Wheel angular speeds (ordered: front-left, front-right, rear-left, rear-right) map to body-frame velocities via a linear transform (forward kinematics):
-
-$$\begin{bmatrix} v_x \\ v_y \\ \omega \end{bmatrix} = \frac{R}{4}\begin{bmatrix} 1 & 1 & 1 & 1 \\ -1 & 1 & -1 & 1 \\ -\tfrac{1}{L+W} & \tfrac{1}{L+W} & -\tfrac{1}{L+W} & \tfrac{1}{L+W} \end{bmatrix}\begin{bmatrix} v_1 \\ v_2 \\ v_3 \\ v_4 \end{bmatrix}$$
-
-Where:
-* $R$ is wheel radius
-* $W_b$ is the Wheel base (longitudinal length)
-* $T$ is the Track width (lateral length)
-* $L = \tfrac{W_b}{2}$
-* $W = \tfrac{T}{2}$
-
-Body-frame velocities are converted to global-frame motion using the heading $\theta$:
-
-$$\begin{aligned}
-\dot{x} &= v_x\cos\theta - v_y\sin\theta\\
-\dot{y} &= v_x\sin\theta + v_y\cos\theta\\
-\dot{\theta} &= \omega
-\end{aligned}$$
-
-With the extended state vector (including velocities)
-$$X = [x,\ y,\ \theta,\ v_x,\ v_y,\ \omega]^T$$
-and treating wheel speeds as control inputs, the (non-linear) discrete process model over $\Delta t$ is:
-
-$$\begin{bmatrix} x_{k+1} \\ y_{k+1} \\ \theta_{k+1} \\ v_{x,k+1} \\ v_{y,k+1} \\ \omega_{k+1} \end{bmatrix} = \begin{bmatrix}
- x_k + (v_{x,k}\cos\theta_k - v_{y,k}\sin\theta_k)\Delta t \\
- y_k + (v_{x,k}\sin\theta_k + v_{y,k}\cos\theta_k)\Delta t \\ \theta_k + \omega_k \Delta t \\
- f_{v_x}(U_k) \\
- f_{v_y}(U_k) \\
- f_{\omega}(U_k)
-\end{bmatrix}$$
-
-Where $f_{v_x}, f_{v_y}, f_{\omega}$ are the linear mappings from wheel speeds (matrix above). Because $v_x, v_y, \omega$ depend only on current control inputs, their partial derivatives w.r.t previous velocities are zero in the Jacobian.
-
-Jacobian (state transition matrix) $F = \tfrac{\partial f}{\partial X}$ evaluated at $(X_k,U_k)$:
-
-$$F = \begin{bmatrix}
-1 & 0 & -(v_x\sin\theta_k + v_y\cos\theta_k)\Delta t & \cos\theta_k\Delta t & -\sin\theta_k\Delta t & 0 \\
-0 & 1 & \ (v_x\cos\theta_k - v_y\sin\theta_k)\Delta t & \sin\theta_k\Delta t & \cos\theta_k\Delta t & 0 \\
-0 & 0 & 1 & 0 & 0 & \Delta t \\
-0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 0 & 0 & 0 & 0 & 0
-\end{bmatrix}$$
-
-The lower rows are zero because the new body velocities are set directly from the control (wheel speeds) rather than previous velocities.
 
 ### Rocker-Bogie Suspension Kinematic Model
 The rocker-bogie suspension has 6 powered wheels, 4 of which are able to rotate independently for ackerman-style steering. The control vector includes all wheel velocities and the 4 (outer) wheel steering angles:
