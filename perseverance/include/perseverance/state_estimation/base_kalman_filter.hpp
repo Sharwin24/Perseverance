@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PERSEVERANCE_STATE_ESTIMATION_BASE_KALMAN_FILTER_HPP
+#define PERSEVERANCE_STATE_ESTIMATION_BASE_KALMAN_FILTER_HPP
 
 #include <memory>
 #include <vector>
@@ -361,3 +362,5 @@ private:
   bool initialized = false;
   AdapterList sensorAdapters;
 };
+
+#endif  // PERSEVERANCE_STATE_ESTIMATION_BASE_KALMAN_FILTER_HPP

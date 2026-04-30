@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PERSEVERANCE_STATE_ESTIMATION_PERSEVERANCE_KALMAN_FILTER_HPP
+#define PERSEVERANCE_STATE_ESTIMATION_PERSEVERANCE_KALMAN_FILTER_HPP
 
 #include "base_kalman_filter.hpp"
 #include <array>
@@ -465,3 +466,5 @@ private:
   RoverGeometry geometry;    // vehicle geometry (axle distances, steering limits)
   double dt;                 // integration timestep [s]
 };
+
+#endif  // PERSEVERANCE_STATE_ESTIMATION_PERSEVERANCE_KALMAN_FILTER_HPP

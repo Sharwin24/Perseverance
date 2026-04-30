@@ -1,5 +1,6 @@
 // ackermann_planner.hpp
-#pragma once
+#ifndef PROTOTYPING_ACKERMANN_PLANNER_HPP
+#define PROTOTYPING_ACKERMANN_PLANNER_HPP
 
 #include <Eigen/Dense>
 #include <cmath>
@@ -99,3 +100,5 @@ private:
     const std::vector<double>& v,
     double dt) const;
 };
+
+#endif  // PROTOTYPING_ACKERMANN_PLANNER_HPP
