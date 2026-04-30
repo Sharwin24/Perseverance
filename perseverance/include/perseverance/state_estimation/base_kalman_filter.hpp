@@ -1,9 +1,10 @@
 #ifndef PERSEVERANCE_STATE_ESTIMATION_BASE_KALMAN_FILTER_HPP
 #define PERSEVERANCE_STATE_ESTIMATION_BASE_KALMAN_FILTER_HPP
 
+#include <eigen3/Eigen/Dense>
 #include <memory>
 #include <vector>
-#include <eigen3/Eigen/Dense>
+#include <utility>
 
 // =============================================================================
 // SensorAdapter<M, U>

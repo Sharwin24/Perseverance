@@ -168,7 +168,8 @@ StateEstimator::StateEstimator()
     for (int idx : coverage.uncoveredMeasurementIndices) {
       RCLCPP_WARN(
         this->get_logger(),
-        "Sensor adapter coverage: measurement index %d (%s) is uncovered.", idx, PerseveranceEKF::getMeasurementIndexName(idx).c_str()
+        "Sensor adapter coverage: measurement index %d (%s) is uncovered.", idx,
+        PerseveranceEKF::getMeasurementIndexName(idx).c_str()
       );
     }
     for (int idx : coverage.uncoveredControlIndices) {
@@ -243,7 +244,6 @@ StateEstimator::StateEstimator()
   this->timer = this->create_wall_timer(
     std::chrono::duration<double>(deltaTime),
     std::bind(&StateEstimator::timerCallback, this));
-
 }
 
 // ── Timer: predict + publish ──────────────────────────────────────────────────

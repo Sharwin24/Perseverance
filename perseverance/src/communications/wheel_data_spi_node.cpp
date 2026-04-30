@@ -3,7 +3,6 @@
 WheelDataSpiNode::WheelDataSpiNode() :
   Node("wheel_data_spi_node"),
   seq_(0) {
-
   // Declare parameters and get their values from YAML file
   this->spi_dev_ = this->declare_parameter<std::string>("spi_device", "/dev/spidev0.0");
   this->spi_speed_ = this->declare_parameter<int>("spi_speed_hz", 8'000'000);

@@ -2,6 +2,7 @@
 #define PERSEVERANCE_STATE_ESTIMATION_PERSEVERANCE_SENSOR_ADAPTERS_HPP
 
 #include <mutex>
+#include <vector>
 
 #include "base_kalman_filter.hpp"
 #include "perseverance_kalman_filter.hpp"

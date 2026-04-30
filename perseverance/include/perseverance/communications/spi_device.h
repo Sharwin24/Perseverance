@@ -1,13 +1,13 @@
 #ifndef SPI_DEVICE_HPP
 #define SPI_DEVICE_HPP
+#include <fcntl.h>
+#include <linux/spi/spidev.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
 #include <string>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <linux/spi/spidev.h>
 
 class SpiDevice {
 public:
