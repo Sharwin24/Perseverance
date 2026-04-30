@@ -352,9 +352,9 @@ protected:
 
   virtual MeasurementModel computeH(const StateVector& state) const = 0;
 
-  StateVector currentState = StateVector::Zero(); // Filtered State Estimate (N×1)
-  StateCovariance P = StateCovariance::Identity(); // State Estimate Covariance (N×N)
-  ProcessNoise Q = ProcessNoise::Zero(); // Process Noise Covariance (N×N)
+  StateVector currentState = StateVector::Zero();          // Filtered State Estimate (N×1)
+  StateCovariance P = StateCovariance::Identity();         // State Estimate Covariance (N×N)
+  ProcessNoise Q = ProcessNoise::Zero();                   // Process Noise Covariance (N×N)
   MeasurementCovariance R = MeasurementCovariance::Zero(); // Measurement Noise Covariance (M×M)
 
 private:
