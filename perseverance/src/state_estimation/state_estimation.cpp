@@ -254,8 +254,10 @@ void StateEstimator::timerCallback() {
 
   const PerseveranceEKF::StateVector& predictedState = this->kalmanFilter->getState();
 
-  RCLCPP_DEBUG(
+  RCLCPP_INFO_THROTTLE(
     this->get_logger(),
+    *this->get_clock(),
+    1000,
     "State: [x=%.3f m, y=%.3f m, theta=%.3f rad, V=%.3f m/s, delta_f=%.3f rad, delta_r=%.3f rad, omega=%.3f rad/s]",
     predictedState(PerseveranceEKF::StateIndex::kPx),
     predictedState(PerseveranceEKF::StateIndex::kPy),
@@ -302,15 +304,19 @@ nav_msgs::msg::Odometry StateEstimator::createOdomMessage(const PerseveranceEKF:
 
   const auto& P = this->kalmanFilter->getStateCovariance();
 
-  std::array<double, 36> pose_cov{};
-  pose_cov[0] = P(PerseveranceEKF::StateIndex::kPx, PerseveranceEKF::StateIndex::kPx);  // x
-  pose_cov[7] = P(PerseveranceEKF::StateIndex::kPy, PerseveranceEKF::StateIndex::kPy);  // y
-  pose_cov[35] = P(PerseveranceEKF::StateIndex::kTheta, PerseveranceEKF::StateIndex::kTheta);  // theta
+  std::array<double, 36> pose_cov = {};
+  pose_cov[PerseveranceEKF::StateIndex::kPx + (6 * PerseveranceEKF::StateIndex::kPx)] =
+    P(PerseveranceEKF::StateIndex::kPx, PerseveranceEKF::StateIndex::kPx);  // x
+  pose_cov[PerseveranceEKF::StateIndex::kPy + (6 * PerseveranceEKF::StateIndex::kPy)] =
+    P(PerseveranceEKF::StateIndex::kPy, PerseveranceEKF::StateIndex::kPy);  // y
+  pose_cov[PerseveranceEKF::StateIndex::kTheta + (6 * PerseveranceEKF::StateIndex::kTheta)] =
+    P(PerseveranceEKF::StateIndex::kTheta, PerseveranceEKF::StateIndex::kTheta);  // theta
 
-  std::array<double, 36> twist_cov{};
-  twist_cov[0] = P(PerseveranceEKF::StateIndex::kV, PerseveranceEKF::StateIndex::kV);  // vx
-  twist_cov[7] = 0.0;  // vy (not estimated, so set to zero)
-  twist_cov[35] = P(PerseveranceEKF::StateIndex::kOmega, PerseveranceEKF::StateIndex::kOmega);  // omega
+  std::array<double, 36> twist_cov = {};
+  twist_cov[PerseveranceEKF::StateIndex::kV + (6 * PerseveranceEKF::StateIndex::kV)] =
+    P(PerseveranceEKF::StateIndex::kV, PerseveranceEKF::StateIndex::kV);  // vx
+  twist_cov[PerseveranceEKF::StateIndex::kOmega + (6 * PerseveranceEKF::StateIndex::kOmega)] =
+    P(PerseveranceEKF::StateIndex::kOmega, PerseveranceEKF::StateIndex::kOmega);  // omega
 
   msg.pose.covariance = pose_cov;
   msg.twist.covariance = twist_cov;
