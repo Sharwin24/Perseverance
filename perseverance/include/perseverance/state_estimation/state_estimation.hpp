@@ -48,17 +48,17 @@ private:
   rclcpp::Subscription<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr frontSteeringSub;
   rclcpp::Subscription<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr rearSteeringSub;
 
-  // ── Timer ──────────────────────────────────────────────────────────────────
-  rclcpp::TimerBase::SharedPtr timer;
-
-  void timerCallback();
-
   // ── TF ────────────────────────────────────────────────────────────────────
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> staticTfBroadcaster;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tfBroadcaster;
 
   // ── Publishers ────────────────────────────────────────────────────────────
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odomPublisher;
+
+  // ── Timer ──────────────────────────────────────────────────────────────────
+  rclcpp::TimerBase::SharedPtr timer;
+
+  void timerCallback();
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   geometry_msgs::msg::Quaternion yaw2Quaternion(double yaw);

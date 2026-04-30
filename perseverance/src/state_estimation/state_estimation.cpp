@@ -21,6 +21,9 @@
 ///             └─ base_link_centered  ← published by this node (same x,y/yaw, z=base_height)
 ///                  └─ base_link      ← original onshape-to-robot frame (from URDF fixed joint)
 ///                       └─ wheels, sensors, etc.
+/// TRANSFORMS: (Broadcasted)
+///  map → odom: Static transform from the world frame to the odometry frame, set at startup based on initial pose parameters.
+///  odom → base_footprint: Dynamic transform from the odometry frame to the robot's base footprint. Updated on the timer
 ///
 /// PUBLISHERS:
 ///   /state_estimation/odom (nav_msgs::msg::Odometry): Filtered robot state
@@ -254,6 +257,10 @@ void StateEstimator::timerCallback() {
 
   const PerseveranceEKF::StateVector& predictedState = this->kalmanFilter->getState();
 
+  this->odomPublisher->publish(this->createOdomMessage(predictedState));
+  this->tfBroadcaster->sendTransform(this->createOdomToBaseFootprintTF(predictedState));
+  this->tfBroadcaster->sendTransform(this->createBaseLinkCenteredToBaseFootprintTF());
+
   RCLCPP_INFO_THROTTLE(
     this->get_logger(),
     *this->get_clock(),
@@ -267,10 +274,6 @@ void StateEstimator::timerCallback() {
     predictedState(PerseveranceEKF::StateIndex::kDeltaR),
     predictedState(PerseveranceEKF::StateIndex::kOmega)
   );
-
-  this->odomPublisher->publish(this->createOdomMessage(predictedState));
-  this->tfBroadcaster->sendTransform(this->createOdomToBaseFootprintTF(predictedState));
-  this->tfBroadcaster->sendTransform(this->createBaseLinkCenteredToBaseFootprintTF());
 }
 
 // ── Helper methods ────────────────────────────────────────────────────────────
@@ -305,18 +308,18 @@ nav_msgs::msg::Odometry StateEstimator::createOdomMessage(const PerseveranceEKF:
   const auto& P = this->kalmanFilter->getStateCovariance();
 
   std::array<double, 36> pose_cov = {};
-  pose_cov[PerseveranceEKF::StateIndex::kPx + (6 * PerseveranceEKF::StateIndex::kPx)] =
-    P(PerseveranceEKF::StateIndex::kPx, PerseveranceEKF::StateIndex::kPx);  // x
-  pose_cov[PerseveranceEKF::StateIndex::kPy + (6 * PerseveranceEKF::StateIndex::kPy)] =
-    P(PerseveranceEKF::StateIndex::kPy, PerseveranceEKF::StateIndex::kPy);  // y
-  pose_cov[PerseveranceEKF::StateIndex::kTheta + (6 * PerseveranceEKF::StateIndex::kTheta)] =
-    P(PerseveranceEKF::StateIndex::kTheta, PerseveranceEKF::StateIndex::kTheta);  // theta
+  const auto& kPx = PerseveranceEKF::StateIndex::kPx;
+  const auto& kPy = PerseveranceEKF::StateIndex::kPy;
+  const auto& kTheta = PerseveranceEKF::StateIndex::kTheta;
+  pose_cov[kPx + (6 * kPx)] = P(kPx, kPx);
+  pose_cov[kPy + (6 * kPy)] = P(kPy, kPy);
+  pose_cov[kTheta + (6 * kTheta)] = P(kTheta, kTheta);
 
   std::array<double, 36> twist_cov = {};
-  twist_cov[PerseveranceEKF::StateIndex::kV + (6 * PerseveranceEKF::StateIndex::kV)] =
-    P(PerseveranceEKF::StateIndex::kV, PerseveranceEKF::StateIndex::kV);  // vx
-  twist_cov[PerseveranceEKF::StateIndex::kOmega + (6 * PerseveranceEKF::StateIndex::kOmega)] =
-    P(PerseveranceEKF::StateIndex::kOmega, PerseveranceEKF::StateIndex::kOmega);  // omega
+  const auto& kV = PerseveranceEKF::StateIndex::kV;
+  const auto& kOmega = PerseveranceEKF::StateIndex::kOmega;
+  twist_cov[kV + (6 * kV)] = P(kV, kV);
+  twist_cov[kOmega + (6 * kOmega)] = P(kOmega, kOmega);
 
   msg.pose.covariance = pose_cov;
   msg.twist.covariance = twist_cov;
