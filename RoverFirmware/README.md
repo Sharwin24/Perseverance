@@ -38,15 +38,13 @@ All tasks run cooperatively using `ArduinoThread`, checked in priority order in 
 | 2 | Motor Task | 100 Hz | PID velocity control for 6 DC motors, updates FeatherWing PWM |
 | 3 | Steering Task | 100 Hz | Updates 4 steering servos based on RPi5 commands |
 | 4 | Communication Task | 100 Hz | SPI — receives commands from RPi5, sends back encoder data |
-| 5 | Battery Monitor Task | 0.5 Hz | Polls MAX17048 alerts and controls charging circuit |
-| 6 | Heartbeat Task | 0.25 Hz | Pulses built-in LED to indicate scheduler is alive |
+| 5 | Heartbeat Task | 0.25 Hz | Pulses built-in LED to indicate scheduler is alive |
 
 ## Arduino / PlatformIO Dependencies
 
 - [`Adafruit_MotorShield`](https://github.com/adafruit/Adafruit_Motor_Shield_V2_Library/blob/master/Adafruit_MotorShield.h)
 - [`Adafruit_MS_PWMServoDriver`](https://github.com/adafruit/Adafruit_Motor_Shield_V2_Library/blob/master/utility/Adafruit_MS_PWMServoDriver.h)
 - [`Adafruit_I2CDevice`](https://github.com/adafruit/Adafruit_BusIO/blob/master/Adafruit_I2CDevice.h)
-- [`Adafruit_MAX1704X`](https://github.com/adafruit/Adafruit_MAX1704X) — battery fuel gauge
 - [`ArduinoThread`](https://gitlab.com/airbornemint/arduino-protothreads) — cooperative multitasking
 
 ## Task Details
@@ -78,21 +76,6 @@ Handles the full-duplex SPI transaction with the Raspberry Pi 5:
 - **RX (40 bytes):** 6 motor speed `float`s (bytes 0–23) followed by 4 servo angle `float`s (bytes 24–39), all little-endian.
 
 Values are unpacked via a `union { uint32_t u; float f; }` bitcast and written into `motorSpeedCommands` and `servoAngleCommands`. On a failed SPI transaction, previous command values are retained unchanged.
-
-### Battery Monitor Task (0.5 Hz)
-
-Polls the MAX17048 fuel gauge for active alerts and responds accordingly:
-
-| Alert Flag | Action |
-|---|---|
-| `SOC_CHANGE` | Clear flag |
-| `SOC_LOW` | Clear flag |
-| `VOLTAGE_RESET` | Clear flag |
-| `VOLTAGE_LOW` (< 3.25 V) | Assert `BATTERY_CHARGE_ENABLE_PIN` HIGH — enables charging circuit |
-| `VOLTAGE_HIGH` (> 4.25 V) | Assert `BATTERY_CHARGE_ENABLE_PIN` LOW — disables charging circuit |
-| `RESET_INDICATOR` | Clear flag |
-
-Thresholds: low = 3.30 V, full = 4.20 V, hysteresis = 0.05 V (prevents rapid toggling at boundary voltages).
 
 ### Heartbeat Task (0.25 Hz)
 
